@@ -59,6 +59,9 @@ val identity_term : env -> types -> types
                             
 (* --- Representations --- *)
 
+(** Construct the external expression for a definition. *)
+val expr_of_global : global_reference -> constr_expr
+
 (*
  * Intern a term (for now, ignore the resulting evar_map)
  *)
@@ -70,11 +73,36 @@ val intern : env -> evar_map -> constr_expr -> types
 val extern : env -> evar_map -> types -> constr_expr
 
 (*
+ * Yves Bertot's edeclare, with extra optional type-checking call (see comment)
+ *)
+val edeclare :
+  Id.t ->
+  (locality * polymorphic * definition_object_kind) ->
+  opaque:'a ->
+  evar_map ->
+  UState.universe_decl ->
+  EConstr.constr ->
+  EConstr.t option ->
+  Impargs.manual_implicits ->
+  global_reference Lemmas.declaration_hook ->
+  bool ->
+  global_reference
+
+(*
  * Define a new Coq term
  * Refresh universes if the bool is true, otherwise don't
  * (Refreshing universes is REALLY costly)
  *)
 val define_term : ?typ:types -> Id.t -> evar_map -> types -> bool -> global_reference
+
+(*
+ * Safely extract the body of a constant, instantiating any universe variables.
+ * If needed, an evar_map should be constructed from the updated environment with
+ * Evd.from_env.
+ *
+ * Raises a Match_failure if the constant does not exist.
+ *)
+val open_constant : env -> Constant.t -> env * constr
 
 (* --- Constructing terms --- *)
 

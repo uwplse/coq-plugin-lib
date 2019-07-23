@@ -129,6 +129,11 @@ let identity_term (env : env) (typ : types) : types =
                                                                     
 (* --- Representations --- *)
 
+(** Construct the external expression for a definition. *)
+let expr_of_global (g : global_reference) : constr_expr =
+  let r = extern_reference Id.Set.empty g in
+  CAst.make @@ (CAppExpl ((None, r, None), []))
+
 (* Intern a term (for now, ignore the resulting evar_map) *)
 let intern env evd t : types =
   let (trm, _) = Constrintern.interp_constr env evd t in
@@ -184,6 +189,15 @@ let define_term ?typ (n : Id.t) (evm : evar_map) (trm : types) (refresh : bool) 
   let etrm = EConstr.of_constr trm in
   let etyp = Option.map EConstr.of_constr typ in
   edeclare n k ~opaque:false evm udecl etrm etyp [] nohook refresh
+
+(* Safely extract the body of a constant, instantiating any universe variables. *)
+let open_constant env const =
+  let (Some (term, auctx)) = Global.body_of_constant const in
+  let uctx = Universes.fresh_instance_from_context auctx |> Univ.UContext.make in
+  let term = Vars.subst_instance_constr (Univ.UContext.instance uctx) term in
+  let env = Environ.push_context uctx env in
+  env, term
+
 
 (* --- Application and arguments --- *)
 
