@@ -776,6 +776,30 @@ let inst_abs_univ_ctx abs_univ_ctx =
 
 (* --- Basic questions about terms --- *)
 
+(*
+ * Get the arity of a function or function type
+ *)
+let rec arity p =
+  match kind p with
+  | Lambda (_, _, b) ->
+     1 + arity b
+  | Prod (_, _, b) ->
+     1 + arity b
+  | _ ->
+     0
+
+(* Check whether trm applies f (using equal for equality) *)
+let applies (f : types) (trm : types) =
+  match kind trm with
+  | App (g, _) ->
+     equal f g
+  | _ ->
+     false
+
+(* Check whether trm is trm' or applies trm', using equal *)
+let is_or_applies (trm' : types) (trm : types) : bool =
+  applies trm' trm || equal trm' trm
+
 (* Is the first term equal to a "head" (application prefix) of the second?
  * The notion of term equality is syntactic (i.e., no environment) and defaults
  * to syntactic equality modulo alpha, casts, grouping, and universes. The
@@ -848,6 +872,66 @@ let num_constrs (mutind_body : mutual_inductive_body) : int =
       n + (Array.length i.mind_consnames))
     0
     mutind_body.mind_packets
+
+(*
+ * Boolean version of above that doesn't care about the term type
+ *)
+let is_elim (env : env) (trm : types) =
+  isConst trm && Option.has_some (inductive_of_elim env (destConst trm))
+
+(* Lookup the eliminator over the type sort *)
+let type_eliminator (env : env) (ind : inductive) =
+  Universes.constr_of_global (Indrec.lookup_eliminator ind InType)
+
+(* Applications of eliminators *)
+type elim_app =
+  {
+    elim : types;
+    pms : types list;
+    p : types;
+    cs : types list;
+    final_args : types list;
+  }
+
+(* Apply an eliminator *)
+let apply_eliminator (ea : elim_app) : types =
+  let args = List.append ea.pms (ea.p :: ea.cs) in
+  mkAppl (mkAppl (ea.elim, args), ea.final_args)
+
+(* Deconstruct an eliminator application *)
+let deconstruct_eliminator env evd app : elim_app =
+  let elim = first_fun app in
+  let ip_args = unfold_args app in
+  let ip_typ = reduce_type env evd elim in
+  let from_i = Option.get (inductive_of_elim env (destConst elim)) in
+  let from_m = lookup_mind from_i env in
+  let npms = from_m.mind_nparams in
+  let from_arity = arity (type_of_inductive env 0 from_m) in
+  let num_indices = from_arity - npms in
+  let num_props = 1 in
+  let num_constrs = arity ip_typ - npms - num_props - num_indices - 1 in
+  let (pms, pmd_args) = take_split npms ip_args in
+  match pmd_args with
+  | p :: cs_and_args ->
+     let (cs, final_args) = take_split num_constrs cs_and_args in
+     { elim; pms; p; cs; final_args }
+  | _ ->
+     failwith "can't deconstruct eliminator; no final arguments"
+
+(*
+ * Given the type of a case of an eliminator,
+ * determine the number of inductive hypotheses
+ *)
+let rec num_ihs env rec_typ typ =
+  match kind typ with
+  | Prod (n, t, b) ->
+     if is_or_applies rec_typ (reduce_term env t) then
+       let (n_b_t, b_t, b_b) = destProd b in
+       1 + num_ihs (push_local (n, t) (push_local (n_b_t, b_t) env)) rec_typ b_b
+     else
+       num_ihs (push_local (n, t) env) rec_typ b
+  | _ ->
+     0
 
 (* Determine whether template polymorphism is used for a one_inductive_body *)
 let is_ind_body_template ind_body =
