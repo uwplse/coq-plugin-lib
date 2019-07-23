@@ -1,12 +1,28 @@
 -I src/utilities
+-I src/coq
 -I src
--R src Library
--Q theories Library
+-R src Plibrary
+-Q theories Plibrary
 
 src/utilities/utilities.mli
 src/utilities/utilities.ml
 
-src/library.ml4
-src/lib.mlpack
+src/coq/coqterms.mli
+src/coq/coqterms.ml
+src/coq/printing.mli
+src/coq/printing.ml
+src/coq/hofs.mli
+src/coq/hofs.ml
+src/coq/debruijn.mli
+src/coq/debruijn.ml
+src/coq/substitution.mli
+src/coq/substitution.ml
+src/coq/filters.mli
+src/coq/filters.ml
+src/coq/reducers.mli
+src/coq/reducers.ml
 
-theories/Lib.v
+src/plibrary.ml4
+src/plib.mlpack
+
+theories/Plib.v

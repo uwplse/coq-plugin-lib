@@ -1,1 +1,0 @@
-DECLARE PLUGIN "lib"
