@@ -264,6 +264,9 @@ val types_convertible : env -> evar_map -> types -> types -> bool
 
 (* --- Names --- *)
 
+(* Look up the name referenced by a term and append a suffix to it. *)
+val suffix_term_name : constr -> Names.Id.t -> Names.Id.t
+
 (* Convert an external reference into a qualid *)
 val qualid_of_reference : Libnames.reference -> Libnames.qualid
 

@@ -164,10 +164,24 @@ let map_tuple (f : 'a -> 'b) ((a1, a2) : ('a * 'a)) : ('b * 'b) =
 let fold_tuple (f : 'a -> 'b -> 'c) ((a, b) : ('a * 'b)) : 'c =
   f a b
 
+(* Apply a function twice with a directionality indicator *)
+let twice (f : 'a -> 'a -> bool -> 'b) (a1 : 'a) (a2 : 'a) : 'b * 'b  =
+  let forward = f a1 a2 true in
+  let backward = f a2 a1 false in
+  (forward, backward)
+
+(* Reverse a tuple *)
+let reverse ((a, b) : 'a * 'b) : 'b * 'a =
+  (b, a)
+
 (* --- Propositions --- *)
         
 (* Always true *)
 let always_true _ = true
+
+(* Check that p a and p b are both true *)
+let and_p (p : 'a -> bool) (o : 'a) (n : 'a) : bool =
+  p o && p n
 
 (* --- Control structures --- *)
 

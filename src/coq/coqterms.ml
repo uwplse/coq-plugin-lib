@@ -679,6 +679,11 @@ let declare_inductive typename consnames template univs nparam arity constypes =
 
 (* --- Names --- *)
 
+(* Look up the name referenced by a term and append a suffix to it. *)
+let suffix_term_name term suffix =
+  let base = Nametab.basename_of_global (Globnames.global_of_constr term) in
+  Nameops.add_suffix base (Names.Id.to_string suffix)  
+
 (* Convert an external reference into a qualid *)
 let qualid_of_reference =
   Libnames.qualid_of_reference %> CAst.with_val identity
