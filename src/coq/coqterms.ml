@@ -31,6 +31,10 @@ type closure = env * (types list)
                
 (* --- Constants --- *)
 
+let coq_init_specif =
+  ModPath.MPfile
+    (DirPath.make (List.map Id.of_string ["Specif"; "Init"; "Coq"]))
+                       
 let coq_init_logic =
   ModPath.MPfile
     (DirPath.make (List.map Id.of_string ["Logic"; "Init"; "Coq"]))
@@ -39,6 +43,34 @@ let coq_init_datatypes =
   ModPath.MPfile
     (DirPath.make (List.map Id.of_string ["Datatypes"; "Init"; "Coq"]))
 
+(* sigma types *)
+let sigT : types =
+  mkInd (MutInd.make1 (KerName.make2 coq_init_specif (Label.make "sigT")), 0)
+
+(* Introduction for sigma types *)
+let existT : types =
+  mkConstruct (fst (destInd sigT), 1)
+
+(* Elimination for sigma types *)
+let sigT_rect : types =
+  mkConst (Constant.make2 coq_init_specif (Label.make "sigT_rect"))
+
+(* Left projection *)
+let projT1 : types =
+  mkConst (Constant.make2 coq_init_specif (Label.make "projT1"))
+
+(* Right projection *)
+let projT2 : types =
+  mkConst (Constant.make2 coq_init_specif (Label.make "projT2"))
+
+(* equality *)
+let eq : types =
+  mkInd (MutInd.make1 (KerName.make2 coq_init_logic (Label.make "eq")), 0)
+
+(* Constructor for quality *)
+let eq_refl : types =
+  mkConstruct (fst (destInd eq), 1)
+        
 (* Symmetric eliminator for equality *)
 let eq_ind_r : types =
   mkConst (Constant.make2 coq_init_logic (Label.make "eq_ind_r"))
