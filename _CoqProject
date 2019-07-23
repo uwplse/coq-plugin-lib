@@ -1,0 +1,12 @@
+-I src/utilities
+-I src
+-R src Library
+-Q theories Library
+
+src/utilities/utilities.mli
+src/utilities/utilities.ml
+
+src/library.ml4
+src/lib.mlpack
+
+theories/Lib.v
