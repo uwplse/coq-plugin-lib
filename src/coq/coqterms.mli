@@ -352,11 +352,14 @@ val declare_inductive : Id.t -> Id.t list -> bool -> Entries.inductive_universes
 (* Look up all indexes from a list in an environment *)
 val lookup_rels : int list -> env -> Rel.Declaration.t list
 
+(* Return a list of all bindings in an environment, starting with the closest *)
+val lookup_all_rels : env -> Rel.Declaration.t list
+                                                       
 (* Return a list of all indexes in an environment, starting with 1 *)
 val all_rel_indexes : env -> int list
 
-(* Return a list of all bindings in an environment, starting with the closest *)
-val lookup_all_rels : env -> Rel.Declaration.t list
+(* Return a list of relative indexes, from highest to lowest, of size n *)
+val mk_n_rels : int -> types list
 
 (*
  * Push to an environment
@@ -412,6 +415,30 @@ val decompose_prod_n_zeta : int -> types -> Rel.t * types
  *)
 val decompose_lam_n_zeta : int -> constr -> Rel.t * constr
 
+(* Is the named declaration an assumption? *)
+val is_named_assum : ('constr, 'types) Named.Declaration.pt -> bool
+
+(* Is the named declaration a definition? *)
+val is_named_defin : ('constr, 'types) Named.Declaration.pt -> bool
+
+(*
+ * Construct a named declaration
+ *)
+val named_assum : Id.t * 'types -> ('constr, 'types) Named.Declaration.pt
+val named_defin : Id.t * 'constr * 'types -> ('constr, 'types) Named.Declaration.pt
+
+(*
+ * Project a component of a named declaration
+ *)
+val named_ident : ('constr, 'types) Named.Declaration.pt -> Id.t
+val named_value : ('constr, 'types) Named.Declaration.pt -> 'constr option
+val named_type : ('constr, 'types) Named.Declaration.pt -> 'types
+
+(*
+ * Map over a named context with environment kept in synch
+ *)
+val map_named_context : env -> (env -> Named.Declaration.t -> 'a) -> Named.t -> 'a list
+                                                                 
 (*
  * Lookup from an environment
  *)
@@ -426,6 +453,21 @@ val bindings_for_inductive :
   env -> mutual_inductive_body -> one_inductive_body array -> CRD.t list
 val bindings_for_fix : name array -> types array -> CRD.t list
 
+(*
+ * Offset between an environment and an index, or two environments, respectively
+ *)
+val new_rels : env -> int -> int
+val new_rels2 : env -> env -> int
+
+(*
+ * Append two contexts (inner first, outer second), shifting internal indices.
+ *
+ * The input contexts are assumed to share the same environment, such that any
+ * external indices inside the now-inner context must be shifted to pass over
+ * the now-outer context.
+ *)
+val context_app : Rel.t -> Rel.t -> Rel.t
+                                                          
 (*
  * Reconstruct local bindings around a term
  *)

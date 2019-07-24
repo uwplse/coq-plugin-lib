@@ -588,6 +588,10 @@ let lookup_rels (is : int list) (env : env) : CRD.t list =
 let all_rel_indexes (env : env) : int list =
   from_one_to (nb_rel env)
 
+(* Make n relative indices, from highest to lowest *)
+let mk_n_rels n =
+  List.map mkRel (List.rev (from_one_to n))
+
 (* Return a list of all bindings in env, starting with the closest *)
 let lookup_all_rels (env : env) : CRD.t list =
   lookup_rels (all_rel_indexes env) env
@@ -699,6 +703,41 @@ let decompose_lam_n_zeta n term =
   in
   aux n Rel.empty term
 
+(* Is the named declaration an assumption? *)
+let is_named_assum = Named.Declaration.is_local_assum
+
+(* Is the named declaration a definition? *)
+let is_named_defin = Named.Declaration.is_local_def
+
+(* Make the named declaration for a local assumption *)
+let named_assum (id, typ) =
+  Named.Declaration.LocalAssum (id, typ)
+
+(* Make the named declaration for a local definition *)
+let named_defin (id, def, typ) =
+  Named.Declaration.LocalDef (id, def, typ)
+
+(* Get the name of a named declaration *)
+let named_ident decl =
+  Named.Declaration.get_id decl
+
+(* Get the optional value of a named declaration *)
+let named_value decl =
+  Named.Declaration.get_value decl
+
+(* Get the type of a named declaration *)
+let named_type decl =
+  Named.Declaration.get_type decl
+
+(* Map over a named context with environment kept in synch *)
+let map_named_context env make ctxt =
+  Named.fold_outside
+    (fun decl (env, res) ->
+       push_named decl env, (make env decl) :: res)
+    ctxt
+    ~init:(env, []) |>
+  snd
+                       
 (* Lookup n rels and remove then *)
 let lookup_pop (n : int) (env : env) =
   let rels = List.map (fun i -> lookup_rel i env) (from_one_to n) in
@@ -758,6 +797,18 @@ let bindings_for_fix (names : name array) (typs : types array) : CRD.t list =
     (CArray.map2_i
        (fun i name typ -> CRD.LocalAssum (name, Vars.lift i typ))
        names typs)
+
+(* Find the offset of some environment from some number of parameters *)
+let new_rels env npm = nb_rel env - npm
+
+(* Find the offset between two environments *)
+let new_rels2 env1 env2 = nb_rel env1 - nb_rel env2
+
+(* Append two contexts (inner first, outer second), shifting internal indices. *)
+let context_app inner outer =
+  List.append
+    (Termops.lift_rel_context (Rel.length outer) inner)
+    outer
 
 (* Bind the declarations of a local context as product/let-in bindings *)
 let recompose_prod_assum decls term =
