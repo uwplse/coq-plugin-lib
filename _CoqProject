@@ -15,6 +15,8 @@ src/coq/hofs.mli
 src/coq/hofs.ml
 src/coq/debruijn.mli
 src/coq/debruijn.ml
+src/coq/zooming.mli
+src/coq/zooming.ml
 src/coq/substitution.mli
 src/coq/substitution.ml
 src/coq/filters.mli
