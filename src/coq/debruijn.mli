@@ -1,52 +1,74 @@
-(* DeBruijn management *)
+(*
+ * DeBruijn management
+ *)
 
 open Environ
 open Constr
 
-(* --- Indexes --- *)
+(* --- Numbers --- *)
 
-(* Unshift an index by a given amount *)
+(*
+ * Shifting and unshifting by an amount
+ *)
 val unshift_i_by : int -> int -> int
-
-(* Shift an index by a given amount *)
 val shift_i_by : int -> int -> int
 
-(* Unshift an index *)
-val unshift_i : int -> int
-
-(* Shift an index *)
+(*
+ * Shifting and unshifting
+ *)
+val unshift_i : int -> int 
 val shift_i : int -> int
 
 (* --- Terms --- *)
 
 (*
- * Unshifts a term by an amount if it is greater than the maximum index
- * of a local binding
+ * Shifting and unshifting all indices greater than some amount by an amount
  *)
 val unshift_local : int -> int -> types -> types
-
-(*
- * Shifts a term by an amount if it is greater than the maximum index
- * of a local binding
- *)
 val shift_local : int -> int -> types -> types
 
-(* Decrement the relative indexes of a term by an amount *)
+(*
+ * Shifting and unshifting all indices greater than 0 by an amount
+ *)
 val unshift_by : int -> types -> types
-
-(* Increment the relative indexes of a term by an amount *)
 val shift_by : int -> types -> types
 
-(* Increment the relative indexes of a term by one *)
+(*
+ * Shifting and unshifting all indices greater than 0
+ *)
 val shift : types -> types
-
-(* Decrement the relative indexes of a term by one *)
 val unshift : types -> types
 
 (* Shift everything and pray; workaround for bug *)
 val shift_by_unconditional : int -> types -> types
 
+(* --- Lists --- *)
+
+(*
+ * Shifting and unshifting a list 
+ *)
+val shift_all : types list -> types list
+val unshift_all : types list -> types list
+
+(*
+ * Shifting and unshifting a list by an amount
+ *)
+val shift_all_by : int -> types list -> types list
+val unshift_all_by : int -> types list -> types list
+
+(* --- Substitutions --- *)
+
+(*
+ * Shifting a list of substitutions or its projections
+ *)
+val shift_subs : (types * types) list -> (types * types) list
+val shift_from : (types * types) list -> (types * types) list
+val shift_to : (types * types) list -> (types * types) list
+                                         
 (* --- Environments --- *)
+
+(* Shift a term from the old (first) env to the new (second) env *)
+val shift_to_env : (env * env) -> types -> types
 
 (* Unshifts indexes for terms in an environment by an amount *)
 val unshift_env_by : int -> env -> env

@@ -6,9 +6,7 @@ open Hofs
 open Utilities
 open Coqterms
 
-(* TODO move shiftability into a module/functor *)
-
-(* --- Indexes --- *)
+(* --- Numbers --- *)
 
 (* Unshift an index by n *)
 let unshift_i_by (n : int) (i : int) : int =
@@ -82,7 +80,36 @@ let shift_by_unconditional (n : int) (trm : types) : types =
     ()
     trm
 
+(* --- Lists --- *)
+
+(* Shift a list *)
+let shift_all = List.map shift
+
+(* Shift all elements of a list by n *)
+let shift_all_by n = List.map (shift_by n)
+
+(* Unshift a list *)
+let unshift_all = List.map unshift
+
+(* Unshift all elements of a list by n *)
+let unshift_all_by n = List.map (unshift_by n)
+
+(* --- Substitutions --- *)
+
+(* Shift substitutions *)
+let shift_subs = List.map (map_tuple shift)
+
+(* Shift from substitutions *)
+let shift_from = List.map (fun (s, d) -> (shift s, d))
+
+(* Shift to substitutions *)
+let shift_to = List.map (fun (s, d) -> (s, shift d))
+                                
 (* --- Environments --- *)
+
+(* Shift a term by the offset from env_o to env_n *)
+let shift_to_env (env_o, env_n) trm =
+  shift_by (new_rels2 env_n env_o) trm
 
 (* Unshifts indexes for terms in env by n *)
 let unshift_env_by (n : int) (env : env) : env =
