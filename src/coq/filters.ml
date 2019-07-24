@@ -8,6 +8,19 @@ open Evd
 
 type 'a filter_strategy = env -> evar_map -> 'a list -> 'a list
 
+(* --- TODO for refactoring without breaking things --- *)
+
+(*
+ * Infer the type of trm in env
+ * Note: This does not yet use good evar map hygeine; will fix that
+ * during the refactor.
+ *)
+let infer_type (env : env) (evd : evar_map) (trm : types) : types =
+  let jmt = Typeops.infer env trm in
+  j_type jmt
+               
+(* --- End TODO --- *)
+
 (* Filter trms to those that have type typ in env *)
 let filter_by_type typ (env : env) (evd : evar_map) (trms : types list) : types list =
   try
