@@ -6,11 +6,6 @@ open Constr
 open Environ
 open Evd
 
-(* --- Strings --- *)
-
-(* Using a supplied pretty printing function, prints directly to a string *)
-val print_to_string : (formatter -> 'a -> unit) -> 'a -> string
-
 (* --- Coq terms --- *)
 
 (* Gets a name as a string *)
@@ -38,6 +33,6 @@ val debug_terms : env -> types list -> string -> unit
 (* Debug an environment with a descriptor string *)
 val debug_env : env -> string -> unit
 
-(* Print a patch to stdout in the standard Coq format *)
+(* Print a patch to stdout in the standard Coq format (TODO rename or move) *)
 val print_patch : env -> evar_map -> string -> types -> unit
 
