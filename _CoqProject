@@ -11,10 +11,10 @@ src/coq/coqterms.mli
 src/coq/coqterms.ml
 src/coq/printing.mli
 src/coq/printing.ml
-src/coq/hofs.mli
-src/coq/hofs.ml
 src/coq/debruijn.mli
 src/coq/debruijn.ml
+src/coq/hofs.mli
+src/coq/hofs.ml
 src/coq/zooming.mli
 src/coq/zooming.ml
 src/coq/substitution.mli

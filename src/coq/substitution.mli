@@ -29,6 +29,11 @@ val all_conv_substs : (types * types) type_substitution
 val all_typ_substs : (types * types) type_substitution
 
 (*
+ * all_substs with eq_constr and the empty environment
+ *)
+val all_eq_substs : (types * types) -> types -> types
+
+(*
  * In an environment, substitute all subterms of a term that apply a
  * constructor with the first argument with the same type as the constructor.
  * This effectively "undoes" the constructor.

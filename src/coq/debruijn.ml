@@ -2,7 +2,6 @@
 
 open Environ
 open Constr
-open Hofs
 open Utilities
 open Coqterms
 

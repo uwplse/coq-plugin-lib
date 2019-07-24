@@ -40,6 +40,10 @@ let all_conv_substs : (types * types) type_substitution =
 let all_typ_substs : (types * types) type_substitution =
   all_substs types_convertible
 
+(* Same, but equal *)
+let all_eq_substs =
+  all_substs (fun _ _ -> equal) empty_env Evd.empty
+
 (*
  * Check if a subterm matches applies a constructor function pat to
  * an argument with the type of itself
