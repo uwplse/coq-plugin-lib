@@ -541,6 +541,12 @@ let delta (env : env) (trm : types) =
     Evd.empty
     (Reductionops.whd_delta env Evd.empty (EConstr.of_constr trm))
 
+(* Weak head reduction *)
+let whd (env : env) (sigma : evar_map) (trm : types) : types =
+  EConstr.to_constr
+    sigma
+    (Reductionops.whd_all env sigma (EConstr.of_constr trm))
+
 (*
  * There's a part of the env that has opacity info,
  * so if you want to make some things opaque, can add them
@@ -851,6 +857,10 @@ let applies (f : types) (trm : types) =
 let is_or_applies (trm' : types) (trm : types) : bool =
   applies trm' trm || equal trm' trm
 
+(* Versions over two terms *)
+let are_or_apply (trm : types) = and_p (is_or_applies trm)
+let apply (trm : types) = and_p (applies trm)
+
 (* Is the first term equal to a "head" (application prefix) of the second?
  * The notion of term equality is syntactic (i.e., no environment) and defaults
  * to syntactic equality modulo alpha, casts, grouping, and universes. The
@@ -1061,12 +1071,99 @@ let declare_inductive typename consnames template univs nparam arity constypes =
   Indschemes.declare_default_schemes mind;
   ind
 
+(* --- Basic mapping --- *)
+
+(*
+ * Recurse on a mapping function with an environment for a fixpoint
+ *)
+let map_rec_env_fix map_rec d env a (ns : Name.t array) (ts : types array) =
+  let fix_bindings = bindings_for_fix ns ts in
+  let env_fix = push_rel_context fix_bindings env in
+  let n = List.length fix_bindings in
+  let d_n = List.fold_left (fun a' _ -> d a') a (range 0 n) in
+  map_rec env_fix d_n
+
+(*
+ * Map a function over a term in an environment
+ * Update the environment as you go
+ * Update the argument of type 'a using the a supplied update function
+ * Return a new term
+ *)
+let rec map_term_env f d (env : env) (a : 'a) (trm : types) : types =
+  let map_rec = map_term_env f d in
+  match kind trm with
+  | Cast (c, k, t) ->
+     let c' = map_rec env a c in
+     let t' = map_rec env a t in
+     mkCast (c', k, t')
+  | Prod (n, t, b) ->
+     let t' = map_rec env a t in
+     let b' = map_rec (push_local (n, t) env) (d a) b in
+     mkProd (n, t', b')
+  | Lambda (n, t, b) ->
+     let t' = map_rec env a t in
+     let b' = map_rec (push_local (n, t) env) (d a) b in
+     mkLambda (n, t', b')
+  | LetIn (n, trm, typ, e) ->
+     let trm' = map_rec env a trm in
+     let typ' = map_rec env a typ in
+     let e' = map_rec (push_let_in (n, e, typ) env) (d a) e in
+     mkLetIn (n, trm', typ', e')
+  | App (fu, args) ->
+     let fu' = map_rec env a fu in
+     let args' = Array.map (map_rec env a) args in
+     mkApp (fu', args')
+  | Case (ci, ct, m, bs) ->
+     let ct' = map_rec env a ct in
+     let m' = map_rec env a m in
+     let bs' = Array.map (map_rec env a) bs in
+     mkCase (ci, ct', m', bs')
+  | Fix ((is, i), (ns, ts, ds)) ->
+     let ts' = Array.map (map_rec env a) ts in
+     let ds' = Array.map (map_rec_env_fix map_rec d env a ns ts) ds in
+     mkFix ((is, i), (ns, ts', ds'))
+  | CoFix (i, (ns, ts, ds)) ->
+     let ts' = Array.map (map_rec env a) ts in
+     let ds' = Array.map (map_rec_env_fix map_rec d env a ns ts) ds in
+     mkCoFix (i, (ns, ts', ds'))
+  | Proj (p, c) ->
+     let c' = map_rec env a c in
+     mkProj (p, c')
+  | _ ->
+     f env a trm
+
+(*
+ * Map a function over a term, when the environment doesn't matter
+ * Update the argument of type 'a using the a supplied update function
+ * Return a new term
+ *)
+let map_term f d (a : 'a) (trm : types) : types =
+  map_term_env (fun _ a t -> f a t) d empty_env a trm
+
 (* --- Names --- *)
 
 (* Look up the name referenced by a term and append a suffix to it. *)
 let suffix_term_name term suffix =
   let base = Nametab.basename_of_global (Globnames.global_of_constr term) in
-  Nameops.add_suffix base (Names.Id.to_string suffix)  
+  Nameops.add_suffix base (Names.Id.to_string suffix)
+
+(* Add a suffix to a name identifier *)
+let with_suffix id suffix =
+  let prefix = Id.to_string id in
+  Id.of_string (String.concat "_" [prefix; suffix])
+
+(* Turn a name into an optional identifier *)
+let ident_of_name = function
+  | Name id -> Some id
+  | Anonymous -> None
+
+(* Turn an identifier into an external (i.e., surface-level) reference *)
+let reference_of_ident id =
+  Libnames.Ident id |> CAst.make
+
+(* Turn a name into an optional external (i.e., surface-level) reference *)
+let reference_of_name =
+  ident_of_name %> Option.map reference_of_ident
 
 (* Convert an external reference into a qualid *)
 let qualid_of_reference =

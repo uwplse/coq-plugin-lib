@@ -476,6 +476,28 @@ val recompose_lam_assum : Rel.t -> types -> types
 
 (* --- Basic questions about terms --- *)
 
+(*
+ * Get the arity of a function or function type
+ *)
+val arity : types -> int
+
+(*
+ * Check whether a term (second argument) applies a function (first argument)
+ * Don't consider terms convertible to the function
+ *
+ * In the plural version, check for both the second and third terms
+ *)
+val applies : types -> types -> bool
+val apply : types -> types -> types -> bool
+
+(*
+ * Check whether a term either is exactly a function or applies it
+ *
+ * In the plural version, check for both the second and the third terms
+ *)
+val is_or_applies : types  -> types -> bool
+val are_or_apply : types -> types -> types -> bool
+                                              
 (* Is the first term equal to a "head" (application prefix) of the second?
  * The notion of term equality is syntactic, by default modulo alpha, casts,
  * application grouping, and universes. The result of this function is an
@@ -539,6 +561,7 @@ val concls_convertible : env -> evar_map -> types -> types -> bool
 val reduce_term : env -> types -> types (* betaiotazeta *)
 val delta : env -> types -> types (* delta *)
 val reduce_nf : env -> types ->  types (* nf_all *)
+val whd : env -> evar_map -> types -> types (* whd_all *)
 val reduce_type : env -> evar_map -> types -> types (* betaiotazeta on types *)
 val chain_reduce : (* sequencing *)
   (env -> types -> types) ->
@@ -557,10 +580,48 @@ val on_type : (types -> 'a) -> env -> evar_map -> types -> 'a
  *)
 val types_convertible : env -> evar_map -> types -> types -> bool
 
+(* --- Basic mapping --- *)
+
+val map_rec_env_fix :
+  (env -> 'a -> 'b) ->
+  ('a -> 'a) ->
+  env ->
+  'a ->
+  name array ->
+  types array ->
+  'b
+
+val map_term_env :
+  (env -> 'a -> types -> types) ->
+  ('a -> 'a) ->
+  env ->
+  'a ->
+  types ->
+  types
+
+val map_term :
+  ('a -> types -> types) ->
+  ('a -> 'a) ->
+  'a ->
+  types ->
+  types
+
 (* --- Names --- *)
 
 (* Look up the name referenced by a term and append a suffix to it. *)
 val suffix_term_name : constr -> Names.Id.t -> Names.Id.t
+
+(* Add a string suffix to a name identifier *)
+val with_suffix : Id.t -> string -> Id.t
+
+(* Turn a name into an optional identifier *)
+val ident_of_name : Name.t -> Id.t option
+
+(* Turn an identifier into an external (i.e., surface-level) reference *)
+val reference_of_ident : Id.t -> Libnames.reference
+
+(* Turn a name into an optional external (i.e., surface-level) reference *)
+val reference_of_name : Name.t -> Libnames.reference option
 
 (* Convert an external reference into a qualid *)
 val qualid_of_reference : Libnames.reference -> Libnames.qualid
