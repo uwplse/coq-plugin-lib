@@ -23,6 +23,10 @@ src/coq/filters.mli
 src/coq/filters.ml
 src/coq/reducers.mli
 src/coq/reducers.ml
+src/coq/indexing.mli
+src/coq/indexing.ml
+src/coq/hypotheses.mli
+src/coq/hypotheses.ml
 
 src/plibrary.ml4
 src/plib.mlpack
