@@ -504,7 +504,7 @@ let conv_ignoring_univ_inconsistency env evm (trm1 : types) (trm2 : types) : boo
 
 (* Checks whether two terms are convertible in env with no evars *)
 let convertible (env : env) (evd : evar_map) (trm1 : types) (trm2 : types) : bool =
-  conv_ignoring_univ_inconsistency env evd trm1 trm2
+  conv_ignoring_univ_inconsistency env Evd.empty trm1 trm2
 
 (*
  * Checks whether the conclusions of two dependent types are convertible,
