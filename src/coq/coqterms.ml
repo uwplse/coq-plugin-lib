@@ -466,14 +466,9 @@ let projections (app : sigT_app) trm =
 
 (* --- Convertibility, reduction, and types --- *)
 
-(*
- * Infer the type of trm in env
- * Note: This does not yet use good evar map hygeine; will fix that
- * during the refactor.
- *)
+(* Infer the type of trm in env *)
 let infer_type (env : env) (evd : evar_map) (trm : types) : types =
-  let jmt = Typeops.infer env trm in
-  j_type jmt
+  EConstr.to_constr evd (Typing.unsafe_type_of env evd (EConstr.of_constr trm))
                     
 (* Safely infer the WHNF type of a term, updating the evar map *)
 let e_infer_type env evm term =
