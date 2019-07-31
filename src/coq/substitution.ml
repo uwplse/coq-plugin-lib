@@ -3,9 +3,10 @@
 open Environ
 open Evd
 open Constr
-open Coqterms
 open Hofs
 open Debruijn
+open Termdiffutils
+open Typediffutils
 
 (* TODO clean up so retrieval is easier *)
 type ('a, 'b) substitution = env -> evar_map -> 'a -> types -> 'b

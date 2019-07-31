@@ -10,4 +10,5 @@ Makefile.conf
 *.cmxa
 *.cmxs
 *.o
+*~
 .merlin

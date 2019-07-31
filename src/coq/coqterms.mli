@@ -88,6 +88,11 @@ val edeclare :
   bool ->
   global_reference
 
+(* 
+ * TODO move, maybe explain
+ *)
+val force_constant_body : constant_body -> types
+
 (*
  * Define a new Coq term
  * Refresh universes if the bool is true, otherwise don't
@@ -256,97 +261,6 @@ val project_value : sigT_app -> types -> types
  *)
 val projections : sigT_app -> types -> (types * types)
 
-(* --- Inductive types and their eliminators --- *)
-
-(*
- * Fail if the inductive type is mutually inductive or coinductive
- *)
-val check_inductive_supported : mutual_inductive_body -> unit
-
-(*
- * Get the number of constructors for an inductive type
- *)
-val num_constrs : mutual_inductive_body -> int
-
-
-(*
- * Determine if a term represents an inductive eliminator
- * For now, this is a naive syntactic check
- *)
-val is_elim : env -> types -> bool
-
-(*
- * Get the type of an inductive type
- *)
-val type_of_inductive : env -> int -> mutual_inductive_body -> types
-
-(*
- * Get an inductive type from an eliminator, if possible
- *)
-val inductive_of_elim : env -> pconstant -> mutual_inductive option
-
-(*
- * Lookup the eliminator over the type sort
- *)
-val type_eliminator : env -> inductive -> types
-
-(*
- * Applications of eliminators
- *)
-type elim_app =
-  {
-    elim : types;
-    pms : types list;
-    p : types;
-    cs : types list;
-    final_args : types list;
-  }
-
-val apply_eliminator : elim_app -> types
-val deconstruct_eliminator : env-> evar_map -> types -> elim_app
-
-(*
- * Given the recursive type and the type of a case of an eliminator,
- * determine the number of inductive hypotheses
- *)
-val num_ihs : env -> types -> types -> int
-
-(* Determine whether template polymorphism is used for a one_inductive_body *)
-val is_ind_body_template : one_inductive_body -> bool
-
-(* Construct the arity of an inductive type from a one_inductive_body *)
-val arity_of_ind_body : one_inductive_body -> types
-
-(*
- * Create an Entries.local_entry from a Rel.Declaration.t
- *)
-val make_ind_local_entry : CRD.t -> Id.t * Entries.local_entry
-
-(*
- * Given a Declarations.abstract_inductive_universes, create an
- * Entries.inductive_universes and an instantiated universe
- * context Univ.UContext.t
- *)
-val make_ind_univs_entry : abstract_inductive_universes -> Entries.inductive_universes * Univ.UContext.t
-
-(*
- * For an inductive type in an environment, return the inductive's arity and
- * recursion-quantified constructor types, all consistently instantiated with fresh
- * universe levels, and return the universe-synchronized environment. If global
- * is true, the global environment is also synchronized with the new universe
- * levels and constraints. A descriptor for the inductive type's universe
- * properties is also returned.
- *)
-val open_inductive : ?global:bool -> env -> Inductive.mind_specif -> env * Entries.inductive_universes * types * types list
-
-(*
- * Declare a new inductive type in the global environment. Note that the arity
- * must quantify all parameters and that each constructor type must quantify
- * a recursive reference and then all parameters (i.e.,
- * forall (I : arity) (P : params), ...).
- *)
-val declare_inductive : Id.t -> Id.t list -> bool -> Entries.inductive_universes -> int -> types -> types list -> inductive
-
 (* --- Environments --- *)
 
 (* Look up all indexes from a list in an environment *)
@@ -449,8 +363,6 @@ val unwrap_definition : env -> types -> types
 (*
  * Get bindings to push to an environment
  *)
-val bindings_for_inductive :
-  env -> mutual_inductive_body -> one_inductive_body array -> CRD.t list
 val bindings_for_fix : name array -> types array -> CRD.t list
 
 (*
@@ -477,26 +389,25 @@ val recompose_lam_assum : Rel.t -> types -> types
 (* --- Basic questions about terms --- *)
 
 (*
+ * Plural versions (that operate over two terms instead of one) of many
+ * of these functionsn are in Diffutils.
+ *)
+
+(*
  * Get the arity of a function or function type
  *)
 val arity : types -> int
 
 (*
- * Check whether a term (second argument) applies a function (first argument)
- * Don't consider terms convertible to the function
- *
- * In the plural version, check for both the second and third terms
+ * Check whether a term (second argument) applies a function (first argument).
+ * Don't consider terms convertible to the function.
  *)
 val applies : types -> types -> bool
-val apply : types -> types -> types -> bool
 
 (*
- * Check whether a term either is exactly a function or applies it
- *
- * In the plural version, check for both the second and the third terms
+ * Check whether a term either is exactly a function or applies it.
  *)
-val is_or_applies : types  -> types -> bool
-val are_or_apply : types -> types -> types -> bool
+val is_or_applies : types -> types -> bool
                                               
 (* Is the first term equal to a "head" (application prefix) of the second?
  * The notion of term equality is syntactic, by default modulo alpha, casts,
@@ -509,51 +420,10 @@ val are_or_apply : types -> types -> types -> bool
  *)
 val eq_constr_head : ?eq_constr:(constr -> constr -> bool) -> constr -> constr -> constr array option
 
-(* --- Convertibility, reduction, and types --- *)
+(* --- Convertibility and reduction --- *)
 
-(*
- * Type-checking
- *
- * Current implementation may cause universe leaks, which will just cause
- * conservative failure of the plugin
- *)
-val infer_type : env -> evar_map -> types -> types
-
-(* Check whether a term has a given type *)
-val has_type : env -> evar_map -> types -> types -> bool
-
-(* Safely infer the WHNF type of a term, updating the evar map. *)
-val e_infer_type : env -> evar_map ref -> constr -> constr
-
-(* Safely infer the sort of a term, updating the evar map. *)
-val e_infer_sort : env -> evar_map ref -> constr -> Sorts.family
-
-(* Safely instantiate a global reference, updating the evar map. *)
+(* Safely instantiate a global reference, updating the evar map. (TODO move) *)
 val e_new_global : evar_map ref -> global_reference -> constr
-
-(* Convertibility, ignoring universe inconsistency for now *)
-val convertible : env -> evar_map -> types -> types -> bool
-                                                         
-(*
- * Checks whether the conclusions of two dependent types are convertible,
- * modulo the assumption that every argument we encounter is equal when
- * the types of those arguments are convertible. Expect exactly the same
- * number of arguments in the same order.
- *
- * For example, the following are true:
- *    concls_convertible empty Evd.empty (forall (a : nat), a) (forall (a : nat) b, a)
- *    concls_convertible empty Evd.empty (forall (a : nat), a) (forall (a : nat), a)
- *    concls_convertible empty Evd.empty (forall (a : nat), True) (forall (b : bin), True)
- *
- * The following are false:
- *    concls_convertible empty Evd.empty (forall a, True) False
- *    concls_convertible empty Evd.empty (forall a, True) True
- *    concls_convertible empty Evd.empty (forall (a : nat), a) (forall (a : bin), a)
- *    concls_convertible empty Evd.empty (forall a b, a) (forall a b, b)
- *
- * Assumes types are locally closed.
- *)
-val concls_convertible : env -> evar_map -> types -> types -> bool
 
 (*
  * Reduction
@@ -562,23 +432,12 @@ val reduce_term : env -> types -> types (* betaiotazeta *)
 val delta : env -> types -> types (* delta *)
 val reduce_nf : env -> types ->  types (* nf_all *)
 val whd : env -> evar_map -> types -> types (* whd_all *)
-val reduce_type : env -> evar_map -> types -> types (* betaiotazeta on types *)
 val chain_reduce : (* sequencing *)
   (env -> types -> types) ->
   (env -> types -> types) ->
   env ->
   types ->
   types
-
-(*
- * Apply a function on a type instead of on the term
- *)
-val on_type : (types -> 'a) -> env -> evar_map -> types -> 'a
-
-(* 
- * Checks whether the types of two terms are convertible
- *)
-val types_convertible : env -> evar_map -> types -> types -> bool
 
 (* --- Basic mapping --- *)
 
@@ -636,42 +495,6 @@ type global_substitution = global_reference Globmap.t
 
 (* Substitute global references throughout a term *)
 val subst_globals : global_substitution -> constr -> constr
-
-(* --- Modules --- *)
-
-(* Type-sensitive transformation of terms *)
-type constr_transformer = env -> evar_map ref -> constr -> constr
-
-(*
- * Declare a new constant under the given name with the transformed term and
- * type from the given constant.
- *
- * NOTE: Global side effects.
- *)
-val transform_constant : Id.t -> constr_transformer -> constant_body -> Constant.t
-
-(*
- * Declare a new inductive family under the given name with the transformed type
- * arity and constructor types from the given inductive definition. Names for
- * the constructors remain the same.
- *
- * NOTE: Global side effects.
- *)
-val transform_inductive : Id.t -> constr_transformer -> Inductive.mind_specif -> inductive
-
-(*
- * Declare a new module structure under the given name with the compositionally
- * transformed (i.e., forward-substituted) components from the given module
- * structure. Names for the components remain the same.
- *
- * The optional initialization function is called immediately after the module
- * structure begins, and its returned subsitution is applied to all other module
- * elements.
- *
- * NOTE: Does not support functors or nested modules.
- * NOTE: Global side effects.
- *)
-val transform_module_structure : ?init:(unit -> global_substitution) -> Id.t -> constr_transformer -> module_body -> ModPath.t
 
 (* --- Application and arguments --- *)
 

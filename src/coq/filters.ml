@@ -2,9 +2,9 @@
 
 open Constr
 open Environ
-open Coqterms
 open Debruijn
 open Evd
+open Termdiffutils
 
 type 'a filter_strategy = env -> evar_map -> 'a list -> 'a list
 

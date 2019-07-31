@@ -8,6 +8,7 @@ open Coqterms
 open Environ
 open Evd
 open Zooming
+open Typeutils
 
 (* --- Eta expansion --- *)
                

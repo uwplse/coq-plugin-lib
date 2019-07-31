@@ -1,6 +1,15 @@
 Utilities
 
 Coqterms
+
+Termdiffutils
+
+Typeutils
+Typediffutils
+
+Indutils
+
+Transform
 Printing
 Debruijn
 Hofs

@@ -6,6 +6,7 @@ open Constr
 open Utilities
 open Debruijn
 open Coqterms
+open Typeutils
 open Hofs
 
 (* --- Generic functions --- *)
