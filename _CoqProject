@@ -1,8 +1,6 @@
 -I src/utilities
 -I src/coq
--I src/coq/terms
--I src/coq/types
--I src/coq/induction
+-I src/components/differencing
 -I src
 -R src Plibrary
 -Q theories Plibrary
@@ -12,21 +10,20 @@ src/utilities/utilities.ml
 
 src/coq/coqterms.mli
 src/coq/coqterms.ml
+src/coq/inference.mli
+src/coq/inference.ml
+src/coq/convertibility.mli
+src/coq/convertibility.ml
+src/coq/typeutils.mli
+src/coq/typeutils.ml
 
-src/coq/terms/termdiffutils.mli
-src/coq/terms/termdiffutils.ml
+src/components/differencing/diffutils.mli
+src/components/differencing/diffutils.ml
 
-src/coq/types/typeutils.mli
-src/coq/types/typeutils.ml
-src/coq/types/typediffutils.mli
-src/coq/types/typediffutils.ml
-
-src/coq/induction/indutils.mli
-src/coq/induction/indutils.ml
-
+src/coq/indutils.mli
+src/coq/indutils.ml
 src/coq/transform.mli
 src/coq/transform.ml
-
 src/coq/printing.mli
 src/coq/printing.ml
 src/coq/debruijn.mli

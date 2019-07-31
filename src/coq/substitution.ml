@@ -5,8 +5,8 @@ open Evd
 open Constr
 open Hofs
 open Debruijn
-open Termdiffutils
-open Typediffutils
+open Convertibility
+open Diffutils
 
 (* TODO clean up so retrieval is easier *)
 type ('a, 'b) substitution = env -> evar_map -> 'a -> types -> 'b

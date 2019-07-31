@@ -4,7 +4,7 @@ open Constr
 open Environ
 open Debruijn
 open Evd
-open Termdiffutils
+open Convertibility
 
 type 'a filter_strategy = env -> evar_map -> 'a list -> 'a list
 

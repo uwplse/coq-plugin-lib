@@ -1,29 +1,10 @@
 (*
- * Utilities for answering questions about how two terms relate to each other
+ * Convertibility
  *)
 
 open Constr
 open Environ
 open Evd
-
-(* --- Plural versions of questions about terms from Coqterms --- *)
-
-(*
- * Plural version of Coqterms.applies.
- * Check whether two terms (the second and third arguments) apply
- * a given function (first argument). Don't consider terms convertible
- * to the function.
- *)
-val apply : types -> types -> types -> bool
-
-(*
- * Plural version of Coqterms.is_or_applies.
- * Check whether two terms (the second and third arguments) either are exactly 
- * a function or apply it.
- *)
-val are_or_apply : types -> types -> types -> bool
-
-(* --- Convertibility --- *)
 
 (* Convertibility, ignoring universe inconsistency for now *)
 val convertible : env -> evar_map -> types -> types -> bool
@@ -50,3 +31,8 @@ val convertible : env -> evar_map -> types -> types -> bool
  * Assumes types are locally closed.
  *)
 val concls_convertible : env -> evar_map -> types -> types -> bool
+
+(* 
+ * Checks whether the types of two terms are convertible
+ *)
+val types_convertible : env -> evar_map -> types -> types -> bool

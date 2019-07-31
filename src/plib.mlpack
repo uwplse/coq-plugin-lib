@@ -2,13 +2,13 @@ Utilities
 
 Coqterms
 
-Termdiffutils
-
+Inference
+Convertibility
 Typeutils
-Typediffutils
+
+Diffutils
 
 Indutils
-
 Transform
 Printing
 Debruijn

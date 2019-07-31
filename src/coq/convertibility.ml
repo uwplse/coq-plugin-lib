@@ -1,6 +1,5 @@
 (*
- * Utilities for answering questions about how two terms relate to each other
- * TODO make a unified diffutils that exports all of these?
+ * Convertibility
  *)
 
 open Constr
@@ -8,18 +7,12 @@ open Coqterms
 open Utilities
 open Environ
 open Evd
-
-(* --- Plural versions of questions about terms from Coqterms --- *)
-
-let are_or_apply (trm : types) = and_p (is_or_applies trm)
-let apply (trm : types) = and_p (applies trm)
-
-(* --- Convertibility --- *)
+open Inference
 
 (*
- * TODO very bad evar_map practice here will change soon
+ * TODO bad evar practices for now
  *)
-
+       
 (* Check whether two terms are convertible, ignoring universe inconsistency *)
 let conv_ignoring_univ_inconsistency env evm (trm1 : types) (trm2 : types) : bool =
   match map_tuple kind (trm1, trm2) with
@@ -53,3 +46,11 @@ let rec concls_convertible (env : env) (evd : evar_map) (typ1 : types) (typ2 : t
        false
   | _ ->
      convertible env evd typ1 typ2
+
+(* Checks whether the types of two terms are convertible *)
+let types_convertible env evd trm1 trm2 : bool =
+  try
+    let typ1 = infer_type env evd trm1 in
+    let typ2 = infer_type env evd trm2 in
+    convertible env evd typ1 typ2
+  with _ -> false
