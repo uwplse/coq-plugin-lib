@@ -5,6 +5,7 @@
 open Constr
 open Environ
 open Termutils
+open Envutils
 open Debruijn
 
 (* --- Zooming --- *)

@@ -13,6 +13,7 @@ open Utilities
 open Declarations
 open Decl_kinds
 open Constrextern
+open Envutils
 open Termutils
 open Typeutils
 

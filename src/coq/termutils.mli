@@ -261,25 +261,7 @@ val project_value : sigT_app -> types -> types
  *)
 val projections : sigT_app -> types -> (types * types)
 
-(* --- Environments --- *)
-
-(* Look up all indexes from a list in an environment *)
-val lookup_rels : int list -> env -> Rel.Declaration.t list
-
-(* Return a list of all bindings in an environment, starting with the closest *)
-val lookup_all_rels : env -> Rel.Declaration.t list
-                                                       
-(* Return a list of all indexes in an environment, starting with 1 *)
-val all_rel_indexes : env -> int list
-
-(* Return a list of relative indexes, from highest to lowest, of size n *)
-val mk_n_rels : int -> types list
-
-(*
- * Push to an environment
- *)
-val push_local : (name * types) -> env -> env
-val push_let_in : (name * types * types) -> env -> env
+(* --- Environments (TODO rename) --- *)
 
 (* Is the rel declaration a local assumption? *)
 val is_rel_assum : ('constr, 'types) Rel.Declaration.pt -> bool

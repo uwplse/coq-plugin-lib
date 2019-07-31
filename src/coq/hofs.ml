@@ -3,6 +3,7 @@
 open Environ
 open Constr
 open Termutils
+open Envutils
 open Utilities
 open Names
 open Debruijn

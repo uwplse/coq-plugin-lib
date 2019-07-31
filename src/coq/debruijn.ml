@@ -4,6 +4,7 @@ open Environ
 open Constr
 open Utilities
 open Termutils
+open Envutils
 
 (* --- Numbers --- *)
 
