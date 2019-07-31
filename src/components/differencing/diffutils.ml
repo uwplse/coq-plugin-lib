@@ -4,7 +4,7 @@
  *)
 
 open Constr
-open Coqterms
+open Termutils
 open Utilities
 open Environ
 open Evd

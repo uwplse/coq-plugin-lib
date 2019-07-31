@@ -13,7 +13,7 @@ open Utilities
 open Declarations
 open Decl_kinds
 open Constrextern
-open Coqterms
+open Termutils
 open Typeutils
 
 (* Get the type of an inductive type *)

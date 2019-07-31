@@ -5,7 +5,7 @@
 open Environ
 open Evd
 open Constr
-open Coqterms
+open Termutils
 open Convertibility
 open Inference
 

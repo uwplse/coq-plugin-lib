@@ -15,7 +15,7 @@ open Printer
 open Utilities
 open Goptions
 open Declarations
-open Coqterms
+open Termutils
 
 module CRD = Context.Rel.Declaration
 

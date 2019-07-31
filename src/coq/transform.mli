@@ -12,7 +12,7 @@ open Names
 open Declarations
 open Globnames
 open Decl_kinds
-open Coqterms
+open Termutils
 
 (* Type-sensitive transformation of terms *)
 type constr_transformer = env -> evar_map ref -> constr -> constr

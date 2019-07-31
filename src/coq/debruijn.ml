@@ -3,7 +3,7 @@
 open Environ
 open Constr
 open Utilities
-open Coqterms
+open Termutils
 
 (* --- Numbers --- *)
 

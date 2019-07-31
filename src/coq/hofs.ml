@@ -2,7 +2,7 @@
 
 open Environ
 open Constr
-open Coqterms
+open Termutils
 open Utilities
 open Names
 open Debruijn

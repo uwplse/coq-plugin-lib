@@ -1,7 +1,6 @@
 Utilities
 
-Coqterms
-
+Termutils
 Inference
 Convertibility
 Typeutils

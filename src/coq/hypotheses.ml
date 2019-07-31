@@ -4,7 +4,7 @@
 
 open Constr
 open Debruijn
-open Coqterms
+open Termutils
 open Environ
 open Evd
 open Zooming

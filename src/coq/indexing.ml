@@ -5,7 +5,7 @@
 open Constr
 open Utilities
 open Debruijn
-open Coqterms
+open Termutils
 open Typeutils
 open Hofs
 

@@ -15,7 +15,7 @@ open Utilities
 open Declarations
 open Decl_kinds
 open Constrextern
-open Coqterms
+open Termutils
 open Indutils
 
 (* Type-sensitive transformation of terms *)

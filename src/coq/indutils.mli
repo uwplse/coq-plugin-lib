@@ -11,7 +11,7 @@ open Names
 open Declarations
 open Globnames
 open Decl_kinds
-open Coqterms
+open Termutils
 
 (*
  * Get bindings to push to an environment

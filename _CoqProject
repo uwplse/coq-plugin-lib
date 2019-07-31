@@ -8,8 +8,8 @@
 src/utilities/utilities.mli
 src/utilities/utilities.ml
 
-src/coq/coqterms.mli
-src/coq/coqterms.ml
+src/coq/termutils.mli
+src/coq/termutils.ml
 src/coq/inference.mli
 src/coq/inference.ml
 src/coq/convertibility.mli
