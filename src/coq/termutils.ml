@@ -18,7 +18,7 @@ open Envutils
 module Globmap = Globnames.Refmap
 module Globset = Globnames.Refset
 
-module CRD = Context.Rel.Declaration
+module CRD = Context.Rel.Declaration (* TODO remove eventually *)
 
 (*
  * Note: This will clean up significantly when we merge DEVOID and PUMPKIN,
@@ -647,35 +647,6 @@ let map_named_context env make ctxt =
     ctxt
     ~init:(env, []) |>
   snd
-                       
-(* Lookup n rels and remove then *)
-let lookup_pop (n : int) (env : env) =
-  let rels = List.map (fun i -> lookup_rel i env) (from_one_to n) in
-  (pop_rel_context n env, rels)
-
-let force_constant_body const_body =
-  match const_body.const_body with
-  | Def const_def ->
-    Mod_subst.force_constr const_def
-  | OpaqueDef opaq ->
-    Opaqueproof.force_proof (Global.opaque_tables ()) opaq
-  | _ ->
-    CErrors.user_err ~hdr:"force_constant_body"
-      (Pp.str "An axiom has no defining term")
-
-(* Lookup a definition *)
-let lookup_definition (env : env) (def : types) : types =
-  match kind def with
-  | Const (c, u) -> force_constant_body (lookup_constant c env)
-  | Ind _ -> def
-  | _ -> failwith "not a definition"
-
-(* Fully lookup a def in env, but return the term if it is not a definition *)
-let rec unwrap_definition (env : env) (trm : types) : types =
-  try
-    unwrap_definition env (lookup_definition env trm)
-  with _ ->
-    trm
 
 (*
  * Similarly but for fixpoints
@@ -685,12 +656,6 @@ let bindings_for_fix (names : name array) (typs : types array) : CRD.t list =
     (CArray.map2_i
        (fun i name typ -> CRD.LocalAssum (name, Vars.lift i typ))
        names typs)
-
-(* Find the offset of some environment from some number of parameters *)
-let new_rels env npm = nb_rel env - npm
-
-(* Find the offset between two environments *)
-let new_rels2 env1 env2 = nb_rel env1 - nb_rel env2
 
 (* Append two contexts (inner first, outer second), shifting internal indices. *)
 let context_app inner outer =

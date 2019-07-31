@@ -261,7 +261,7 @@ val project_value : sigT_app -> types -> types
  *)
 val projections : sigT_app -> types -> (types * types)
 
-(* --- Environments (TODO rename) --- *)
+(* --- Environments (TODO rename/decouple/move more) --- *)
 
 (* Is the rel declaration a local assumption? *)
 val is_rel_assum : ('constr, 'types) Rel.Declaration.pt -> bool

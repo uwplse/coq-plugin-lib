@@ -11,13 +11,8 @@ open Names
 open Declarations
 open Globnames
 open Decl_kinds
-open Termutils
+open Envutils
 
-(*
- * Get bindings to push to an environment
- *)
-val bindings_for_inductive :
-  env -> mutual_inductive_body -> one_inductive_body array -> CRD.t list
        
 (*
  * Fail if the inductive type is mutually inductive or coinductive
@@ -95,3 +90,6 @@ val open_inductive : ?global:bool -> env -> Inductive.mind_specif -> env * Entri
  * forall (I : arity) (P : params), ...).
  *)
 val declare_inductive : Id.t -> Id.t list -> bool -> Entries.inductive_universes -> int -> types -> types list -> inductive
+                                                                        
+val bindings_for_inductive :
+  env -> mutual_inductive_body -> one_inductive_body array -> CRD.t list
