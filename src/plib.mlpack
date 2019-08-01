@@ -1,7 +1,8 @@
 Utilities
 
-Envutils
 Termutils
+Envutils
+Hofs
 Inference
 Convertibility
 Typeutils
@@ -12,7 +13,7 @@ Indutils
 Transform
 Printing
 Debruijn
-Hofs
+Hofimpls
 Zooming
 Substitution
 Filters

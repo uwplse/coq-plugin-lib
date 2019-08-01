@@ -333,25 +333,12 @@ val named_type : ('constr, 'types) Named.Declaration.pt -> 'types
 (*
  * Map over a named context with environment kept in synch
  *)
-val map_named_context : env -> (env -> Named.Declaration.t -> 'a) -> Named.t -> 'a list
-                                                                 
-(*
- * Lookup from an environment
- *)
-val lookup_pop : int -> env -> (env * CRD.t list)
-val lookup_definition : env -> types -> types
-val unwrap_definition : env -> types -> types
+val map_named_context : env -> (env -> Named.Declaration.t -> 'a) -> Named.t -> 'a list                                                                 
 
 (*
  * Get bindings to push to an environment
  *)
 val bindings_for_fix : name array -> types array -> CRD.t list
-
-(*
- * Offset between an environment and an index, or two environments, respectively
- *)
-val new_rels : env -> int -> int
-val new_rels2 : env -> env -> int
 
 (*
  * Append two contexts (inner first, outer second), shifting internal indices.
@@ -418,32 +405,6 @@ val chain_reduce : (* sequencing *)
   (env -> types -> types) ->
   (env -> types -> types) ->
   env ->
-  types ->
-  types
-
-(* --- Basic mapping --- *)
-
-val map_rec_env_fix :
-  (env -> 'a -> 'b) ->
-  ('a -> 'a) ->
-  env ->
-  'a ->
-  name array ->
-  types array ->
-  'b
-
-val map_term_env :
-  (env -> 'a -> types -> types) ->
-  ('a -> 'a) ->
-  env ->
-  'a ->
-  types ->
-  types
-
-val map_term :
-  ('a -> types -> types) ->
-  ('a -> 'a) ->
-  'a ->
   types ->
   types
 

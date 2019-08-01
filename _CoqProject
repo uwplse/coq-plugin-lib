@@ -8,10 +8,12 @@
 src/utilities/utilities.mli
 src/utilities/utilities.ml
 
-src/coq/envutils.mli
-src/coq/envutils.ml
 src/coq/termutils.mli
 src/coq/termutils.ml
+src/coq/envutils.mli
+src/coq/envutils.ml
+src/coq/hofs.mli
+src/coq/hofs.ml
 src/coq/inference.mli
 src/coq/inference.ml
 src/coq/convertibility.mli
@@ -30,8 +32,8 @@ src/coq/printing.mli
 src/coq/printing.ml
 src/coq/debruijn.mli
 src/coq/debruijn.ml
-src/coq/hofs.mli
-src/coq/hofs.ml
+src/coq/hofimpls.mli
+src/coq/hofimpls.ml
 src/coq/zooming.mli
 src/coq/zooming.ml
 src/coq/substitution.mli

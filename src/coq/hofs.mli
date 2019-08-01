@@ -85,12 +85,22 @@ type ('a, 'b) proposition_list_mapper =
   'a updater ->
   ('a, 'b) list_transformer
 
-(* --- Terms --- *)
+(* --- Basic mapping over terms --- *)
+    
+(*
+ * Map a function over subterms of a term in an environment
+ * Update the environment as you go
+ * Update the argument of type 'a using the a supplied update function
+ * Return the new term
+ *)
+val map_term_env : ('a, types) mapper_with_env
 
 (*
- * The most basic versions of these (map_term and map_term_env) are in
- * coqterms.ml. These are more advanced variations.
+ * map_term_env with the empty environment
  *)
+val map_term : ('a, types) mapper
+
+(* --- Advanced mapping over terms --- *)
 
 (*
  * Map a function over subterms of a term in an environment
@@ -207,10 +217,3 @@ val exists_subterm : ('a, types) proposition_mapper
  *)
 val all_const_subterms : ('a, types) proposition_list_mapper
 
-(* --- Containment --- *)
-
-(* 
- * Check whether the first term contains the second as a subterm, 
- * using exact syntactic equality
- *)
-val contains_term : types -> types -> bool

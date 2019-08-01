@@ -7,7 +7,7 @@ open Utilities
 open Debruijn
 open Termutils
 open Typeutils
-open Hofs
+open Hofimpls
 
 (* --- Generic functions --- *)
 
