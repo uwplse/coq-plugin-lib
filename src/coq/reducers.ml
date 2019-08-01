@@ -27,10 +27,34 @@ let infer_type (env : env) (evd : evar_map) (trm : types) : types =
 
 (* --- Top-level --- *)
 
-let reduce_all (r : reducer) env evd (trms : types list) : types list =
-  List.map (r env evd) trms
+(* Default reducer *)
+let reduce_term (env : env) (sigma : evar_map) (trm : types) : types =
+  EConstr.to_constr
+    sigma
+    (Reductionops.nf_betaiotazeta env sigma (EConstr.of_constr trm))
+
+(* Delta reduction *)
+let delta (env : env) (sigma : evar_map) (trm : types) =
+  EConstr.to_constr
+    sigma
+    (Reductionops.whd_delta env sigma (EConstr.of_constr trm))
+
+(* Weak head reduction *)
+let whd (env : env) (sigma : evar_map) (trm : types) : types =
+  EConstr.to_constr
+    sigma
+    (Reductionops.whd_all env sigma (EConstr.of_constr trm))
+
+(* nf_all *)
+let reduce_nf (env : env) (sigma : evar_map) (trm : types) : types =
+  EConstr.to_constr
+    sigma
+    (Reductionops.nf_all env sigma (EConstr.of_constr trm))
 
 (* --- Combinators and converters --- *)
+
+let reduce_all (r : reducer) env evd (trms : types list) : types list =
+  List.map (r env evd) trms
 
 let chain_reduce (r1 : reducer) (r2 : reducer) env evd trm : types =
   r2 env evd (r1 env evd trm)

@@ -16,6 +16,7 @@ open Constrextern
 open Envutils
 open Termutils
 open Typeutils
+open Reducers
 
 (* Get the type of an inductive type *)
 let type_of_inductive env index mutind_body : types =
@@ -145,7 +146,7 @@ let deconstruct_eliminator env evd app : elim_app =
 let rec num_ihs env rec_typ typ =
   match kind typ with
   | Prod (n, t, b) ->
-     if is_or_applies rec_typ (reduce_term env t) then
+     if is_or_applies rec_typ (reduce_term env Evd.empty t) then
        let (n_b_t, b_t, b_b) = destProd b in
        1 + num_ihs (push_local (n, t) (push_local (n_b_t, b_t) env)) rec_typ b_b
      else

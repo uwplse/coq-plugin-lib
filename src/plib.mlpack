@@ -5,6 +5,8 @@ Envutils
 Hofs
 Inference
 Convertibility
+Debruijn
+Reducers
 Typeutils
 
 Diffutils
@@ -12,12 +14,10 @@ Diffutils
 Indutils
 Transform
 Printing
-Debruijn
 Hofimpls
 Zooming
 Substitution
 Filters
-Reducers
 Indexing
 Hypotheses
 

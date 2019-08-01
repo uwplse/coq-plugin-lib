@@ -8,6 +8,7 @@ open Debruijn
 open Termutils
 open Typeutils
 open Hofimpls
+open Reducers
 
 (* --- Generic functions --- *)
 
@@ -49,7 +50,7 @@ let reindex_body reindexer lam =
  * but we are not sure if the term is a lambda or curried
  *)
 let dummy_index env f =
-  reduce_term env (mkAppl (f, [mkRel 0]))
+  reduce_term env Evd.empty (mkAppl (f, [mkRel 0]))
 
 (* --- Managing inductive property arguments --- *)
 
@@ -86,7 +87,7 @@ let rec computes_ih_index off p i typ =
  * get all of the arguments to that type that aren't the new/forgotten index
  *)
 let non_index_args index_i env typ =
-  let typ = reduce_nf env typ in
+  let typ = reduce_nf env Evd.empty typ in
   if is_or_applies sigT typ then
     let packer = (dest_sigT typ).packer in
     remove_index index_i (unfold_args (dummy_index env packer))

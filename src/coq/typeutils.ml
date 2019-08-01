@@ -8,6 +8,7 @@ open Constr
 open Termutils
 open Convertibility
 open Inference
+open Reducers
 
 (* --- Type checking -- *)
                                                        
@@ -20,9 +21,9 @@ let has_type (env : env) (evd : evar_map) (typ : types) (trm : types) : bool =
 
 (* --- Reduction on types --- *)
 
-(* Reduce the type *)
+(* Reduce the type (TODO empty here for rev. compat. for now) (TODO move to reducers?) *)
 let reduce_type (env : env) evd (trm : types) : types =
-  reduce_term env (infer_type env evd trm)
+  reduce_term env Evd.empty (infer_type env evd trm)
               
 (* --- Higher-order functions --- *)
 

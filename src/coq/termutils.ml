@@ -19,12 +19,6 @@ module Globset = Globnames.Refset
 
 module CRD = Context.Rel.Declaration (* TODO remove eventually *)
 
-(*
- * Note: This will clean up significantly when we merge DEVOID and PUMPKIN,
- * and split back into multiple files. We'll also use better evar map and
- * universe hygiene at that point.
- *)
-
 (* --- Auxiliary types --- *)
                
 type closure = env * (types list)
@@ -469,45 +463,6 @@ let projections (app : sigT_app) trm =
 (* Safely instantiate a global reference, with proper universe handling (TODO move) *)
 let e_new_global evm gref =
   Evarutil.e_new_global evm gref |> EConstr.to_constr !evm
-
-(* Default reducer *)
-let reduce_term (env : env) (trm : types) : types =
-  EConstr.to_constr
-    Evd.empty
-    (Reductionops.nf_betaiotazeta env Evd.empty (EConstr.of_constr trm))
-
-(* Delta reduction *)
-let delta (env : env) (trm : types) =
-  EConstr.to_constr
-    Evd.empty
-    (Reductionops.whd_delta env Evd.empty (EConstr.of_constr trm))
-
-(* Weak head reduction *)
-let whd (env : env) (sigma : evar_map) (trm : types) : types =
-  EConstr.to_constr
-    sigma
-    (Reductionops.whd_all env sigma (EConstr.of_constr trm))
-
-(*
- * There's a part of the env that has opacity info,
- * so if you want to make some things opaque, can add them
- * get env, store it, call set_strategy w/ opaque,
- * then revert later
- *
- * See environ.mli
- * set_oracle
- * set_strategy
- *)
-
-(* nf_all *)
-let reduce_nf (env : env) (trm : types) : types =
-  EConstr.to_constr
-    Evd.empty
-    (Reductionops.nf_all env Evd.empty (EConstr.of_constr trm))
-
-(* Chain reduction *)
-let chain_reduce rg rf (env : env) (trm : types) : types =
-  rg env (rf env trm)
 
 (* --- Environments (TODO rename) --- *)
 

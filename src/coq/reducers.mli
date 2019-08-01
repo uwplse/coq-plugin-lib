@@ -8,17 +8,25 @@ type reducer = env -> evar_map -> types -> types
 
 (* --- Top-level --- *)
 
-val reduce_all : reducer -> env -> evar_map -> types list -> types list
-
-(* --- Defaults --- *)
-
 (*
- * Default reducer
+ * Default reducer (currently betaiotazeta)
  *)
 val reduce_term : reducer
 
+(*
+ * Other reducers
+ *)
+val delta : reducer
+val whd : reducer
+val reduce_nf : reducer
+
 (* --- Custom reducers --- *)
 
+(*
+ * Reduce all using the reducer
+ *)
+val reduce_all : reducer -> env -> evar_map -> types list -> types list
+                    
 (*
  * Do not reduce
  *)

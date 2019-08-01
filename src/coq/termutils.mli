@@ -394,20 +394,6 @@ val eq_constr_head : ?eq_constr:(constr -> constr -> bool) -> constr -> constr -
 (* Safely instantiate a global reference, updating the evar map. (TODO move) *)
 val e_new_global : evar_map ref -> global_reference -> constr
 
-(*
- * Reduction
- *)
-val reduce_term : env -> types -> types (* betaiotazeta *)
-val delta : env -> types -> types (* delta *)
-val reduce_nf : env -> types ->  types (* nf_all *)
-val whd : env -> evar_map -> types -> types (* whd_all *)
-val chain_reduce : (* sequencing *)
-  (env -> types -> types) ->
-  (env -> types -> types) ->
-  env ->
-  types ->
-  types
-
 (* --- Names --- *)
 
 (* Look up the name referenced by a term and append a suffix to it. *)
