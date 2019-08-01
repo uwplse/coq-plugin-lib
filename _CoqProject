@@ -10,6 +10,8 @@ src/utilities/utilities.ml
 
 src/coq/termutils.mli
 src/coq/termutils.ml
+src/coq/nameutils.mli
+src/coq/nameutils.ml
 src/coq/envutils.mli
 src/coq/envutils.ml
 src/coq/hofs.mli
