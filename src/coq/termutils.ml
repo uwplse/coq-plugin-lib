@@ -96,14 +96,13 @@ let define_canonical ?typ (n : Id.t) (evm : evar_map) (trm : types) (refresh : b
   let etyp = Option.map EConstr.of_constr typ in
   edeclare n k ~opaque:false evm udecl etrm etyp [] hook refresh
 
-(* Safely extract the body of a constant, instantiating any universe variables. *)
+(* Safely extract the body of a constant, instantiating any universe variables. TODO move *)
 let open_constant env const =
   let (Some (term, auctx)) = Global.body_of_constant const in
   let uctx = Universes.fresh_instance_from_context auctx |> Univ.UContext.make in
   let term = Vars.subst_instance_constr (Univ.UContext.instance uctx) term in
   let env = Environ.push_context uctx env in
   env, term
-
 
 (* --- Application and arguments --- *)
 
@@ -314,16 +313,6 @@ let map_named_context env make ctxt =
     ctxt
     ~init:(env, []) |>
     snd
-
-let force_constant_body const_body =
-  match const_body.const_body with
-  | Def const_def ->
-    Mod_subst.force_constr const_def
-  | OpaqueDef opaq ->
-    Opaqueproof.force_proof (Global.opaque_tables ()) opaq
-  | _ ->
-    CErrors.user_err ~hdr:"force_constant_body"
-      (Pp.str "An axiom has no defining term")
 
 (*
  * Similarly but for fixpoints

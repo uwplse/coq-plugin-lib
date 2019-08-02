@@ -22,6 +22,20 @@ open Indutils
 type constr_transformer = env -> evar_map ref -> constr -> constr
 
 (*
+ * Force a constant_body into the internal representation
+ * Fail with an error if the supplied constant_body is an axiom
+ *)
+let force_constant_body const_body =
+  match const_body.const_body with
+  | Def const_def ->
+    Mod_subst.force_constr const_def
+  | OpaqueDef opaq ->
+    Opaqueproof.force_proof (Global.opaque_tables ()) opaq
+  | _ ->
+    CErrors.user_err ~hdr:"force_constant_body"
+      (Pp.str "An axiom has no defining term")
+
+(*
  * Declare a new constant under the given name with the transformed term and
  * type from the given constant.
  *

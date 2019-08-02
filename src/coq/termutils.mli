@@ -23,8 +23,18 @@ type closure = env * (types list)
                             
 (* --- Representations --- *)
 
-(** Construct the external expression for a definition. *)
-val expr_of_global : global_reference -> constr_expr
+(*
+ * Coq has many ways of representing terms. These functions convert
+ * between different representations, using extra information (environments,
+ * evar maps, and so on) as necessary
+ *
+ * The internal representation is constr or types (types aliases to constr).
+ * Constr stands for "construction," not constructor.
+ *
+ * The external representation is constr_expr.
+ *
+ * References to definitions are represented by the global_reference type.
+ *)
 
 (*
  * Intern a term (for now, ignore the resulting evar_map)
@@ -35,11 +45,6 @@ val intern : env -> evar_map -> constr_expr -> types
  * Extern a term
  *)
 val extern : env -> evar_map -> types -> constr_expr
-
-(* 
- * TODO move, maybe explain
- *)
-val force_constant_body : constant_body -> types
 
 (*
  * Define a new Coq term
@@ -55,13 +60,18 @@ val define_term :
 val define_canonical :
   ?typ:types -> Id.t -> evar_map -> types -> bool -> global_reference
 
-
+(* 
+ * Construct the external expression for a definition.
+ *)
+val expr_of_global : global_reference -> constr_expr
+                                                       
 (*
  * Safely extract the body of a constant, instantiating any universe variables.
  * If needed, an evar_map should be constructed from the updated environment with
  * Evd.from_env.
  *
  * Raises a Match_failure if the constant does not exist.
+ * TODO move
  *)
 val open_constant : env -> Constant.t -> env * constr
 
