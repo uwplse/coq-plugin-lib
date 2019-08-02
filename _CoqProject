@@ -1,12 +1,16 @@
 -I src/utilities
 -I src/coq
 -I src/components/differencing
+-I src/coq/constants
 -I src
 -R src Plibrary
 -Q theories Plibrary
 
 src/utilities/utilities.mli
 src/utilities/utilities.ml
+
+src/coq/constants/logicutils.mli
+src/coq/constants/logicutils.ml
 
 src/coq/termutils.mli
 src/coq/termutils.ml
