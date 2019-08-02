@@ -185,25 +185,9 @@ val recompose_lam_assum : Rel.t -> types -> types
 (* --- Basic questions about terms --- *)
 
 (*
- * Plural versions (that operate over two terms instead of one) of many
- * of these functionsn are in Diffutils.
- *)
-
-(*
  * Get the arity of a function or function type
  *)
 val arity : types -> int
-
-(*
- * Check whether a term (second argument) applies a function (first argument).
- * Don't consider terms convertible to the function.
- *)
-val applies : types -> types -> bool
-
-(*
- * Check whether a term either is exactly a function or applies it.
- *)
-val is_or_applies : types -> types -> bool
                                               
 (* Is the first term equal to a "head" (application prefix) of the second?
  * The notion of term equality is syntactic, by default modulo alpha, casts,

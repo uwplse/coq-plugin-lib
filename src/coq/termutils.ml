@@ -309,18 +309,6 @@ let rec arity p =
   | _ ->
      0
 
-(* Check whether trm applies f (using equal for equality) *)
-let applies (f : types) (trm : types) =
-  match kind trm with
-  | App (g, _) ->
-     equal f g
-  | _ ->
-     false
-
-(* Check whether trm is trm' or applies trm', using equal *)
-let is_or_applies (trm' : types) (trm : types) : bool =
-  applies trm' trm || equal trm' trm
-
 (* Is the first term equal to a "head" (application prefix) of the second?
  * The notion of term equality is syntactic (i.e., no environment) and defaults
  * to syntactic equality modulo alpha, casts, grouping, and universes. The
@@ -329,6 +317,8 @@ let is_or_applies (trm' : types) (trm : types) : bool =
  *
  * This function is similar to is_or_applies, except for term equality and the
  * informative boolean result.
+ *
+ * TODO move, maybe don't expose
  *)
 let eq_constr_head ?(eq_constr=eq_constr_nounivs) term term' =
   let head, args = decompose_app term in

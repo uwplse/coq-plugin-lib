@@ -50,3 +50,17 @@ let get_arg i trm =
      Array.get args i
   | _ ->
      failwith "not an application"
+
+(* --- Questions about application --- *)
+
+(* Check whether trm applies f (using equal for equality) *)
+let applies (f : types) (trm : types) =
+  match kind trm with
+  | App (g, _) ->
+     equal f g
+  | _ ->
+     false
+
+(* Check whether trm is trm' or applies trm', using equal *)
+let is_or_applies (trm' : types) (trm : types) : bool =
+  applies trm' trm || equal trm' trm

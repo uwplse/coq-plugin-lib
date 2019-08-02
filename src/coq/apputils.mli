@@ -33,3 +33,16 @@ val first_fun : types -> types
  * Fully unfold arguments, then get the argument at a given position
  *)
 val get_arg : int -> types -> types
+
+(* --- Questions about application --- *)
+
+(*
+ * Check whether a term (second argument) applies a function (first argument).
+ * Don't consider terms convertible to the function.
+ *)
+val applies : types -> types -> bool
+
+(*
+ * Check whether a term either is exactly a function or applies it.
+ *)
+val is_or_applies : types -> types -> bool

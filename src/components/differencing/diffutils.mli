@@ -6,10 +6,10 @@ open Constr
 open Environ
 open Evd
 
-(* --- Plural versions of questions about terms from Coqterms --- *)
+(* --- Plural versions of questions about terms --- *)
 
 (*
- * Plural version of Coqterms.applies.
+ * Plural version of Apputils.applies.
  * Check whether two terms (the second and third arguments) apply
  * a given function (first argument). Don't consider terms convertible
  * to the function.
@@ -17,7 +17,7 @@ open Evd
 val apply : types -> types -> types -> bool
 
 (*
- * Plural version of Coqterms.is_or_applies.
+ * Plural version of Apputils.is_or_applies.
  * Check whether two terms (the second and third arguments) either are exactly 
  * a function or apply it.
  *)
