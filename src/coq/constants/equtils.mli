@@ -1,5 +1,5 @@
 (*
- * Utilities for the Coq.Init.Logic module
+ * Utilities for propositional equality
  *)
 
 open Constr

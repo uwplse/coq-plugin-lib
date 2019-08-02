@@ -9,6 +9,7 @@ open Termutils
 open Typeutils
 open Hofimpls
 open Reducers
+open Sigmautils
 
 (* --- Generic functions --- *)
 

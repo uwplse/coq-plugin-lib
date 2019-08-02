@@ -7,6 +7,7 @@ open Environ
 open Termutils
 open Envutils
 open Debruijn
+open Sigmautils
 
 (* --- Zooming --- *)
 

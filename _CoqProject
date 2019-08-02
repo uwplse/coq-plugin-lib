@@ -9,11 +9,14 @@
 src/utilities/utilities.mli
 src/utilities/utilities.ml
 
-src/coq/constants/logicutils.mli
-src/coq/constants/logicutils.ml
-
 src/coq/termutils.mli
 src/coq/termutils.ml
+
+src/coq/constants/equtils.mli
+src/coq/constants/equtils.ml
+src/coq/constants/sigmautils.mli
+src/coq/constants/sigmautils.ml
+
 src/coq/nameutils.mli
 src/coq/nameutils.ml
 src/coq/envutils.mli

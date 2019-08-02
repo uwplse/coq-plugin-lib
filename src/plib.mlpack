@@ -1,6 +1,10 @@
 Utilities
 
 Termutils
+
+Equtils
+Sigmautils
+
 Nameutils
 Envutils
 Hofs
@@ -21,7 +25,5 @@ Substitution
 Filters
 Indexing
 Hypotheses
-
-Logicutils
 
 Plibrary
