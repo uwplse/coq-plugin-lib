@@ -34,6 +34,7 @@ type closure = env * (types list)
  * The external representation is constr_expr.
  *
  * References to definitions are represented by the global_reference type.
+ * global_reference Univ.puniverses additionally stores universes.
  *)
 
 (*
@@ -64,6 +65,16 @@ val define_canonical :
  * Construct the external expression for a definition.
  *)
 val expr_of_global : global_reference -> constr_expr
+
+(*
+ * Convert a term into a global reference with universes (or raise Not_found) 
+ *)
+val pglobal_of_constr : constr -> global_reference Univ.puniverses
+
+(* 
+ * Convert a global reference with universes into a term
+ *)
+val constr_of_pglobal : global_reference Univ.puniverses -> constr
                                                        
 (*
  * Safely extract the body of a constant, instantiating any universe variables.
@@ -206,12 +217,6 @@ val eq_constr_head : ?eq_constr:(constr -> constr -> bool) -> constr -> constr -
 val e_new_global : evar_map ref -> global_reference -> constr
 
 (* --- Names (TODO move/rename remaining) --- *)
-
-(* Convert a term into a global reference with universes (or raise Not_found) *)
-val pglobal_of_constr : constr -> global_reference Univ.puniverses
-
-(* Convert a global reference with universes into a term *)
-val constr_of_pglobal : global_reference Univ.puniverses -> constr
 
 type global_substitution = global_reference Globmap.t
 

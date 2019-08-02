@@ -26,10 +26,9 @@ type closure = env * (types list)
                                                                     
 (* --- Representations --- *)
 
-(** Construct the external expression for a definition. *)
-let expr_of_global (g : global_reference) : constr_expr =
-  let r = extern_reference Id.Set.empty g in
-  CAst.make @@ (CAppExpl ((None, r, None), []))
+(*
+ * See termutils.mli for explanations of these representations.
+ *)
 
 (* Intern a term (for now, ignore the resulting evar_map) *)
 let intern env evd t : types =
@@ -95,6 +94,30 @@ let define_canonical ?typ (n : Id.t) (evm : evar_map) (trm : types) (refresh : b
   let etrm = EConstr.of_constr trm in
   let etyp = Option.map EConstr.of_constr typ in
   edeclare n k ~opaque:false evm udecl etrm etyp [] hook refresh
+
+(*
+ * Construct the external expression for a definition. 
+ *)
+let expr_of_global (g : global_reference) : constr_expr =
+  let r = extern_reference Id.Set.empty g in
+  CAst.make @@ (CAppExpl ((None, r, None), []))
+
+(* Convert a term into a global reference with universes (or raise Not_found) *)
+let pglobal_of_constr term =
+  match Constr.kind term with
+  | Const (const, univs) -> ConstRef const, univs
+  | Ind (ind, univs) -> IndRef ind, univs
+  | Construct (cons, univs) -> ConstructRef cons, univs
+  | Var id -> VarRef id, Univ.Instance.empty
+  | _ -> raise Not_found
+
+(* Convert a global reference with universes into a term *)
+let constr_of_pglobal (glob, univs) =
+  match glob with
+  | ConstRef const -> mkConstU (const, univs)
+  | IndRef ind -> mkIndU (ind, univs)
+  | ConstructRef cons -> mkConstructU (cons, univs)
+  | VarRef id -> mkVar id
 
 (* Safely extract the body of a constant, instantiating any universe variables. TODO move *)
 let open_constant env const =
@@ -329,23 +352,6 @@ let eq_constr_head ?(eq_constr=eq_constr_nounivs) term term' =
     None
 
 (* --- Names --- *)
-
-(* Convert a term into a global reference with universes (or raise Not_found) *)
-let pglobal_of_constr term =
-  match Constr.kind term with
-  | Const (const, univs) -> ConstRef const, univs
-  | Ind (ind, univs) -> IndRef ind, univs
-  | Construct (cons, univs) -> ConstructRef cons, univs
-  | Var id -> VarRef id, Univ.Instance.empty
-  | _ -> raise Not_found
-
-(* Convert a global reference with universes into a term *)
-let constr_of_pglobal (glob, univs) =
-  match glob with
-  | ConstRef const -> mkConstU (const, univs)
-  | IndRef ind -> mkIndU (ind, univs)
-  | ConstructRef cons -> mkConstructU (cons, univs)
-  | VarRef id -> mkVar id
 
 type global_substitution = global_reference Globmap.t
 
