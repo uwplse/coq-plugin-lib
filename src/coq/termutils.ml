@@ -132,22 +132,6 @@ let open_constant env const =
 (* Define a constant from an ID in the current path *)
 let make_constant id =
   mkConst (Constant.make1 (Lib.make_kn id))
-                             
-(* Recursively turn a product into a function *)
-let rec prod_to_lambda trm =
-  match kind trm with
-  | Prod (n, t, b) ->
-     mkLambda (n, t, prod_to_lambda b)
-  | _ ->
-     trm
-
-(* Recursively turn a function into a product *)
-let rec lambda_to_prod trm =
-  match kind trm with
-  | Lambda (n, t, b) ->
-     mkProd (n, t, lambda_to_prod b)
-  | _ ->
-     trm
 
 (* --- Convertibility and reduction --- *)
 

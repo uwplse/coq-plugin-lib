@@ -5,7 +5,7 @@
 open Constr
 open Environ
 open Apputils
-open Termutils
+open Funutils
 open Envutils
 open Debruijn
 open Sigmautils

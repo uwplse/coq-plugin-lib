@@ -92,12 +92,6 @@ val open_constant : env -> Constant.t -> env * constr
  * Define a constant from an ID in the current path
  *)
 val make_constant: Id.t -> types
-                                                 
-(*
- * Switch between products and lambdas, without changing anything else
- *)
-val prod_to_lambda : types -> types
-val lambda_to_prod : types -> types
 
 (* --- Environments (TODO rename/decouple/move more) --- *)
 
