@@ -10,6 +10,7 @@ open Typeutils
 open Hofimpls
 open Reducers
 open Sigmautils
+open Apputils
 
 (* --- Generic functions --- *)
 

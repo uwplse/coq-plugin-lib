@@ -4,6 +4,7 @@
 
 open Constr
 open Environ
+open Apputils
 open Termutils
 open Envutils
 open Debruijn

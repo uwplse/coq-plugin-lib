@@ -78,11 +78,6 @@ val open_constant : env -> Constant.t -> env * constr
 (* --- Constructing terms --- *)
 
 (*
- * mkApp with a list (instead of an array) of arguments
- *)
-val mkAppl : (types * types list) -> types
-
-(*
  * Define a constant from an ID in the current path
  *)
 val make_constant: Id.t -> types
@@ -238,26 +233,3 @@ type global_substitution = global_reference Globmap.t
 
 (* Substitute global references throughout a term *)
 val subst_globals : global_substitution -> constr -> constr
-
-(* --- Application and arguments --- *)
-
-(*
- * Get a list of all arguments of a type unfolded at the head
- * Return empty if it's not an application
- *)
-val unfold_args : types -> types list
-
-(*
- * Get the very last argument of an application
- *)
-val last_arg : types -> types
-
-(*
- * Get the very first function of an application
- *)
-val first_fun : types -> types
-
-(*
- * Fully unfold arguments, then get the argument at a given position
- *)
-val get_arg : int -> types -> types

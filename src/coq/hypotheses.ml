@@ -4,12 +4,13 @@
 
 open Constr
 open Debruijn
-open Termutils
 open Envutils
 open Environ
 open Evd
 open Zooming
+open Apputils
 open Typeutils
+open Termutils
 
 (* --- Eta expansion --- *)
                

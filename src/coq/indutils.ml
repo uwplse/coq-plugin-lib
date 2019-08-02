@@ -15,6 +15,7 @@ open Decl_kinds
 open Constrextern
 open Envutils
 open Termutils
+open Apputils
 open Typeutils
 open Reducers
 
