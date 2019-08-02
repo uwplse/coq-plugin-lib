@@ -13,6 +13,7 @@ open Utilities
 open Declarations
 open Decl_kinds
 open Constrextern
+open Recordops
 
 module Globmap = Globnames.Refmap
 module Globset = Globnames.Refset
@@ -85,6 +86,15 @@ let define_term ?typ (n : Id.t) (evm : evar_map) (trm : types) (refresh : bool) 
   let etrm = EConstr.of_constr trm in
   let etyp = Option.map EConstr.of_constr typ in
   edeclare n k ~opaque:false evm udecl etrm etyp [] nohook refresh
+
+(* Define a Canonical Structure *)
+let define_canonical ?typ (n : Id.t) (evm : evar_map) (trm : types) (refresh : bool) =
+  let k = (Global, Flags.is_universe_polymorphism (), CanonicalStructure) in
+  let udecl = Univdecls.default_univ_decl in
+  let hook = Lemmas.mk_hook (fun _ x -> declare_canonical_structure x; x) in
+  let etrm = EConstr.of_constr trm in
+  let etyp = Option.map EConstr.of_constr typ in
+  edeclare n k ~opaque:false evm udecl etrm etyp [] hook refresh
 
 (* Safely extract the body of a constant, instantiating any universe variables. *)
 let open_constant env const =

@@ -36,22 +36,6 @@ val intern : env -> evar_map -> constr_expr -> types
  *)
 val extern : env -> evar_map -> types -> constr_expr
 
-(*
- * Yves Bertot's edeclare, with extra optional type-checking call (see comment)
- *)
-val edeclare :
-  Id.t ->
-  (locality * polymorphic * definition_object_kind) ->
-  opaque:'a ->
-  evar_map ->
-  UState.universe_decl ->
-  EConstr.constr ->
-  EConstr.t option ->
-  Impargs.manual_implicits ->
-  global_reference Lemmas.declaration_hook ->
-  bool ->
-  global_reference
-
 (* 
  * TODO move, maybe explain
  *)
@@ -62,7 +46,15 @@ val force_constant_body : constant_body -> types
  * Refresh universes if the bool is true, otherwise don't
  * (Refreshing universes is REALLY costly)
  *)
-val define_term : ?typ:types -> Id.t -> evar_map -> types -> bool -> global_reference
+val define_term :
+  ?typ:types -> Id.t -> evar_map -> types -> bool -> global_reference
+
+(*
+ * Like define_term, but for a canonical structure
+ *)
+val define_canonical :
+  ?typ:types -> Id.t -> evar_map -> types -> bool -> global_reference
+
 
 (*
  * Safely extract the body of a constant, instantiating any universe variables.
