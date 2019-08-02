@@ -14,6 +14,7 @@ open Declarations
 open Decl_kinds
 open Constrextern
 open Envutils
+open Funutils
 open Termutils
 open Apputils
 open Typeutils

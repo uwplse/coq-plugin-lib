@@ -304,18 +304,6 @@ let recompose_lam_assum decls term =
 
 (* --- Basic questions about terms --- *)
 
-(*
- * Get the arity of a function or function type
- *)
-let rec arity p =
-  match kind p with
-  | Lambda (_, _, b) ->
-     1 + arity b
-  | Prod (_, _, b) ->
-     1 + arity b
-  | _ ->
-     0
-
 (* Is the first term equal to a "head" (application prefix) of the second?
  * The notion of term equality is syntactic (i.e., no environment) and defaults
  * to syntactic equality modulo alpha, casts, grouping, and universes. The

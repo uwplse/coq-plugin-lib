@@ -188,11 +188,6 @@ val recompose_prod_assum : Rel.t -> types -> types
 val recompose_lam_assum : Rel.t -> types -> types
 
 (* --- Basic questions about terms --- *)
-
-(*
- * Get the arity of a function or function type
- *)
-val arity : types -> int
                                               
 (* Is the first term equal to a "head" (application prefix) of the second?
  * The notion of term equality is syntactic, by default modulo alpha, casts,

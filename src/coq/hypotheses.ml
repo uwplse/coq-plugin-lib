@@ -10,7 +10,7 @@ open Evd
 open Zooming
 open Apputils
 open Typeutils
-open Termutils
+open Funutils
 
 (* --- Eta expansion --- *)
                
