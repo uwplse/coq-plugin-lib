@@ -20,21 +20,6 @@ module CRD = Context.Rel.Declaration
 (* --- Auxiliary types --- *)
                
 type closure = env * (types list)
-
-(* --- Questions about constants --- *)
-
-(*
- * Determine if a term applies an identity term
- * For efficiency, don't consider convertible terms
- *)
-val applies_identity : types -> bool
-
-(* --- Convenient applications of constants --- *)
-
-(*
- * Get the Coq identity function instantiated at a given type
- *)
-val identity_term : env -> types -> types
                             
 (* --- Representations --- *)
 

@@ -16,6 +16,8 @@ src/coq/constants/equtils.mli
 src/coq/constants/equtils.ml
 src/coq/constants/sigmautils.mli
 src/coq/constants/sigmautils.ml
+src/coq/constants/idutils.mli
+src/coq/constants/idutils.ml
 
 src/coq/nameutils.mli
 src/coq/nameutils.ml

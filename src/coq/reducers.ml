@@ -7,6 +7,7 @@ open Hofs
 open Termutils
 open Utilities
 open Debruijn
+open Idutils
 
 module CRD = Context.Rel.Declaration
 

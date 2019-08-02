@@ -22,39 +22,6 @@ module CRD = Context.Rel.Declaration (* TODO remove eventually *)
 (* --- Auxiliary types --- *)
                
 type closure = env * (types list)
-               
-(* --- Constants --- *)
-
-let coq_init_datatypes =
-  ModPath.MPfile
-    (DirPath.make (List.map Id.of_string ["Datatypes"; "Init"; "Coq"]))
-
-(* The identity proposition *)
-let id_prop : types =
-  mkConst (Constant.make2 coq_init_datatypes (Label.make "idProp"))
-
-(* The identity type *)
-let id_typ : types =
-  mkConst (Constant.make2 coq_init_datatypes (Label.make "id"))
-
-(* --- Questions about constants --- *)
-
-(* Determine if a term applies an identity term *)
-let applies_identity (trm : types) : bool =
-  match kind trm with
-  | App (f, _) ->
-     equal f id_prop || equal f id_typ
-  | _ ->
-     false
-
-(* --- Convenient applications of constants --- *)
-                                                
-(* Get the Coq identity term for typ *)
-let identity_term (env : env) (typ : types) : types =
-  let id = mkApp (id_prop, Array.make 1 typ) in
-  try
-    let _ = Typeops.infer env id in id
-  with _ -> mkApp (id_typ, Array.make 1 typ)
                                                                     
 (* --- Representations --- *)
 
