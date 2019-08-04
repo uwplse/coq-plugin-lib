@@ -10,7 +10,6 @@ open Names
 open Constrexpr
 open Evd
 open Utilities
-open Declarations
 open Decl_kinds
 open Constrextern
 open Recordops
@@ -118,20 +117,6 @@ let constr_of_pglobal (glob, univs) =
   | IndRef ind -> mkIndU (ind, univs)
   | ConstructRef cons -> mkConstructU (cons, univs)
   | VarRef id -> mkVar id
-
-(* Safely extract the body of a constant, instantiating any universe variables. TODO move *)
-let open_constant env const =
-  let (Some (term, auctx)) = Global.body_of_constant const in
-  let uctx = Universes.fresh_instance_from_context auctx |> Univ.UContext.make in
-  let term = Vars.subst_instance_constr (Univ.UContext.instance uctx) term in
-  let env = Environ.push_context uctx env in
-  env, term
-
-(* --- Constructing terms --- *)
-
-(* Define a constant from an ID in the current path *)
-let make_constant id =
-  mkConst (Constant.make1 (Lib.make_kn id))
 
 (* --- Convertibility and reduction --- *)
 

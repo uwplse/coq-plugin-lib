@@ -8,7 +8,6 @@ open Constr
 open Evd
 open Constrexpr
 open Names
-open Declarations
 open Globnames
 open Decl_kinds
 
@@ -75,23 +74,6 @@ val pglobal_of_constr : constr -> global_reference Univ.puniverses
  * Convert a global reference with universes into a term
  *)
 val constr_of_pglobal : global_reference Univ.puniverses -> constr
-                                                       
-(*
- * Safely extract the body of a constant, instantiating any universe variables.
- * If needed, an evar_map should be constructed from the updated environment with
- * Evd.from_env.
- *
- * Raises a Match_failure if the constant does not exist.
- * TODO move
- *)
-val open_constant : env -> Constant.t -> env * constr
-
-(* --- Constructing terms --- *)
-
-(*
- * Define a constant from an ID in the current path
- *)
-val make_constant: Id.t -> types
 
 (* --- Environments (TODO rename/decouple/move more) --- *)
 
