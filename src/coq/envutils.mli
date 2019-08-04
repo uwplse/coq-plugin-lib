@@ -6,8 +6,7 @@
 open Environ
 open Constr
 open Names
-
-module CRD = Context.Rel.Declaration
+open Contextutils
 
 (* Look up all indexes from a list in an environment *)
 val lookup_rels : int list -> env -> CRD.t list

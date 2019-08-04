@@ -5,6 +5,7 @@
 open Environ
 open Evd
 open Constr
+open Declarations
 
 (*
  * Type inference
@@ -19,3 +20,8 @@ val e_infer_type : env -> evar_map ref -> constr -> constr
 
 (* Safely infer the sort of a term, updating the evar map. *)
 val e_infer_sort : env -> evar_map ref -> constr -> Sorts.family
+
+(*
+ * Get the type of an inductive type
+ *)
+val type_of_inductive : env -> int -> mutual_inductive_body -> types

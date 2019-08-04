@@ -17,6 +17,7 @@ open Goptions
 open Declarations
 open Envutils
 open Termutils
+open Contextutils
 
 module CRD = Context.Rel.Declaration
 

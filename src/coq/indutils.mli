@@ -11,7 +11,6 @@ open Names
 open Declarations
 open Globnames
 open Decl_kinds
-open Envutils
 
        
 (*
@@ -30,11 +29,6 @@ val num_constrs : mutual_inductive_body -> int
  * For now, this is a naive syntactic check
  *)
 val is_elim : env -> types -> bool
-
-(*
- * Get the type of an inductive type
- *)
-val type_of_inductive : env -> int -> mutual_inductive_body -> types
 
 (*
  * Get an inductive type from an eliminator, if possible
@@ -90,6 +84,4 @@ val open_inductive : ?global:bool -> env -> Inductive.mind_specif -> env * Entri
  * forall (I : arity) (P : params), ...).
  *)
 val declare_inductive : Id.t -> Id.t list -> bool -> Entries.inductive_universes -> int -> types -> types list -> inductive
-                                                                        
-val bindings_for_inductive :
-  env -> mutual_inductive_body -> one_inductive_body array -> CRD.t list
+

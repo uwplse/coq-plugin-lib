@@ -3,11 +3,11 @@
 open Environ
 open Constr
 open Termutils
+open Contextutils
 open Envutils
 open Utilities
 open Names
 
-module CRD = Context.Rel.Declaration
 (* Predicates to determine whether to apply a mapped function *)
 type ('a, 'b) pred = 'a -> 'b -> bool
 type 'b unit_pred = 'b -> bool

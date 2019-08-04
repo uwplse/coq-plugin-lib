@@ -4,6 +4,7 @@
 
 open Constr
 open Termutils
+open Contextutils
 open Utilities
 open Environ
 open Evd

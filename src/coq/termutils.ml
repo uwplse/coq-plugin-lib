@@ -17,10 +17,9 @@ open Recordops
 module Globmap = Globnames.Refmap
 module Globset = Globnames.Refset
 
-module CRD = Context.Rel.Declaration (* TODO remove eventually *)
-
 (* --- Auxiliary types --- *)
-               
+
+(* TODO remove and fix code that refers to this *)
 type closure = env * (types list)
                                                                     
 (* --- Representations --- *)
@@ -126,107 +125,6 @@ let e_new_global evm gref =
 
 (* --- Environments (TODO rename) --- *)
 
-(* Is the rel declaration a local assumption? *)
-let is_rel_assum = Rel.Declaration.is_local_assum
-
-(* Is the rel declaration a local definition? *)
-let is_rel_defin = Rel.Declaration.is_local_def
-
-(* Make the rel declaration for a local assumption *)
-let rel_assum (name, typ) =
-  Rel.Declaration.LocalAssum (name, typ)
-
-(* Make the rel declaration for a local definition *)
-let rel_defin (name, def, typ) =
-  Rel.Declaration.LocalDef (name, def, typ)
-
-(* Get the name of a rel declaration *)
-let rel_name decl =
-  Rel.Declaration.get_name decl
-
-(* Get the optional value of a rel declaration *)
-let rel_value decl =
-  Rel.Declaration.get_value decl
-
-(* Get the type of a rel declaration *)
-let rel_type decl =
-  Rel.Declaration.get_type decl
-
-(* Map over a rel context with environment kept in synch *)
-let map_rel_context env make ctxt =
-  Rel.fold_outside
-    (fun decl (env, res) ->
-       push_rel decl env, (make env decl) :: res)
-    ctxt
-    ~init:(env, []) |>
-  snd
-
-(*
- * Bind all local declarations in the relative context onto the body term as
- * products, substituting away (i.e., zeta-reducing) any local definitions.
- *)
-let smash_prod_assum ctxt body =
-  Rel.fold_inside
-    (fun body decl ->
-       match rel_value decl with
-       | Some defn -> Vars.subst1 defn body
-       | None -> mkProd (rel_name decl, rel_type decl, body))
-    ~init:body
-    ctxt
-
-(*
- * Bind all local declarations in the relative context onto the body term as
- * lambdas, substituting away (i.e., zeta-reducing) any local definitions.
- *)
-let smash_lam_assum ctxt body =
-  Rel.fold_inside
-    (fun body decl ->
-       match rel_value decl with
-       | Some defn -> Vars.subst1 defn body
-       | None -> mkLambda (rel_name decl, rel_type decl, body))
-    ~init:body
-    ctxt
-
-(*
- * Decompose the first n product bindings, zeta-reducing let bindings to reveal
- * further product bindings when necessary.
- *)
-let decompose_prod_n_zeta n term =
-  assert (n >= 0);
-  let rec aux n ctxt body =
-    if n > 0 then
-      match Constr.kind body with
-      | Prod (name, param, body) ->
-        aux (n - 1) (Rel.add (rel_assum (name, param)) ctxt) body
-      | LetIn (name, def_term, def_type, body) ->
-        aux n ctxt (Vars.subst1 def_term body)
-      | _ ->
-        invalid_arg "decompose_prod_n_zeta: not enough products"
-    else
-      ctxt, body
-  in
-  aux n Rel.empty term
-
-(*
- * Decompose the first n lambda bindings, zeta-reducing let bindings to reveal
- * further lambda bindings when necessary.
- *)
-let decompose_lam_n_zeta n term =
-  assert (n >= 0);
-  let rec aux n ctxt body =
-    if n > 0 then
-      match Constr.kind body with
-      | Lambda (name, param, body) ->
-        aux (n - 1) (Rel.add (rel_assum (name, param)) ctxt) body
-      | LetIn (name, def_term, def_type, body) ->
-        Vars.subst1 def_term body |> aux n ctxt
-      | _ ->
-        invalid_arg "decompose_lam_n_zeta: not enough lambdas"
-    else
-      ctxt, body
-  in
-  aux n Rel.empty term
-
 (* Is the named declaration an assumption? *)
 let is_named_assum = Named.Declaration.is_local_assum
 
@@ -261,15 +159,6 @@ let map_named_context env make ctxt =
     ctxt
     ~init:(env, []) |>
     snd
-
-(*
- * Similarly but for fixpoints
- *)
-let bindings_for_fix (names : name array) (typs : types array) : CRD.t list =
-  Array.to_list
-    (CArray.map2_i
-       (fun i name typ -> CRD.LocalAssum (name, Vars.lift i typ))
-       names typs)
 
 (* Append two contexts (inner first, outer second), shifting internal indices. *)
 let context_app inner outer =

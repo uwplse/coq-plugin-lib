@@ -8,8 +8,7 @@ open Termutils
 open Utilities
 open Debruijn
 open Idutils
-
-module CRD = Context.Rel.Declaration
+open Contextutils
 
 type reducer = env -> evar_map -> types -> types
 

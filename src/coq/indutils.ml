@@ -13,34 +13,14 @@ open Utilities
 open Declarations
 open Decl_kinds
 open Constrextern
-open Envutils
 open Funutils
 open Termutils
 open Apputils
 open Typeutils
 open Reducers
-
-(* Get the type of an inductive type *)
-let type_of_inductive env index mutind_body : types =
-  let ind_bodies = mutind_body.mind_packets in
-  let ind_body = Array.get ind_bodies index in
-  let univs = Declareops.inductive_polymorphic_context mutind_body in
-  let univ_instance = Univ.make_abstract_instance univs in
-  let mutind_spec = (mutind_body, ind_body) in
-  Inductive.type_of_inductive env (mutind_spec, univ_instance)
-
-(*
- * Inductive types create bindings that we need to push to the environment
- * This function gets those bindings
- *)
-let bindings_for_inductive env mutind_body ind_bodies : CRD.t list =
-  Array.to_list
-    (Array.mapi
-       (fun i ind_body ->
-         let name_id = ind_body.mind_typename in
-         let typ = type_of_inductive env i mutind_body in
-         CRD.LocalAssum (Name name_id, typ))
-       ind_bodies)
+open Envutils
+open Contextutils
+open Inference
 
 (* Don't support mutually inductive or coinductive types yet (TODO move) *)
 let check_inductive_supported mutind_body : unit =

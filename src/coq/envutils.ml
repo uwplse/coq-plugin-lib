@@ -9,8 +9,7 @@ open Declarations
 open Decl_kinds
 open Constrextern
 open Termutils
-
-module CRD = Context.Rel.Declaration
+open Contextutils
 
 (* Look up all indexes from is in env *)
 let lookup_rels (is : int list) (env : env) : CRD.t list =

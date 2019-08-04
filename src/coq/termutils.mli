@@ -14,8 +14,6 @@ open Decl_kinds
 module Globmap = Globnames.Refmap
 module Globset = Globnames.Refset
 
-module CRD = Context.Rel.Declaration
-
 (* --- Auxiliary types --- *)
                
 type closure = env * (types list)
@@ -77,54 +75,6 @@ val constr_of_pglobal : global_reference Univ.puniverses -> constr
 
 (* --- Environments (TODO rename/decouple/move more) --- *)
 
-(* Is the rel declaration a local assumption? *)
-val is_rel_assum : ('constr, 'types) Rel.Declaration.pt -> bool
-
-(* Is the rel declaration a local definition? *)
-val is_rel_defin : ('constr, 'types) Rel.Declaration.pt -> bool
-
-(*
- * Construct a rel declaration
- *)
-val rel_assum : Name.t * 'types -> ('constr, 'types) Rel.Declaration.pt
-val rel_defin : Name.t * 'constr * 'types -> ('constr, 'types) Rel.Declaration.pt
-
-(*
- * Project a component of a rel declaration
- *)
-val rel_name : ('constr, 'types) Rel.Declaration.pt -> Name.t
-val rel_value : ('constr, 'types) Rel.Declaration.pt -> 'constr option
-val rel_type : ('constr, 'types) Rel.Declaration.pt -> 'types
-
-(*
- * Map over a rel context with environment kept in synch
- *)
-val map_rel_context : env -> (env -> Rel.Declaration.t -> 'a) -> Rel.t -> 'a list
-
-(*
- * Bind all local declarations in the relative context onto the body term as
- * products, substituting away (i.e., zeta-reducing) any local definitions.
- *)
-val smash_prod_assum : Rel.t -> types -> types
-
-(*
- * Bind all local declarations in the relative context onto the body term as
- * lambdas, substituting away (i.e., zeta-reducing) any local definitions.
- *)
-val smash_lam_assum : Rel.t -> constr -> constr
-
-(*
- * Decompose the first n product bindings, zeta-reducing let bindings to reveal
- * further product bindings when necessary.
- *)
-val decompose_prod_n_zeta : int -> types -> Rel.t * types
-
-(*
- * Decompose the first n lambda bindings, zeta-reducing let bindings to reveal
- * further lambda bindings when necessary.
- *)
-val decompose_lam_n_zeta : int -> constr -> Rel.t * constr
-
 (* Is the named declaration an assumption? *)
 val is_named_assum : ('constr, 'types) Named.Declaration.pt -> bool
 
@@ -148,11 +98,6 @@ val named_type : ('constr, 'types) Named.Declaration.pt -> 'types
  * Map over a named context with environment kept in synch
  *)
 val map_named_context : env -> (env -> Named.Declaration.t -> 'a) -> Named.t -> 'a list                                                                 
-
-(*
- * Get bindings to push to an environment
- *)
-val bindings_for_fix : name array -> types array -> CRD.t list
 
 (*
  * Append two contexts (inner first, outer second), shifting internal indices.

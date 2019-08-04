@@ -7,6 +7,7 @@ open Environ
 open Apputils
 open Funutils
 open Envutils
+open Contextutils
 open Debruijn
 open Sigmautils
 
