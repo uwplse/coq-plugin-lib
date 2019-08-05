@@ -1,7 +1,7 @@
 -I src/utilities
 -I src/coq
 -I src/coq/termutils
--I src/coq/typeutils
+-I src/coq/logicutils
 -I src/coq/constants
 -I src
 -R src Plibrary
@@ -17,14 +17,12 @@ src/coq/termutils/constutils.ml
 src/coq/termutils/funutils.mli
 src/coq/termutils/funutils.ml
 
-src/coq/typeutils/inference.mli
-src/coq/typeutils/inference.ml
-
-src/coq/convertibility.mli
-src/coq/convertibility.ml
-
-src/coq/typeutils/checking.mli
-src/coq/typeutils/checking.ml
+src/coq/logicutils/inference.mli
+src/coq/logicutils/inference.ml
+src/coq/logicutils/convertibility.mli
+src/coq/logicutils/convertibility.ml
+src/coq/logicutils/checking.mli
+src/coq/logicutils/checking.ml
 
 src/coq/defutils.mli
 src/coq/defutils.ml
