@@ -52,11 +52,11 @@ src/coq/logicutils/substitution.mli
 src/coq/logicutils/substitution.ml
 src/coq/logicutils/indutils.mli
 src/coq/logicutils/indutils.ml
+src/coq/logicutils/hofimpls.mli
+src/coq/logicutils/hofimpls.ml
 
 src/coq/printing.mli
 src/coq/printing.ml
-src/coq/hofimpls.mli
-src/coq/hofimpls.ml
 src/coq/zooming.mli
 src/coq/zooming.ml
 src/coq/transform.mli
