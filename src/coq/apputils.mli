@@ -39,13 +39,19 @@ val get_arg : int -> types -> types
 (*
  * Check whether a term (second argument) applies a function (first argument).
  * Don't consider terms convertible to the function.
+ *
+ * The plural version checks the conjunction on the second and third arguments.
  *)
 val applies : types -> types -> bool
+val apply : types -> types -> types -> bool
 
 (*
  * Check whether a term either is exactly a function or applies it.
+ *
+ * The plural version checks the conjunction on the second and third arguments.
  *)
 val is_or_applies : types -> types -> bool
+val are_or_apply : types -> types -> types -> bool
 
 (* 
  * Is the first term equal to a "head" (application prefix) of the second?

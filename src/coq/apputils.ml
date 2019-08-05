@@ -61,10 +61,16 @@ let applies (f : types) (trm : types) =
   | _ ->
      false
 
+(* Plural version *)
+let apply (trm : types) = and_p (applies trm)
+
 (* Check whether trm is trm' or applies trm', using equal *)
 let is_or_applies (trm' : types) (trm : types) : bool =
   applies trm' trm || equal trm' trm
 
+(* Plural version *)
+let are_or_apply (trm : types) = and_p (is_or_applies trm)
+                            
 (*
  * Is the first term equal to a "head" (application prefix) of the second?
  * The notion of term equality is syntactic (i.e., no environment) and defaults

@@ -6,7 +6,7 @@ open Constr
 open Hofs
 open Debruijn
 open Convertibility
-open Diffutils
+open Apputils
 open Defutils
 open Names
 open Utilities

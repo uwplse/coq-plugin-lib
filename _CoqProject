@@ -1,6 +1,5 @@
 -I src/utilities
 -I src/coq
--I src/components/differencing
 -I src/coq/constants
 -I src
 -R src Plibrary
@@ -35,10 +34,6 @@ src/coq/envutils.mli
 src/coq/envutils.ml
 src/coq/hofs.mli
 src/coq/hofs.ml
-
-src/components/differencing/diffutils.mli
-src/components/differencing/diffutils.ml
-
 src/coq/convertibility.mli
 src/coq/convertibility.ml
 src/coq/debruijn.mli

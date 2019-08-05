@@ -14,9 +14,6 @@ Inference
 Contextutils
 Envutils
 Hofs
-
-Diffutils
-
 Convertibility
 Debruijn
 Reducers
