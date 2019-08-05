@@ -10,14 +10,6 @@ open Constr
 module Globmap = Globnames.Refmap
 module Globset = Globnames.Refset
 
-(* --- Environments (TODO rename) --- *)
-
-(* Append two contexts (inner first, outer second), shifting internal indices. *)
-let context_app inner outer =
-  List.append
-    (Termops.lift_rel_context (Rel.length outer) inner)
-    outer
-
 (* --- Basic questions about terms --- *)
 
 (* Is the first term equal to a "head" (application prefix) of the second?

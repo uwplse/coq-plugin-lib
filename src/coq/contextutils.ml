@@ -184,3 +184,13 @@ let bindings_for_fix (names : name array) (typs : types array) : CRD.t list =
     (CArray.map2_i
        (fun i name typ -> CRD.LocalAssum (name, Vars.lift i typ))
        names typs)
+
+(* --- Combining contexts --- *)
+
+(* 
+ * Append two contexts (inner first, outer second), shifting internal indices. 
+ *)
+let context_app inner outer =
+  List.append
+    (Termops.lift_rel_context (Context.Rel.length outer) inner)
+    outer

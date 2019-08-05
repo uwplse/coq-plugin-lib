@@ -67,12 +67,14 @@ val named_type : ('constr, 'types) CND.pt -> 'types
 (*
  * Map over a rel context with environment kept in synch
  *)
-val map_rel_context : env -> (env -> CRD.t -> 'a) -> Context.Rel.t -> 'a list
+val map_rel_context :
+  env -> (env -> CRD.t -> 'a) -> Context.Rel.t -> 'a list
 
 (*
  * Map over a named context with environment kept in synch
  *)
-val map_named_context : env -> (env -> CND.t -> 'a) -> Context.Named.t -> 'a list     
+val map_named_context :
+  env -> (env -> CND.t -> 'a) -> Context.Named.t -> 'a list     
 
 (* --- Binding in contexts --- *)
 
@@ -108,3 +110,14 @@ val bindings_for_inductive :
 
 val bindings_for_fix :
   name array -> types array -> CRD.t list
+
+(* --- Combining contexts --- *) 
+
+(*
+ * Append two contexts (inner first, outer second), shifting internal indices.
+ *
+ * The input contexts are assumed to share the same environment, such that any
+ * external indices inside the now-inner context must be shifted to pass over
+ * the now-outer context.
+ *)
+val context_app : Context.Rel.t -> Context.Rel.t -> Context.Rel.t

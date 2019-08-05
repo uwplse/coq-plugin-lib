@@ -14,16 +14,6 @@ open Decl_kinds
 module Globmap = Globnames.Refmap
 module Globset = Globnames.Refset
 
-(* --- Environments (TODO rename/decouple/move more) --- *)                     
-(*
- * Append two contexts (inner first, outer second), shifting internal indices.
- *
- * The input contexts are assumed to share the same environment, such that any
- * external indices inside the now-inner context must be shifted to pass over
- * the now-outer context.
- *)
-val context_app : Rel.t -> Rel.t -> Rel.t
-
 (* --- Basic questions about terms --- *)
                                               
 (* Is the first term equal to a "head" (application prefix) of the second?
