@@ -11,12 +11,10 @@ Idutils
 Inference
 Convertibility
 Checking
-
 Envutils
 Contextutils
 Hofs
 Debruijn
-
 Reducers
 Typeutils
 
