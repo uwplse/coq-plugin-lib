@@ -4,23 +4,25 @@ Apputils
 Constutils
 Funutils
 
-Inference
-Convertibility
-Checking
-
-Defutils
-Nameutils
-Contextutils
-Envutils
-Hofs
-Debruijn
-
 Equtils
 Sigmautils
 Idutils
 
+Inference
+Convertibility
+Checking
+
+Envutils
+Contextutils
+Hofs
+Debruijn
+
 Reducers
 Typeutils
+
+Defutils
+Nameutils
+
 Indutils
 Printing
 Hofimpls
