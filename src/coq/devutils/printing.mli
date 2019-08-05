@@ -1,6 +1,5 @@
 (* Auxiliary functions for printing *)
 
-open Format
 open Names
 open Constr
 open Environ

@@ -55,17 +55,16 @@ src/coq/logicutils/indutils.mli
 src/coq/logicutils/indutils.ml
 src/coq/logicutils/hofimpls.mli
 src/coq/logicutils/hofimpls.ml
-
-src/coq/zooming.mli
-src/coq/zooming.ml
-src/coq/transform.mli
-src/coq/transform.ml
-src/coq/filters.mli
-src/coq/filters.ml
-src/coq/indexing.mli
-src/coq/indexing.ml
-src/coq/hypotheses.mli
-src/coq/hypotheses.ml
+src/coq/logicutils/zooming.mli
+src/coq/logicutils/zooming.ml
+src/coq/logicutils/transform.mli
+src/coq/logicutils/transform.ml
+src/coq/logicutils/filters.mli
+src/coq/logicutils/filters.ml
+src/coq/logicutils/indexing.mli
+src/coq/logicutils/indexing.ml
+src/coq/logicutils/hypotheses.mli
+src/coq/logicutils/hypotheses.ml
 
 src/coq/devutils/printing.mli
 src/coq/devutils/printing.ml
