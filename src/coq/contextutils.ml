@@ -9,6 +9,7 @@ open Inference
 open Declarations
 
 module CRD = Context.Rel.Declaration
+module CND = Context.Named.Declaration
 
 (* --- Constructing declarations --- *)
 
@@ -16,7 +17,13 @@ module CRD = Context.Rel.Declaration
 let rel_assum (name, typ) = CRD.LocalAssum (name, typ)
 
 (* Make the rel declaration for a local definition *)
-let rel_defin (name, def, typ) = CRD.LocalDef (name, def, typ)               
+let rel_defin (name, def, typ) = CRD.LocalDef (name, def, typ)
+
+(* Make the named declaration for a local assumption *)
+let named_assum (id, typ) = CND.LocalAssum (id, typ)
+
+(* Make the named declaration for a local definition *)
+let named_defin (id, def, typ) = CND.LocalDef (id, def, typ)
 
 (* --- Questions about declarations --- *)
 
@@ -25,6 +32,12 @@ let is_rel_assum = CRD.is_local_assum
 
 (* Is the rel declaration a local definition? *)
 let is_rel_defin = CRD.is_local_def
+
+(* Is the named declaration an assumption? *)
+let is_named_assum = CND.is_local_assum
+
+(* Is the named declaration a definition? *)
+let is_named_defin = CND.is_local_def
 
 (* --- Deconstructing declarations --- *)
 
@@ -37,6 +50,15 @@ let rel_value decl = CRD.get_value decl
 (* Get the type of a rel declaration *)
 let rel_type decl = CRD.get_type decl
 
+(* Get the identifier of a named declaration *)
+let named_ident decl = CND.get_id decl
+
+(* Get the optional value of a named declaration *)
+let named_value decl = CND.get_value decl
+
+(* Get the type of a named declaration *)
+let named_type decl = CND.get_type decl
+
 (* --- Mapping over contexts --- *)
 
 (* Map over a rel context with environment kept in sync *)
@@ -46,7 +68,16 @@ let map_rel_context env make ctxt =
        push_rel decl env, (make env decl) :: res)
     ctxt
     ~init:(env, []) |>
-  snd
+    snd
+
+(* Map over a named context with environment kept in synch *)
+let map_named_context env make ctxt =
+  Context.Named.fold_outside
+    (fun decl (env, res) ->
+       push_named decl env, (make env decl) :: res)
+    ctxt
+    ~init:(env, []) |>
+    snd
 
 (* --- Binding in contexts --- *)
 
@@ -115,6 +146,16 @@ let decompose_lam_n_zeta n term =
       ctxt, body
   in
   aux n Context.Rel.empty term
+
+(* Bind the declarations of a local context as product/let-in bindings *)
+let recompose_prod_assum decls term =
+  let bind term decl = Term.mkProd_or_LetIn decl term in
+  Context.Rel.fold_inside bind ~init:term decls
+
+(* Bind the declarations of a local context as lambda/let-in bindings *)
+let recompose_lam_assum decls term =
+  let bind term decl = Term.mkLambda_or_LetIn decl term in
+  Context.Rel.fold_inside bind ~init:term decls
 
 (* --- Getting bindings for certain kinds of terms --- *)
 

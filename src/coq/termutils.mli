@@ -14,32 +14,7 @@ open Decl_kinds
 module Globmap = Globnames.Refmap
 module Globset = Globnames.Refset
 
-(* --- Environments (TODO rename/decouple/move more) --- *)
-
-(* Is the named declaration an assumption? *)
-val is_named_assum : ('constr, 'types) Named.Declaration.pt -> bool
-
-(* Is the named declaration a definition? *)
-val is_named_defin : ('constr, 'types) Named.Declaration.pt -> bool
-
-(*
- * Construct a named declaration
- *)
-val named_assum : Id.t * 'types -> ('constr, 'types) Named.Declaration.pt
-val named_defin : Id.t * 'constr * 'types -> ('constr, 'types) Named.Declaration.pt
-
-(*
- * Project a component of a named declaration
- *)
-val named_ident : ('constr, 'types) Named.Declaration.pt -> Id.t
-val named_value : ('constr, 'types) Named.Declaration.pt -> 'constr option
-val named_type : ('constr, 'types) Named.Declaration.pt -> 'types
-
-(*
- * Map over a named context with environment kept in synch
- *)
-val map_named_context : env -> (env -> Named.Declaration.t -> 'a) -> Named.t -> 'a list                                                                 
-
+(* --- Environments (TODO rename/decouple/move more) --- *)                     
 (*
  * Append two contexts (inner first, outer second), shifting internal indices.
  *
@@ -48,12 +23,6 @@ val map_named_context : env -> (env -> Named.Declaration.t -> 'a) -> Named.t -> 
  * the now-outer context.
  *)
 val context_app : Rel.t -> Rel.t -> Rel.t
-                                                          
-(*
- * Reconstruct local bindings around a term
- *)
-val recompose_prod_assum : Rel.t -> types -> types
-val recompose_lam_assum : Rel.t -> types -> types
 
 (* --- Basic questions about terms --- *)
                                               
