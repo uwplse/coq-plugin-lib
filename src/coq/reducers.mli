@@ -81,3 +81,8 @@ val try_reduce : reducer -> reducer
  * It reduces as soon as the condition holds.
  *)
 val reduce_body_if : (env -> types -> bool) -> reducer -> reducer
+
+(*
+ * Infer the type, then reduce using the default reducer
+ *)
+val reduce_type : reducer

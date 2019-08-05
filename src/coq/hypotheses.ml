@@ -9,7 +9,7 @@ open Environ
 open Evd
 open Zooming
 open Apputils
-open Typeutils
+open Reducers
 open Funutils
 
 (* --- Eta expansion --- *)

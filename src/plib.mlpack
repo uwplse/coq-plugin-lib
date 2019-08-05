@@ -4,13 +4,17 @@ Apputils
 Constutils
 Funutils
 
+Inference
+
+Convertibility
+
+Checking
+
 Defutils
 Nameutils
-Inference
 Contextutils
 Envutils
 Hofs
-Convertibility
 Debruijn
 
 Equtils

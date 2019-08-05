@@ -150,4 +150,6 @@ let rec remove_unused_hypos (env : env) (evd : evar_map) (trm : types) : types =
   | _ ->
      trm
 
-
+(* Reduce the type (TODO empty here for rev. compat. for now *)
+let reduce_type (env : env) evd (trm : types) : types =
+  reduce_term env Evd.empty (Inference.infer_type env evd trm)

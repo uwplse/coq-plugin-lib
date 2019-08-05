@@ -1,6 +1,7 @@
 -I src/utilities
 -I src/coq
 -I src/coq/termutils
+-I src/coq/typeutils
 -I src/coq/constants
 -I src
 -R src Plibrary
@@ -16,20 +17,25 @@ src/coq/termutils/constutils.ml
 src/coq/termutils/funutils.mli
 src/coq/termutils/funutils.ml
 
+src/coq/typeutils/inference.mli
+src/coq/typeutils/inference.ml
+
+src/coq/convertibility.mli
+src/coq/convertibility.ml
+
+src/coq/typeutils/checking.mli
+src/coq/typeutils/checking.ml
+
 src/coq/defutils.mli
 src/coq/defutils.ml
 src/coq/nameutils.mli
 src/coq/nameutils.ml
-src/coq/inference.mli
-src/coq/inference.ml
 src/coq/contextutils.mli
 src/coq/contextutils.ml
 src/coq/envutils.mli
 src/coq/envutils.ml
 src/coq/hofs.mli
 src/coq/hofs.ml
-src/coq/convertibility.mli
-src/coq/convertibility.ml
 src/coq/debruijn.mli
 src/coq/debruijn.ml
 
