@@ -1,5 +1,6 @@
 -I src/utilities
 -I src/coq
+-I src/coq/termutils
 -I src/coq/constants
 -I src
 -R src Plibrary
@@ -8,22 +9,15 @@
 src/utilities/utilities.mli
 src/utilities/utilities.ml
 
-src/coq/apputils.mli
-src/coq/apputils.ml
-
-src/coq/constants/equtils.mli
-src/coq/constants/equtils.ml
-src/coq/constants/sigmautils.mli
-src/coq/constants/sigmautils.ml
-src/coq/constants/idutils.mli
-src/coq/constants/idutils.ml
+src/coq/termutils/apputils.mli
+src/coq/termutils/apputils.ml
+src/coq/termutils/constutils.mli
+src/coq/termutils/constutils.ml
+src/coq/termutils/funutils.mli
+src/coq/termutils/funutils.ml
 
 src/coq/defutils.mli
 src/coq/defutils.ml
-src/coq/constutils.mli
-src/coq/constutils.ml
-src/coq/funutils.mli
-src/coq/funutils.ml
 src/coq/nameutils.mli
 src/coq/nameutils.ml
 src/coq/inference.mli
@@ -38,6 +32,14 @@ src/coq/convertibility.mli
 src/coq/convertibility.ml
 src/coq/debruijn.mli
 src/coq/debruijn.ml
+
+src/coq/constants/equtils.mli
+src/coq/constants/equtils.ml
+src/coq/constants/sigmautils.mli
+src/coq/constants/sigmautils.ml
+src/coq/constants/idutils.mli
+src/coq/constants/idutils.ml
+
 src/coq/reducers.mli
 src/coq/reducers.ml
 src/coq/typeutils.mli

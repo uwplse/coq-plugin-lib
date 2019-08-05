@@ -1,14 +1,10 @@
 Utilities
 
 Apputils
-
-Equtils
-Sigmautils
-Idutils
-
-Defutils
 Constutils
 Funutils
+
+Defutils
 Nameutils
 Inference
 Contextutils
@@ -16,6 +12,11 @@ Envutils
 Hofs
 Convertibility
 Debruijn
+
+Equtils
+Sigmautils
+Idutils
+
 Reducers
 Typeutils
 Indutils
