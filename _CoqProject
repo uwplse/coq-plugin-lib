@@ -25,6 +25,11 @@ src/coq/constants/sigmautils.ml
 src/coq/constants/idutils.mli
 src/coq/constants/idutils.ml
 
+src/coq/representationutils/defutils.mli
+src/coq/representationutils/defutils.ml
+src/coq/representationutils/nameutils.mli
+src/coq/representationutils/nameutils.ml
+
 src/coq/logicutils/inference.mli
 src/coq/logicutils/inference.ml
 src/coq/logicutils/convertibility.mli
@@ -43,11 +48,8 @@ src/coq/logicutils/reducers.mli
 src/coq/logicutils/reducers.ml
 src/coq/logicutils/typeutils.mli
 src/coq/logicutils/typeutils.ml
-
-src/coq/representationutils/defutils.mli
-src/coq/representationutils/defutils.ml
-src/coq/representationutils/nameutils.mli
-src/coq/representationutils/nameutils.ml
+src/coq/logicutils/substitution.mli
+src/coq/logicutils/substitution.ml
 
 src/coq/indutils.mli
 src/coq/indutils.ml
@@ -57,8 +59,6 @@ src/coq/hofimpls.mli
 src/coq/hofimpls.ml
 src/coq/zooming.mli
 src/coq/zooming.ml
-src/coq/substitution.mli
-src/coq/substitution.ml
 src/coq/transform.mli
 src/coq/transform.ml
 src/coq/filters.mli

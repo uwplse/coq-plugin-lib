@@ -8,6 +8,9 @@ Equtils
 Sigmautils
 Idutils
 
+Defutils
+Nameutils
+
 Inference
 Convertibility
 Checking
@@ -17,15 +20,12 @@ Hofs
 Debruijn
 Reducers
 Typeutils
-
-Defutils
-Nameutils
+Substitution
 
 Indutils
 Printing
 Hofimpls
 Zooming
-Substitution
 Transform
 Filters
 Indexing
