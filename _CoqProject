@@ -21,6 +21,8 @@ src/coq/constants/idutils.ml
 
 src/coq/termutils.mli
 src/coq/termutils.ml
+src/coq/defutils.mli
+src/coq/defutils.ml
 src/coq/constutils.mli
 src/coq/constutils.ml
 src/coq/funutils.mli

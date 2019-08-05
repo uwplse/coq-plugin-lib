@@ -15,6 +15,7 @@ open Utilities
 open Declarations
 open Decl_kinds
 open Constrextern
+open Defutils
 open Termutils
 open Indutils
 

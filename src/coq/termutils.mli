@@ -40,20 +40,6 @@ val intern : env -> evar_map -> constr_expr -> types
  *)
 val extern : env -> evar_map -> types -> constr_expr
 
-(*
- * Define a new Coq term
- * Refresh universes if the bool is true, otherwise don't
- * (Refreshing universes is REALLY costly)
- *)
-val define_term :
-  ?typ:types -> Id.t -> evar_map -> types -> bool -> global_reference
-
-(*
- * Like define_term, but for a canonical structure
- *)
-val define_canonical :
-  ?typ:types -> Id.t -> evar_map -> types -> bool -> global_reference
-
 (* 
  * Construct the external expression for a definition.
  *)
