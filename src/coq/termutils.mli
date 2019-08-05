@@ -13,10 +13,6 @@ open Decl_kinds
 
 module Globmap = Globnames.Refmap
 module Globset = Globnames.Refset
-
-(* --- Auxiliary types --- *)
-               
-type closure = env * (types list)
                             
 (* --- Representations --- *)
 

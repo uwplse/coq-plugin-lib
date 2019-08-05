@@ -16,11 +16,6 @@ open Recordops
 
 module Globmap = Globnames.Refmap
 module Globset = Globnames.Refset
-
-(* --- Auxiliary types --- *)
-
-(* TODO remove and fix code that refers to this *)
-type closure = env * (types list)
                                                                     
 (* --- Representations --- *)
 
