@@ -50,9 +50,9 @@ src/coq/logicutils/typeutils.mli
 src/coq/logicutils/typeutils.ml
 src/coq/logicutils/substitution.mli
 src/coq/logicutils/substitution.ml
+src/coq/logicutils/indutils.mli
+src/coq/logicutils/indutils.ml
 
-src/coq/indutils.mli
-src/coq/indutils.ml
 src/coq/printing.mli
 src/coq/printing.ml
 src/coq/hofimpls.mli
