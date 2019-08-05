@@ -77,14 +77,6 @@ let rec reduce_body_if p (r : reducer) env evd trm =
     | _ ->
        failwith "Could not specialize"
 
-(* --- Defaults --- *)
-
-(* Default reducer *)
-let reduce_term (env : env) (evd : evar_map) (trm : types) : types =
-  EConstr.to_constr
-    evd
-    (Reductionops.nf_betaiotazeta env evd (EConstr.of_constr trm))
-
 (* --- Custom reducers --- *)
 
 (* Don't reduce *)

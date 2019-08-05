@@ -2,7 +2,6 @@
  * Specific implementations of higher-order functions from Hofs
  *)
 
-open Hofs
 open Constr
 
 (*

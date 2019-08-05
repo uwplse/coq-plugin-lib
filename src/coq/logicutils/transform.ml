@@ -5,16 +5,11 @@
  *)
 
 open Util
-open Context
 open Environ
 open Constr
 open Names
-open Constrexpr
 open Evd
-open Utilities
 open Declarations
-open Decl_kinds
-open Constrextern
 open Defutils
 open Indutils
 open Substitution

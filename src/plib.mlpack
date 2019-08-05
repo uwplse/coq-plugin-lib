@@ -14,21 +14,24 @@ Nameutils
 Inference
 Convertibility
 Checking
+
 Envutils
 Contextutils
+
 Hofs
 Debruijn
-Reducers
-Typeutils
-Substitution
-Indutils
 Hofimpls
+Substitution
+Reducers
+Typehofs
+Filters	
 Zooming
-Transform
-Filters
+Hypotheses
 
 Indexing
-Hypotheses
+Indutils
+
+Transform
 
 Printing
 

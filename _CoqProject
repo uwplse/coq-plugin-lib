@@ -3,6 +3,11 @@
 -I src/coq/termutils
 -I src/coq/constants
 -I src/coq/logicutils
+-I src/coq/logicutils/contexts
+-I src/coq/logicutils/typesandequality
+-I src/coq/logicutils/hofs
+-I src/coq/logicutils/inductive
+-I src/coq/logicutils/transformation
 -I src/coq/devutils
 -I src/coq/representationutils
 -I src
@@ -31,40 +36,44 @@ src/coq/representationutils/defutils.ml
 src/coq/representationutils/nameutils.mli
 src/coq/representationutils/nameutils.ml
 
-src/coq/logicutils/inference.mli
-src/coq/logicutils/inference.ml
-src/coq/logicutils/convertibility.mli
-src/coq/logicutils/convertibility.ml
-src/coq/logicutils/checking.mli
-src/coq/logicutils/checking.ml
-src/coq/logicutils/envutils.mli
-src/coq/logicutils/envutils.ml
-src/coq/logicutils/contextutils.mli
-src/coq/logicutils/contextutils.ml
-src/coq/logicutils/hofs.mli
-src/coq/logicutils/hofs.ml
-src/coq/logicutils/debruijn.mli
-src/coq/logicutils/debruijn.ml
-src/coq/logicutils/reducers.mli
-src/coq/logicutils/reducers.ml
-src/coq/logicutils/typeutils.mli
-src/coq/logicutils/typeutils.ml
-src/coq/logicutils/substitution.mli
-src/coq/logicutils/substitution.ml
-src/coq/logicutils/indutils.mli
-src/coq/logicutils/indutils.ml
-src/coq/logicutils/hofimpls.mli
-src/coq/logicutils/hofimpls.ml
-src/coq/logicutils/zooming.mli
-src/coq/logicutils/zooming.ml
-src/coq/logicutils/transform.mli
-src/coq/logicutils/transform.ml
-src/coq/logicutils/filters.mli
-src/coq/logicutils/filters.ml
-src/coq/logicutils/indexing.mli
-src/coq/logicutils/indexing.ml
-src/coq/logicutils/hypotheses.mli
-src/coq/logicutils/hypotheses.ml
+src/coq/logicutils/typesandequality/inference.mli
+src/coq/logicutils/typesandequality/inference.ml
+src/coq/logicutils/typesandequality/convertibility.mli
+src/coq/logicutils/typesandequality/convertibility.ml
+src/coq/logicutils/typesandequality/checking.mli
+src/coq/logicutils/typesandequality/checking.ml
+
+src/coq/logicutils/contexts/envutils.mli
+src/coq/logicutils/contexts/envutils.ml
+src/coq/logicutils/contexts/contextutils.mli
+src/coq/logicutils/contexts/contextutils.ml
+
+src/coq/logicutils/hofs/hofs.mli
+src/coq/logicutils/hofs/hofs.ml
+src/coq/logicutils/hofs/hofimpls.mli
+src/coq/logicutils/hofs/hofimpls.ml
+src/coq/logicutils/hofs/debruijn.mli
+src/coq/logicutils/hofs/debruijn.ml
+src/coq/logicutils/hofs/substitution.mli
+src/coq/logicutils/hofs/substitution.ml
+src/coq/logicutils/hofs/reducers.mli
+src/coq/logicutils/hofs/reducers.ml
+src/coq/logicutils/hofs/typehofs.mli
+src/coq/logicutils/hofs/typehofs.ml
+src/coq/logicutils/hofs/filters.mli
+src/coq/logicutils/hofs/filters.ml
+src/coq/logicutils/hofs/zooming.mli
+src/coq/logicutils/hofs/zooming.ml
+src/coq/logicutils/hofs/hypotheses.mli
+src/coq/logicutils/hofs/hypotheses.ml
+
+src/coq/logicutils/inductive/indexing.mli
+src/coq/logicutils/inductive/indexing.ml
+src/coq/logicutils/inductive/indutils.mli
+src/coq/logicutils/inductive/indutils.ml
+
+src/coq/logicutils/transformation/transform.mli
+src/coq/logicutils/transformation/transform.ml
 
 src/coq/devutils/printing.mli
 src/coq/devutils/printing.ml

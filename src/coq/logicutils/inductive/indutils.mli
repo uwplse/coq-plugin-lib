@@ -2,15 +2,11 @@
  * Inductive types and their eliminators (TODO organize, maybe move some stuff)
  *)
 
-open Context
 open Environ
 open Constr
 open Evd
-open Constrexpr
 open Names
 open Declarations
-open Globnames
-open Decl_kinds
 
        
 (*

@@ -2,9 +2,6 @@
  * Utilities for types
  *)
 
-open Environ
-open Evd
-open Constr
 open Reducers
 
 (* --- Higher-order functions --- *)

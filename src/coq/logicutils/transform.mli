@@ -3,15 +3,11 @@
  * TODO explain more, maybe move later
  *)
 
-open Context
 open Environ
 open Constr
 open Evd
-open Constrexpr
 open Names
 open Declarations
-open Globnames
-open Decl_kinds
 open Substitution
 
 (* Type-sensitive transformation of terms *)
