@@ -1,8 +1,9 @@
 -I src/utilities
 -I src/coq
 -I src/coq/termutils
--I src/coq/logicutils
 -I src/coq/constants
+-I src/coq/logicutils
+-I src/coq/representationutils
 -I src
 -R src Plibrary
 -Q theories Plibrary
@@ -43,10 +44,10 @@ src/coq/logicutils/reducers.ml
 src/coq/logicutils/typeutils.mli
 src/coq/logicutils/typeutils.ml
 
-src/coq/defutils.mli
-src/coq/defutils.ml
-src/coq/nameutils.mli
-src/coq/nameutils.ml
+src/coq/representationutils/defutils.mli
+src/coq/representationutils/defutils.ml
+src/coq/representationutils/nameutils.mli
+src/coq/representationutils/nameutils.ml
 
 src/coq/indutils.mli
 src/coq/indutils.ml
