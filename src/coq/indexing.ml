@@ -5,7 +5,6 @@
 open Constr
 open Utilities
 open Debruijn
-open Termutils
 open Typeutils
 open Hofimpls
 open Reducers

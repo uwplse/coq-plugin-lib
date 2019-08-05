@@ -12,7 +12,6 @@ open Names
 open Declarations
 open Globnames
 open Decl_kinds
-open Termutils
 open Substitution
 
 (* Type-sensitive transformation of terms *)

@@ -5,7 +5,6 @@
 open Environ
 open Evd
 open Constr
-open Termutils
 open Convertibility
 open Inference
 open Reducers

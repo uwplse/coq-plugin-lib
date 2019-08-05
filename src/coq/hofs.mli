@@ -2,7 +2,6 @@
 
 open Environ
 open Constr
-open Termutils
 
 (* Predicates to determine whether to apply a mapped function *)
 type ('a, 'b) pred = 'a -> 'b -> bool

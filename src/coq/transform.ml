@@ -16,7 +16,6 @@ open Declarations
 open Decl_kinds
 open Constrextern
 open Defutils
-open Termutils
 open Indutils
 open Substitution
 
@@ -125,7 +124,7 @@ let declare_module_structure ?(params=[]) ident declare_elements =
  * NOTE: Does not support functors or nested modules.
  * NOTE: Global side effects.
  *)
-let transform_module_structure ?(init=const Globmap.empty) ident tr_constr mod_body =
+let transform_module_structure ?(init=const Globnames.Refmap.empty) ident tr_constr mod_body =
   let mod_path = mod_body.mod_mp in
   let mod_arity, mod_elems = decompose_module_signature mod_body.mod_type in
   assert (List.is_empty mod_arity); (* Functors are not yet supported *)
@@ -135,11 +134,11 @@ let transform_module_structure ?(init=const Globmap.empty) ident tr_constr mod_b
     match body with
     | SFBconst const_body ->
       let const = Constant.make2 mod_path label in
-      if Globmap.mem (ConstRef const) subst then
+      if Globnames.Refmap.mem (ConstRef const) subst then
         subst (* Do not transform schematic definitions. *)
       else
         let const' = transform_constant ident tr_constr const_body in
-        Globmap.add (ConstRef const) (ConstRef const') subst
+        Globnames.Refmap.add (ConstRef const) (ConstRef const') subst
     | SFBmind mind_body ->
       check_inductive_supported mind_body;
       let ind = (MutInd.make2 mod_path label, 0) in
@@ -149,9 +148,9 @@ let transform_module_structure ?(init=const Globmap.empty) ident tr_constr mod_b
       let list_cons ind = List.init ncons (fun i -> ConstructRef (ind, i + 1)) in
       let sorts = ind_body.mind_kelim in
       let list_elim ind = List.map (Indrec.lookup_eliminator ind) sorts in
-      Globmap.add (IndRef ind) (IndRef ind') subst |>
-      List.fold_right2 Globmap.add (list_cons ind) (list_cons ind') |>
-      List.fold_right2 Globmap.add (list_elim ind) (list_elim ind')
+      Globnames.Refmap.add (IndRef ind) (IndRef ind') subst |>
+      List.fold_right2 Globnames.Refmap.add (list_cons ind) (list_cons ind') |>
+      List.fold_right2 Globnames.Refmap.add (list_elim ind) (list_elim ind')
     | SFBmodule mod_body ->
       Feedback.msg_warning
         Pp.(str "Skipping nested module structure " ++ Label.print label);

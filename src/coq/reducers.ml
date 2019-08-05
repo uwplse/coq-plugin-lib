@@ -4,7 +4,6 @@ open Environ
 open Evd
 open Constr
 open Hofs
-open Termutils
 open Utilities
 open Debruijn
 open Idutils

@@ -8,7 +8,6 @@ open Constr
 open Declarations
 open Decl_kinds
 open Constrextern
-open Termutils
 open Contextutils
 
 (* Look up all indexes from is in env *)

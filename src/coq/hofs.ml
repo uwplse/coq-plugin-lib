@@ -2,7 +2,6 @@
 
 open Environ
 open Constr
-open Termutils
 open Contextutils
 open Envutils
 open Utilities
