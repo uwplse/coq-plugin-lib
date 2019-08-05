@@ -51,8 +51,6 @@ src/coq/typeutils.mli
 src/coq/typeutils.ml
 src/coq/indutils.mli
 src/coq/indutils.ml
-src/coq/transform.mli
-src/coq/transform.ml
 src/coq/printing.mli
 src/coq/printing.ml
 src/coq/hofimpls.mli
@@ -61,6 +59,8 @@ src/coq/zooming.mli
 src/coq/zooming.ml
 src/coq/substitution.mli
 src/coq/substitution.ml
+src/coq/transform.mli
+src/coq/transform.ml
 src/coq/filters.mli
 src/coq/filters.ml
 src/coq/indexing.mli

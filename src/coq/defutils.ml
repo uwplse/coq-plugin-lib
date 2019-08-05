@@ -7,6 +7,10 @@ open Names
 open Evd
 open Decl_kinds
 open Recordops
+open Constrexpr
+open Constrextern
+
+(* --- Defining Coq terms --- *)
 
 (* https://github.com/ybertot/plugin_tutorials/blob/master/tuto1/src/simple_declare.ml *)
 let edeclare ident (_, poly, _ as k) ~opaque sigma udecl body tyopt imps hook refresh =
@@ -63,3 +67,44 @@ let define_canonical ?typ (n : Id.t) (evm : evar_map) (trm : types) (refresh : b
   let etrm = EConstr.of_constr trm in
   let etyp = Option.map EConstr.of_constr typ in
   edeclare n k ~opaque:false evm udecl etrm etyp [] hook refresh
+
+(* --- Converting between representations --- *)
+
+(*
+ * See defutils.mli for explanations of these representations.
+ *)
+
+(* Intern a term (for now, ignore the resulting evar_map) *)
+let intern env evd t : types =
+  let (trm, _) = Constrintern.interp_constr env evd t in
+  EConstr.to_constr evd trm
+
+(* Extern a term *)
+let extern env evd t : constr_expr =
+  Constrextern.extern_constr true env evd (EConstr.of_constr t)
+
+(* Construct the external expression for a definition *)
+let expr_of_global (g : global_reference) : constr_expr =
+  let r = extern_reference Id.Set.empty g in
+  CAst.make @@ (CAppExpl ((None, r, None), []))
+
+(* Convert a term into a global reference with universes (or raise Not_found) *)
+let pglobal_of_constr term =
+  match Constr.kind term with
+  | Const (const, univs) -> ConstRef const, univs
+  | Ind (ind, univs) -> IndRef ind, univs
+  | Construct (cons, univs) -> ConstructRef cons, univs
+  | Var id -> VarRef id, Univ.Instance.empty
+  | _ -> raise Not_found
+
+(* Convert a global reference with universes into a term *)
+let constr_of_pglobal (glob, univs) =
+  match glob with
+  | ConstRef const -> mkConstU (const, univs)
+  | IndRef ind -> mkIndU (ind, univs)
+  | ConstructRef cons -> mkConstructU (cons, univs)
+  | VarRef id -> mkVar id
+
+(* Safely instantiate a global reference, with proper universe handling *)
+let e_new_global evm gref =
+  Evarutil.e_new_global evm gref |> EConstr.to_constr !evm

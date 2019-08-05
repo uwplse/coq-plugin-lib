@@ -13,47 +13,6 @@ open Decl_kinds
 
 module Globmap = Globnames.Refmap
 module Globset = Globnames.Refset
-                            
-(* --- Representations --- *)
-
-(*
- * Coq has many ways of representing terms. These functions convert
- * between different representations, using extra information (environments,
- * evar maps, and so on) as necessary
- *
- * The internal representation is constr or types (types aliases to constr).
- * Constr stands for "construction," not constructor.
- *
- * The external representation is constr_expr.
- *
- * References to definitions are represented by the global_reference type.
- * global_reference Univ.puniverses additionally stores universes.
- *)
-
-(*
- * Intern a term (for now, ignore the resulting evar_map)
- *)
-val intern : env -> evar_map -> constr_expr -> types
-
-(*
- * Extern a term
- *)
-val extern : env -> evar_map -> types -> constr_expr
-
-(* 
- * Construct the external expression for a definition.
- *)
-val expr_of_global : global_reference -> constr_expr
-
-(*
- * Convert a term into a global reference with universes (or raise Not_found) 
- *)
-val pglobal_of_constr : constr -> global_reference Univ.puniverses
-
-(* 
- * Convert a global reference with universes into a term
- *)
-val constr_of_pglobal : global_reference Univ.puniverses -> constr
 
 (* --- Environments (TODO rename/decouple/move more) --- *)
 
@@ -108,15 +67,3 @@ val recompose_lam_assum : Rel.t -> types -> types
  * informative boolean result.
  *)
 val eq_constr_head : ?eq_constr:(constr -> constr -> bool) -> constr -> constr -> constr array option
-
-(* --- Convertibility and reduction --- *)
-
-(* Safely instantiate a global reference, updating the evar map. (TODO move) *)
-val e_new_global : evar_map ref -> global_reference -> constr
-
-(* --- Names (TODO move/rename remaining) --- *)
-
-type global_substitution = global_reference Globmap.t
-
-(* Substitute global references throughout a term *)
-val subst_globals : global_substitution -> constr -> constr

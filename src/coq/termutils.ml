@@ -7,60 +7,13 @@ open Context
 open Environ
 open Constr
 open Names
-open Constrexpr
 open Evd
 open Utilities
 open Decl_kinds
-open Constrextern
 open Recordops
 
 module Globmap = Globnames.Refmap
 module Globset = Globnames.Refset
-                                                                    
-(* --- Representations --- *)
-
-(*
- * See termutils.mli for explanations of these representations.
- *)
-
-(* Intern a term (for now, ignore the resulting evar_map) *)
-let intern env evd t : types =
-  let (trm, _) = Constrintern.interp_constr env evd t in
-  EConstr.to_constr evd trm
-
-(* Extern a term *)
-let extern env evd t : constr_expr =
-  Constrextern.extern_constr true env evd (EConstr.of_constr t)
-
-(*
- * Construct the external expression for a definition. 
- *)
-let expr_of_global (g : global_reference) : constr_expr =
-  let r = extern_reference Id.Set.empty g in
-  CAst.make @@ (CAppExpl ((None, r, None), []))
-
-(* Convert a term into a global reference with universes (or raise Not_found) *)
-let pglobal_of_constr term =
-  match Constr.kind term with
-  | Const (const, univs) -> ConstRef const, univs
-  | Ind (ind, univs) -> IndRef ind, univs
-  | Construct (cons, univs) -> ConstructRef cons, univs
-  | Var id -> VarRef id, Univ.Instance.empty
-  | _ -> raise Not_found
-
-(* Convert a global reference with universes into a term *)
-let constr_of_pglobal (glob, univs) =
-  match glob with
-  | ConstRef const -> mkConstU (const, univs)
-  | IndRef ind -> mkIndU (ind, univs)
-  | ConstructRef cons -> mkConstructU (cons, univs)
-  | VarRef id -> mkVar id
-
-(* --- Convertibility and reduction --- *)
-
-(* Safely instantiate a global reference, with proper universe handling (TODO move) *)
-let e_new_global evm gref =
-  Evarutil.e_new_global evm gref |> EConstr.to_constr !evm
 
 (* --- Environments (TODO rename) --- *)
 
@@ -135,19 +88,3 @@ let eq_constr_head ?(eq_constr=eq_constr_nounivs) term term' =
     Some (List.skipn (List.length args) args' |> Array.of_list)
   else
     None
-
-(* --- Names --- *)
-
-type global_substitution = global_reference Globmap.t
-
-(* Substitute global references throughout a term *)
-let subst_globals subst term =
-  let rec aux term =
-    try
-      pglobal_of_constr term |>
-      map_puniverses (flip Globmap.find subst) |>
-      constr_of_pglobal
-    with Not_found ->
-      Constr.map aux term
-  in
-  aux term

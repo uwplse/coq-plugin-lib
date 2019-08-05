@@ -7,6 +7,9 @@ open Hofs
 open Debruijn
 open Convertibility
 open Diffutils
+open Defutils
+open Names
+open Utilities
 
 (* TODO clean up so retrieval is easier *)
 type ('a, 'b) substitution = env -> evar_map -> 'a -> types -> 'b
@@ -88,3 +91,19 @@ let all_conv_substs_combs : (types * types) comb_substitution =
 (* In env, return all substitutions of subterms of trm that have a convertible type to the type of src with dst *)
 let all_typ_substs_combs : (types * types) comb_substitution =
   all_substs_combs types_convertible
+
+ (* --- Substituting global references --- *)
+
+type global_substitution = global_reference Globnames.Refmap.t
+
+(* Substitute global references throughout a term *)
+let subst_globals subst term =
+  let rec aux term =
+    try
+      pglobal_of_constr term |>
+      map_puniverses (flip Globnames.Refmap.find subst) |>
+      constr_of_pglobal
+    with Not_found ->
+      Constr.map aux term
+  in
+  aux term

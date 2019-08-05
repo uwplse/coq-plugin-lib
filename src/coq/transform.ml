@@ -18,6 +18,7 @@ open Constrextern
 open Defutils
 open Termutils
 open Indutils
+open Substitution
 
 (* Type-sensitive transformation of terms *)
 type constr_transformer = env -> evar_map ref -> constr -> constr

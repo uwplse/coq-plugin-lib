@@ -13,6 +13,7 @@ open Declarations
 open Globnames
 open Decl_kinds
 open Termutils
+open Substitution
 
 (* Type-sensitive transformation of terms *)
 type constr_transformer = env -> evar_map ref -> constr -> constr

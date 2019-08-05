@@ -3,6 +3,7 @@
 open Environ
 open Constr
 open Evd
+open Names
 
 (* TODO clean up so retrieval is easier *)
 type ('a, 'b) substitution = env -> evar_map -> 'a -> types -> 'b
@@ -61,3 +62,10 @@ val all_conv_substs_combs : (types * types) comb_substitution
  * the type of a source term  with a destination term.
  *)
 val all_typ_substs_combs : (types * types) comb_substitution
+
+(* --- Substituting global references (TODO unify w/ above after cleaning types) --- *)
+
+type global_substitution = global_reference Globnames.Refmap.t
+
+(* Substitute global references throughout a term *)
+val subst_globals : global_substitution -> constr -> constr
