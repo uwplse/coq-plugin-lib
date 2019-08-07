@@ -79,7 +79,7 @@ let define_canonical ?typ (n : Id.t) (evm : evar_map) (trm : types) (refresh : b
 (* Intern a term (for now, ignore the resulting evar_map) *)
 let intern env sigma t : evar_map * types =
   let (trm, uctxt) = Constrintern.interp_constr env sigma t in
-  let sigma = merge_universe_context sigma uctxt in
+  let sigma = set_universe_context sigma uctxt in
   sigma, EConstr.to_constr sigma trm
 
 (* Extern a term *)
