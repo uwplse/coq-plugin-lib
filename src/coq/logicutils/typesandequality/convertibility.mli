@@ -6,7 +6,7 @@ open Constr
 open Environ
 open Evd
 
-(* Convertibility, ignoring universe inconsistency for now *)
+(* Convertibility under some set of constraints *)
 val convertible : env -> evar_map -> types -> types -> bool
                                                 
 (*

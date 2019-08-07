@@ -9,7 +9,10 @@ open Environ
 open Evd
 open Inference
 
-(* Checks whether two terms may be convertible *)
+(* 
+ * Checks whether two terms may be convertible 
+ * TODO do we need the returned evar_map? Would that be helpful?
+ *)
 let convertible env sigma trm1 trm2 : bool =
   let etrm1 = EConstr.of_constr trm1 in
   let etrm2 = EConstr.of_constr trm2 in
