@@ -5,6 +5,7 @@
 open Constr
 open Names
 open Environ
+open Evd
 
 let coq_init_datatypes =
   ModPath.MPfile
@@ -23,11 +24,14 @@ let id_typ : types =
 (* --- Representations --- *)
 
 (* Get the Coq identity term for typ *)
-let identity_term (env : env) (typ : types) : types =
-  let id = mkApp (id_prop, Array.make 1 typ) in
-  try
-    let _ = Typeops.infer env id in id
-  with _ -> mkApp (id_typ, Array.make 1 typ)
+let identity_term env sigma typ : evar_map * types =
+  let sigma_ref = ref sigma in 
+  let sort_family = Inference.e_infer_sort env sigma_ref typ in
+  match sort_family with
+  | InProp ->
+     (! sigma_ref, mkApp (id_prop, Array.make 1 typ))
+  | _ ->
+     (! sigma_ref, mkApp (id_typ, Array.make 1 typ))
 
 (* --- Questions about constants --- *)
 

@@ -4,16 +4,16 @@ Apputils
 Constutils
 Funutils
 
-Equtils
-Sigmautils
-Idutils
-
 Defutils
 Nameutils
 
 Inference
 Convertibility
 Checking
+
+Equtils
+Sigmautils
+Idutils
 
 Envutils
 Contextutils

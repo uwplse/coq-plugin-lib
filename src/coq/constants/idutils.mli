@@ -4,6 +4,7 @@
 
 open Constr
 open Environ
+open Evd
        
 (* --- Constants --- *)
 
@@ -18,7 +19,7 @@ val id_typ : types
 (*
  * Apply identity (id_prop or id_typ) to the input, as appropriate
  *)
-val identity_term : env -> types -> types
+val identity_term : env -> evar_map -> types -> evar_map * types
 
 (* --- Questions about constants --- *)
 

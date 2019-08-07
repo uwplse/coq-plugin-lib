@@ -24,13 +24,6 @@ src/coq/termutils/constutils.ml
 src/coq/termutils/funutils.mli
 src/coq/termutils/funutils.ml
 
-src/coq/constants/equtils.mli
-src/coq/constants/equtils.ml
-src/coq/constants/sigmautils.mli
-src/coq/constants/sigmautils.ml
-src/coq/constants/idutils.mli
-src/coq/constants/idutils.ml
-
 src/coq/representationutils/defutils.mli
 src/coq/representationutils/defutils.ml
 src/coq/representationutils/nameutils.mli
@@ -42,6 +35,13 @@ src/coq/logicutils/typesandequality/convertibility.mli
 src/coq/logicutils/typesandequality/convertibility.ml
 src/coq/logicutils/typesandequality/checking.mli
 src/coq/logicutils/typesandequality/checking.ml
+
+src/coq/constants/equtils.mli
+src/coq/constants/equtils.ml
+src/coq/constants/sigmautils.mli
+src/coq/constants/sigmautils.ml
+src/coq/constants/idutils.mli
+src/coq/constants/idutils.ml
 
 src/coq/logicutils/contexts/envutils.mli
 src/coq/logicutils/contexts/envutils.ml
