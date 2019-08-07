@@ -69,6 +69,5 @@ val constr_of_pglobal : global_reference Univ.puniverses -> constr
 
 (*
  * Safely instantiate a global reference, updating the evar map
- * (TODO would be better just returning new evar_map)
  *)
-val e_new_global : evar_map ref -> global_reference -> constr
+val new_global : evar_map -> global_reference -> evar_map * constr

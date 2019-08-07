@@ -109,5 +109,8 @@ let constr_of_pglobal (glob, univs) =
   | VarRef id -> mkVar id
 
 (* Safely instantiate a global reference, with proper universe handling *)
-let e_new_global sigma gref =
-  Evarutil.e_new_global sigma gref |> EConstr.to_constr !sigma
+let new_global sigma gref =
+  let sigma_ref = ref sigma in
+  let glob =  Evarutil.e_new_global sigma_ref gref in
+  let sigma = ! sigma_ref in
+  sigma, EConstr.to_constr sigma glob
