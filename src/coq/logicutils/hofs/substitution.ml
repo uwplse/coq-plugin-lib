@@ -17,23 +17,27 @@ type 'a type_substitution = ('a, types) substitution
 
 (* Map a substitution over a term *)
 let all_substs p env evd (src, dst) trm : types =
-  map_term_env_if
-    (fun en (s, _) t -> p en evd s t)
-    (fun _ (_, d) _ -> d)
-    (fun (s, d) -> (shift s, shift d))
-    env
-    (src, dst)
-    trm
+  snd
+    (map_term_env_if
+       (fun en evd (s, _) t -> p en evd s t)
+       (fun _ evd (_, d) _ -> evd, d)
+       (fun (s, d) -> (shift s, shift d))
+       env
+       evd
+       (src, dst)
+       trm)
 
 (* Map all combinations of a substitution over a term *)
 let all_substs_combs p env evd (src, dst) trm : types list =
-  map_subterms_env_if
-    (fun en (s, _) t -> p en evd s t)
-    (fun _ (_, d) t -> [d; t])
-    (fun (s, d) -> (shift s, shift d))
-    env
-    (src, dst)
-    trm
+  snd
+    (map_subterms_env_if
+       (fun en evd (s, _) t -> p en evd s t)
+       (fun _ evd (_, d) t -> evd, [d; t])
+       (fun (s, d) -> (shift s, shift d))
+       env
+       evd
+       (src, dst)
+       trm)
 
 (* In env, substitute all subterms of trm that are convertible to src with dst *)
 let all_conv_substs : (types * types) type_substitution =
@@ -73,15 +77,17 @@ let constructs_recursively env evd c trm : bool =
  * Can generalize this further
  *)
 let all_constr_substs env evd c trm : types =
-  map_term_env_if
-    (fun env -> constructs_recursively env evd)
-    (fun env _ t ->
-      let (_, args_t) = destApp t in
-      List.find (types_convertible env evd t) (Array.to_list args_t))
-    shift
-    env
-    c
-    trm
+  snd
+    (map_term_env_if
+       constructs_recursively
+       (fun env evd _ t ->
+         let (_, args_t) = destApp t in
+         evd, List.find (types_convertible env evd t) (Array.to_list args_t))
+       shift
+       env
+       evd
+       c
+       trm)
 
 (* In env, return all substitutions of subterms of trm that are convertible to src with dst *)
 let all_conv_substs_combs : (types * types) comb_substitution =
