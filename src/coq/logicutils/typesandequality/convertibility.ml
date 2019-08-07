@@ -9,27 +9,11 @@ open Environ
 open Evd
 open Inference
 
-(*
- * TODO bad evar practices for now
- *)
-       
-(* Check whether two terms are convertible, ignoring universe inconsistency *)
-let conv_ignoring_univ_inconsistency env evm (trm1 : types) (trm2 : types) : bool =
-  match map_tuple kind (trm1, trm2) with
-  | (Sort (Type u1), Sort (Type u2)) ->
-     (* PUMPKIN assumes universe consistency for now *)
-     true
-  | _ ->
-     let etrm1 = EConstr.of_constr trm1 in
-     let etrm2 = EConstr.of_constr trm2 in
-     try
-       Reductionops.is_conv env evm etrm1 etrm2
-     with _ ->
-       false
-
-(* Checks whether two terms are convertible in env with no evars *)
-let convertible (env : env) (evd : evar_map) (trm1 : types) (trm2 : types) : bool =
-  conv_ignoring_univ_inconsistency env Evd.empty trm1 trm2
+(* Checks whether two terms may be convertible *)
+let convertible env sigma trm1 trm2 : bool =
+  let etrm1 = EConstr.of_constr trm1 in
+  let etrm2 = EConstr.of_constr trm2 in
+  snd (Reductionops.infer_conv env sigma etrm1 etrm2)
 
 (*
  * Checks whether the conclusions of two dependent types are convertible,
