@@ -12,7 +12,9 @@ open Constrextern
 
 (* --- Defining Coq terms --- *)
 
-(* https://github.com/ybertot/plugin_tutorials/blob/master/tuto1/src/simple_declare.ml *)
+(* https://github.com/ybertot/plugin_tutorials/blob/master/tuto1/src/simple_declare.ml 
+
+TODO do we need to return the updated evar_map? *)
 let edeclare ident (_, poly, _ as k) ~opaque sigma udecl body tyopt imps hook refresh =
   let open EConstr in
   (* XXX: "Standard" term construction combinators such as `mkApp`
@@ -75,13 +77,14 @@ let define_canonical ?typ (n : Id.t) (evm : evar_map) (trm : types) (refresh : b
  *)
 
 (* Intern a term (for now, ignore the resulting evar_map) *)
-let intern env evd t : types =
-  let (trm, _) = Constrintern.interp_constr env evd t in
-  EConstr.to_constr evd trm
+let intern env sigma t : evar_map * types =
+  let (trm, uctxt) = Constrintern.interp_constr env sigma t in
+  let sigma = merge_universe_context sigma uctxt in
+  sigma, EConstr.to_constr sigma trm
 
 (* Extern a term *)
-let extern env evd t : constr_expr =
-  Constrextern.extern_constr true env evd (EConstr.of_constr t)
+let extern env sigma t : constr_expr =
+  Constrextern.extern_constr true env sigma (EConstr.of_constr t)
 
 (* Construct the external expression for a definition *)
 let expr_of_global (g : global_reference) : constr_expr =
@@ -106,5 +109,5 @@ let constr_of_pglobal (glob, univs) =
   | VarRef id -> mkVar id
 
 (* Safely instantiate a global reference, with proper universe handling *)
-let e_new_global evm gref =
-  Evarutil.e_new_global evm gref |> EConstr.to_constr !evm
+let e_new_global sigma gref =
+  Evarutil.e_new_global sigma gref |> EConstr.to_constr !sigma

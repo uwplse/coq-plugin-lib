@@ -43,9 +43,9 @@ val define_canonical :
  *)
 
 (*
- * Intern a term (for now, ignore the resulting evar_map)
+ * Intern a term
  *)
-val intern : env -> evar_map -> constr_expr -> types
+val intern : env -> evar_map -> constr_expr -> evar_map * types
 
 (*
  * Extern a term
