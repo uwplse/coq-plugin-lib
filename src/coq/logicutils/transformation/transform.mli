@@ -11,7 +11,7 @@ open Declarations
 open Substitution
 
 (* Type-sensitive transformation of terms *)
-type constr_transformer = env -> evar_map ref -> constr -> constr
+type constr_transformer = env -> evar_map -> constr -> evar_map * constr
 
 (*
  * Declare a new constant under the given name with the transformed term and
