@@ -2,20 +2,21 @@
 
 open Environ
 open Constr
+open Evd
 
 (* Predicates to determine whether to apply a mapped function *)
 type ('a, 'b) pred = 'a -> 'b -> bool
 type 'b unit_pred = 'b -> bool
-type ('a, 'b) pred_with_env = env -> ('a, 'b) pred
-type 'b unit_pred_with_env = env -> 'b unit_pred
+type ('a, 'b) pred_with_env = env -> evar_map -> ('a, 'b) pred
+type 'b unit_pred_with_env = env -> evar_map -> 'b unit_pred
 
 (* Functions to use in maps *)
 type ('a, 'b) transformer = 'a -> 'b -> 'b
 type 'b unit_transformer = 'b -> 'b
 type ('a, 'b) list_transformer = 'a -> 'b -> 'b list
-type ('a, 'b) transformer_with_env = env -> 'a -> 'b -> 'b
-type 'b unit_transformer_with_env = env -> 'b -> 'b
-type ('a, 'b) list_transformer_with_env = env -> 'a -> 'b -> 'b list
+type ('a, 'b) transformer_with_env = env -> evar_map -> 'a -> 'b -> evar_map * 'b
+type 'b unit_transformer_with_env = env -> evar_map -> 'b -> evar_map * 'b
+type ('a, 'b) list_transformer_with_env = env -> evar_map -> 'a -> 'b -> evar_map * 'b list
 
 (* Updating arguments *)
 type 'a updater = 'a -> 'a
