@@ -6,21 +6,24 @@ open Environ
 open Evd
 open Constr
 open Declarations
-
-(* Infer the type of trm in env *)
-let infer_type (env : env) (evd : evar_map) (trm : types) : types =
-  EConstr.to_constr evd (Typing.unsafe_type_of env evd (EConstr.of_constr trm))
-                    
+             
 (* Safely infer the WHNF type of a term, updating the evar map *)
-let e_infer_type env evm term =
-  EConstr.of_constr term |> Typing.e_type_of ~refresh:true env evm |>
-  Reductionops.whd_all env !evm |> EConstr.to_constr !evm
+let infer_type env sigma term =
+  let sigma_ref = ref sigma in
+  let eterm = EConstr.of_constr term in
+  let typ = Typing.e_type_of ~refresh:true env sigma_ref eterm in
+  let sigma = ! sigma_ref in
+  sigma, EConstr.to_constr sigma typ
 
-(* Safely infer the sort of a type, updating the evar map (TODO for these, not into the ref thing) *)
-let e_infer_sort env evm term =
-  EConstr.of_constr term |> Typing.e_sort_of env evm |> Sorts.family
+(* Safely infer the sort of a type, updating the evar map *)
+let infer_sort env sigma term =
+  let sigma_ref = ref sigma in
+  let eterm = EConstr.of_constr term in
+  let sort = Typing.e_sort_of env sigma_ref eterm in
+  let sigma = ! sigma_ref in
+  sigma, Sorts.family sort
 
-(* Get the type of an inductive type *)
+(* Get the type of an inductive type (TODO do we need evar_map here?) *)
 let type_of_inductive env index mutind_body : types =
   let ind_bodies = mutind_body.mind_packets in
   let ind_body = Array.get ind_bodies index in

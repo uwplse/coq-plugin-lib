@@ -8,18 +8,14 @@ open Constr
 open Declarations
 
 (*
- * Type inference
- *
- * Current implementation may cause universe leaks, which will just cause
- * conservative failure of the plugin (TODO)
+ * Safely infer the WHNF type of a term, updating the evar map
  *)
-val infer_type : env -> evar_map -> types -> types
+val infer_type : env -> evar_map -> constr -> evar_map * types
 
-(* Safely infer the WHNF type of a term, updating the evar map. *)
-val e_infer_type : env -> evar_map ref -> constr -> constr
-
-(* Safely infer the sort of a term, updating the evar map. *)
-val e_infer_sort : env -> evar_map ref -> constr -> Sorts.family
+(*
+ * Safely infer the sort of a term, updating the evar map
+ *)
+val infer_sort : env -> evar_map -> constr -> evar_map * Sorts.family
 
 (*
  * Get the type of an inductive type

@@ -25,13 +25,12 @@ let id_typ : types =
 
 (* Get the Coq identity term for typ *)
 let identity_term env sigma typ : evar_map * types =
-  let sigma_ref = ref sigma in 
-  let sort_family = Inference.e_infer_sort env sigma_ref typ in
+  let sigma, sort_family = Inference.infer_sort env sigma typ in
   match sort_family with
   | InProp ->
-     (! sigma_ref, mkApp (id_prop, Array.make 1 typ))
+     (sigma, mkApp (id_prop, Array.make 1 typ))
   | _ ->
-     (! sigma_ref, mkApp (id_typ, Array.make 1 typ))
+     (sigma, mkApp (id_typ, Array.make 1 typ))
 
 (* --- Questions about constants --- *)
 

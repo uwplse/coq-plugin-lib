@@ -48,9 +48,9 @@ let rec concls_convertible (env : env) (evd : evar_map) (typ1 : types) (typ2 : t
      convertible env evd typ1 typ2
 
 (* Checks whether the types of two terms are convertible *)
-let types_convertible env evd trm1 trm2 : bool =
+let types_convertible env sigma trm1 trm2 : bool =
   try
-    let typ1 = infer_type env evd trm1 in
-    let typ2 = infer_type env evd trm2 in
-    convertible env evd typ1 typ2
+    let sigma, typ1 = infer_type env sigma trm1 in
+    let sigma, typ2 = infer_type env sigma trm2 in
+    convertible env sigma typ1 typ2
   with _ -> false

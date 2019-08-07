@@ -9,9 +9,9 @@ open Convertibility
 open Inference
                                                        
 (* Check whether a term has a given type *)
-let has_type (env : env) (evd : evar_map) (typ : types) (trm : types) : bool =
+let has_type (env : env) (sigma : evar_map) (typ : types) (trm : types) : bool =
   try
-    let trm_typ = infer_type env evd trm in
-    convertible env evd trm_typ typ
+    let sigma, trm_typ = infer_type env sigma trm in
+    convertible env sigma trm_typ typ
   with _ -> false
 
