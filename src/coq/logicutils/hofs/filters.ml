@@ -11,16 +11,17 @@ open Inference
 type 'a filter_strategy = env -> evar_map -> 'a list -> 'a list
 
 (* Filter trms to those that have type typ in env *)
-let filter_by_type typ (env : env) (evd : evar_map) (trms : types list) : types list =
+(* TODO do we need to update sigma? If so, need to update sigma in has_type *)
+let filter_by_type typ (env : env) sigma (trms : types list) : types list =
   try
-    List.filter (has_type env evd typ) trms
+    List.filter (has_type env sigma typ) trms
   with
   | _ -> []
 
 (* Find the singleton list with the first term that has type typ *)
-let find_by_type typ (env : env) (evd : evar_map) (trms : types list) : types list =
+let find_by_type typ (env : env) sigma (trms : types list) : types list =
   try
-    [List.find (has_type env evd typ) trms]
+    [List.find (has_type env sigma typ) trms]
   with
   | _ -> []
 
@@ -40,14 +41,16 @@ let filter_not_same trm (_ : env) (_ : evar_map) (trms : types list) : types lis
  *
  * Sometimes this will not be possible, in which case we need a backup plan.
  * This is not yet implemented.
+ *
+ * TODO do we need sigma?
  *)
-let filter_ihs (env : env) (evd : evar_map) (cs : types list) : types list =
+let filter_ihs (env : env) sigma (cs : types list) : types list =
   let env_no_ih = pop_rel_context 1 env in
   List.filter
     (fun c ->
       let c_no_ih = unshift c in
       try
-        ignore (infer_type env_no_ih evd c_no_ih);
+        ignore (infer_type env_no_ih sigma c_no_ih);
         true
       with _ -> false)
     cs
