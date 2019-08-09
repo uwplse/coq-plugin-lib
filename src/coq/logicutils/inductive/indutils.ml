@@ -14,6 +14,7 @@ open Reducers
 open Envutils
 open Contextutils
 open Inference
+open Evd
 
 (* Don't support mutually inductive or coinductive types yet (TODO move) *)
 let check_inductive_supported mutind_body : unit =
@@ -95,7 +96,7 @@ let apply_eliminator (ea : elim_app) : types =
   mkAppl (mkAppl (ea.elim, args), ea.final_args)
 
 (* Deconstruct an eliminator application *)
-let deconstruct_eliminator env sigma app : elim_app =
+let deconstruct_eliminator env sigma app : evar_map * elim_app =
   let elim = first_fun app in
   let ip_args = unfold_args app in
   let sigma, ip_typ = reduce_type env sigma elim in
@@ -110,7 +111,7 @@ let deconstruct_eliminator env sigma app : elim_app =
   match pmd_args with
   | p :: cs_and_args ->
      let (cs, final_args) = take_split num_constrs cs_and_args in
-     { elim; pms; p; cs; final_args }
+     sigma, { elim; pms; p; cs; final_args }
   | _ ->
      failwith "can't deconstruct eliminator; no final arguments"
 
@@ -118,14 +119,14 @@ let deconstruct_eliminator env sigma app : elim_app =
  * Given the type of a case of an eliminator,
  * determine the number of inductive hypotheses
  *)
-let rec num_ihs env rec_typ typ =
+let rec num_ihs env sigma rec_typ typ =
   match kind typ with
   | Prod (n, t, b) ->
-     if is_or_applies rec_typ (reduce_term env Evd.empty t) then
+     if is_or_applies rec_typ (reduce_term env sigma t) then
        let (n_b_t, b_t, b_b) = destProd b in
-       1 + num_ihs (push_local (n, t) (push_local (n_b_t, b_t) env)) rec_typ b_b
+       1 + num_ihs (push_local (n, t) (push_local (n_b_t, b_t) env)) sigma rec_typ b_b
      else
-       num_ihs (push_local (n, t) env) rec_typ b
+       num_ihs (push_local (n, t) env) sigma rec_typ b
   | _ ->
      0
 
@@ -160,7 +161,7 @@ let inst_abs_univ_ctx abs_univ_ctx =
   (* Note that we're creating *globally* fresh universe levels. *)
   Universes.fresh_instance_from_context abs_univ_ctx |> Univ.UContext.make
 
-(* Instantiate an abstract_inductive_universes into an Entries.inductive_universes with Univ.UContext.t *)
+(* Instantiate an abstract_inductive_universes into an Entries.inductive_universes with Univ.UContext.t (TODO do we do something with evar_map here?) *)
 let make_ind_univs_entry = function
   | Monomorphic_ind univ_ctx_set ->
     let univ_ctx = Univ.UContext.empty in

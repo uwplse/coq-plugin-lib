@@ -49,13 +49,13 @@ type elim_app =
   }
 
 val apply_eliminator : elim_app -> types
-val deconstruct_eliminator : env-> evar_map -> types -> elim_app
+val deconstruct_eliminator : env-> evar_map -> types -> evar_map * elim_app
 
 (*
  * Given the recursive type and the type of a case of an eliminator,
  * determine the number of inductive hypotheses
  *)
-val num_ihs : env -> types -> types -> int
+val num_ihs : env -> evar_map -> types -> types -> int
 
 (* Determine whether template polymorphism is used for a one_inductive_body *)
 val is_ind_body_template : one_inductive_body -> bool
