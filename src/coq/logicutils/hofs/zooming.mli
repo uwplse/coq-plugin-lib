@@ -4,6 +4,7 @@
 
 open Constr
 open Environ
+open Evd
                  
 (* --- Zoom n deep --- *)
 
@@ -51,33 +52,54 @@ val reconstruct_product : env -> types -> types
 
 val in_body :
   (env -> types -> (env * types)) ->
-  (env -> types -> 'a) ->
+  (env -> evar_map -> types -> 'a) ->
   env ->
+  evar_map ->
   types ->
   'a
 
 val in_lambda_body :
-  (env -> types -> 'a) -> env -> types -> 'a
+  (env -> evar_map -> types -> 'a) ->
+  env ->
+  evar_map ->
+  types ->
+  'a
                                             
 (* --- Zoom in, apply a function, then reconstruct the result --- *)
 
 val zoom_apply :
   (env -> types -> (env * types)) -> (* zoomer *)
   (env -> types -> types) -> (* reconstructer *)
-  (env -> types -> types) -> (* function *)
+  (env -> evar_map -> types -> evar_map * types) -> (* function *)
   env ->
+  evar_map ->
   types ->
-  types
+  evar_map * types
 
 val zoom_apply_lambda :
-  (env -> types -> types) -> env -> types -> types
+  (env -> evar_map -> types -> evar_map * types) ->
+  env ->
+  evar_map ->
+  types ->
+  evar_map * types
 
 val zoom_apply_lambda_empty :
   (types -> types) -> types -> types
 
 val zoom_apply_lambda_n :
-  int -> (env -> types -> types) -> env -> types -> types
+  int ->
+  (env -> evar_map -> types -> evar_map * types) ->
+  env ->
+  evar_map ->
+  types ->
+  evar_map * types
 
 val zoom_apply_lambda_n_skip :
-  int -> int -> (env -> types -> types) -> env -> types -> types
+  int ->
+  int ->
+  (env -> evar_map -> types -> evar_map * types) ->
+  env ->
+  evar_map ->
+  types ->
+  evar_map * types
 

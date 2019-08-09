@@ -10,6 +10,7 @@ open Envutils
 open Contextutils
 open Debruijn
 open Sigmautils
+open Evd
 
 (* --- Zooming --- *)
 
@@ -145,23 +146,34 @@ let rec reconstruct_product_n_skip (env : env) (b : types) (i : int) (j : int) :
 (*
  * Zoom in and apply a function
  *)
-let in_body zoom f env trm =
+let in_body zoom f env sigma trm =
   let (env_body, trm_body) = zoom env trm in
-  f env_body trm_body
+  f env_body sigma trm_body
 
-let in_lambda_body f env trm = in_body zoom_lambda_term f env trm
+let in_lambda_body f env sigma trm = in_body zoom_lambda_term f env sigma trm
 
 (*
  * Zoom in, apply a function, then reconstruct the result
  *)
 let zoom_apply zoom reconstruct f =
-  in_body zoom (fun env trm -> reconstruct env (f env trm))
+  in_body
+    zoom
+    (fun env sigma trm ->
+      let sigma, trm = f env sigma trm in
+      sigma, reconstruct env trm)
 
 let zoom_apply_lambda =
   zoom_apply zoom_lambda_term reconstruct_lambda
 
-let zoom_apply_lambda_empty f =
-  zoom_apply zoom_lambda_term reconstruct_lambda (fun _ -> f) empty_env
+let zoom_apply_lambda_empty f trm =
+  snd
+    (zoom_apply
+       zoom_lambda_term
+       reconstruct_lambda
+       (fun _ sigma trm -> sigma, f trm)
+       empty_env
+       Evd.empty
+       trm)
              
 let zoom_apply_lambda_n n =
   zoom_apply zoom_lambda_term (fun e t -> reconstruct_lambda_n e t n)
