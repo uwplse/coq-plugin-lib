@@ -9,4 +9,4 @@ open Evd
 (*
  * Eta expansion of an application or function
  *)
-val expand_eta : env -> evar_map -> types -> types
+val expand_eta : env -> evar_map -> types -> evar_map * types
