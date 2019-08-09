@@ -186,7 +186,7 @@ let debug_env (env : env) (descriptor : string) : unit =
 (* --- TODO move me --- *)
 
 (* Print a patch to stdout in the standard Coq format *)
-let print_patch env evm patch_id patch : unit =
+let print_patch env sigma patch_id patch : unit =
   let opts = get_tables () in
   let print_all =
     match (OptionMap.find ["Printing"; "All"] opts).opt_value with
@@ -203,7 +203,7 @@ let print_patch env evm patch_id patch : unit =
         (Pp.str "\nDefinition");
         (Pp.str patch_id);
         (Pp.str ":=");
-        (pr_lconstr_env env evm patch);
+        (pr_lconstr_env env sigma patch);
         (Pp.str ".\nEND PATCH");
         (Pp.str "\n")]);
   set_bool_option_value ["Printing"; "All"] print_all
