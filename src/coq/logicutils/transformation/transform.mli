@@ -19,7 +19,7 @@ type constr_transformer = env -> evar_map -> constr -> evar_map * constr
  *
  * NOTE: Global side effects.
  *)
-val transform_constant : Id.t -> constr_transformer -> constant_body -> Constant.t
+val transform_constant : env -> evar_map -> Id.t -> constr_transformer -> constant_body -> Constant.t
 
 (*
  * Declare a new inductive family under the given name with the transformed type
@@ -28,7 +28,7 @@ val transform_constant : Id.t -> constr_transformer -> constant_body -> Constant
  *
  * NOTE: Global side effects.
  *)
-val transform_inductive : Id.t -> constr_transformer -> Inductive.mind_specif -> inductive
+val transform_inductive : env -> evar_map -> Id.t -> constr_transformer -> Inductive.mind_specif -> inductive
 
 (*
  * Declare a new module structure under the given name with the compositionally
@@ -42,4 +42,4 @@ val transform_inductive : Id.t -> constr_transformer -> Inductive.mind_specif ->
  * NOTE: Does not support functors or nested modules.
  * NOTE: Global side effects.
  *)
-val transform_module_structure : ?init:(unit -> global_substitution) -> Id.t -> constr_transformer -> module_body -> ModPath.t
+val transform_module_structure : ?init:(unit -> global_substitution) -> env -> evar_map -> Id.t -> constr_transformer -> module_body -> ModPath.t
