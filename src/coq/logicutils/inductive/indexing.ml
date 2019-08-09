@@ -10,6 +10,7 @@ open Hofimpls
 open Reducers
 open Sigmautils
 open Apputils
+open Evd
 
 (* --- Generic functions --- *)
 
@@ -46,14 +47,14 @@ let reindex_body reindexer lam =
   let (n, t, b) = destLambda lam in
   mkLambda (n, t, reindexer b)
 
+(* --- Managing inductive property arguments --- *)
+
 (*
  * Apply the term to a dummy index, when we would like the other arguments,
  * but we are not sure if the term is a lambda or curried
  *)
-let dummy_index env f =
-  reduce_term env Evd.empty (mkAppl (f, [mkRel 0]))
-
-(* --- Managing inductive property arguments --- *)
+let dummy_index env sigma f =
+  reduce_term env sigma (mkAppl (f, [mkRel 0]))
 
 (*
  * Unshift arguments after index_i, since the index is no longer in
@@ -91,7 +92,7 @@ let non_index_args index_i env sigma typ =
   let typ = reduce_nf env sigma typ in
   if is_or_applies sigT typ then
     let packer = (dest_sigT typ).packer in
-    remove_index index_i (unfold_args (dummy_index env packer))
+    remove_index index_i (unfold_args (dummy_index env sigma packer))
   else
     unfold_args typ
 
@@ -103,6 +104,6 @@ let non_index_typ_args index_i env sigma trm =
   if is_or_applies existT trm then
     (* don't bother type-checking *)
     let packer = (dest_existT trm).packer in
-    remove_index index_i (unfold_args (dummy_index env packer))
+    remove_index index_i (unfold_args (dummy_index env sigma packer))
   else
     on_type (non_index_args index_i) env sigma trm
