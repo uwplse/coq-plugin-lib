@@ -6,6 +6,17 @@ open Evd
 open Names
 
 (* TODO clean up so retrieval is easier *)
+
+(*
+ * Note: These substitution functions assume that all of the necessary
+ * constraints for both the source and destination terms are already in the 
+ * provided evar_map. Thus, they do not update the evar_map as they recurse.
+ * If the destination type refers to evars or universes that are not in
+ * the evar_map, then these functions may produce terms that are not
+ * well-typed. In general, these functions may produce terms that are not
+ * well-typed even regardless of evar_map problems; it is up to you
+ * to check the returned terms later on.
+ *)
 type ('a, 'b) substitution = env -> evar_map -> 'a -> types -> 'b
 type 'a comb_substitution = ('a, types list) substitution
 type 'a type_substitution = ('a, types) substitution

@@ -95,10 +95,10 @@ let apply_eliminator (ea : elim_app) : types =
   mkAppl (mkAppl (ea.elim, args), ea.final_args)
 
 (* Deconstruct an eliminator application *)
-let deconstruct_eliminator env evd app : elim_app =
+let deconstruct_eliminator env sigma app : elim_app =
   let elim = first_fun app in
   let ip_args = unfold_args app in
-  let ip_typ = reduce_type env evd elim in
+  let sigma, ip_typ = reduce_type env sigma elim in
   let from_i = Option.get (inductive_of_elim env (destConst elim)) in
   let from_m = lookup_mind from_i env in
   let npms = from_m.mind_nparams in

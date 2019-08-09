@@ -15,31 +15,36 @@ type ('a, 'b) substitution = env -> evar_map -> 'a -> types -> 'b
 type 'a comb_substitution = ('a, types list) substitution
 type 'a type_substitution = ('a, types) substitution
 
-(* Map a substitution over a term *)
-let all_substs p env evd (src, dst) trm : types =
+(* 
+ * Map a substitution over a term
+ *)
+let all_substs p env sigma (src, dst) trm : types =
   snd
     (map_term_env_if
-       (fun en evd (s, _) t -> p en evd s t)
-       (fun _ evd (_, d) _ -> evd, d)
+       (fun env sigma (s, _) t -> p env sigma s t)
+       (fun _ sigma (_, d) _ -> sigma, d)
        (fun (s, d) -> (shift s, shift d))
        env
-       evd
+       sigma
        (src, dst)
        trm)
 
 (* Map all combinations of a substitution over a term *)
-let all_substs_combs p env evd (src, dst) trm : types list =
+let all_substs_combs p env sigma (src, dst) trm : types list =
   snd
     (map_subterms_env_if
-       (fun en evd (s, _) t -> p en evd s t)
-       (fun _ evd (_, d) t -> evd, [d; t])
+       (fun env sigma (s, _) t -> p env sigma s t)
+       (fun _ sigma (_, d) t -> sigma, [d; t])
        (fun (s, d) -> (shift s, shift d))
        env
-       evd
+       sigma
        (src, dst)
        trm)
 
-(* In env, substitute all subterms of trm that are convertible to src with dst *)
+(* In env, substitute all subterms of trm that are convertible to src with dst
+   TODO do we want to thread the evar_map through for the conv ones
+   and check the result? Does that gain us anything? How does it
+   impact performance? *)
 let all_conv_substs : (types * types) type_substitution =
   all_substs convertible
 
@@ -55,12 +60,12 @@ let all_eq_substs =
  * Check if a subterm matches applies a constructor function pat to
  * an argument with the type of itself
  *)
-let constructs_recursively env evd c trm : bool =
+let constructs_recursively env sigma c trm : bool =
   if isApp trm then
     try
       let (f, args) = destApp trm in
-      let conv = convertible env evd in
-      let types_conv = types_convertible env evd in
+      let conv = convertible env sigma in
+      let types_conv = types_convertible env sigma in
       conv f c && List.exists (types_conv trm) (Array.to_list args)
     with _ ->
       false
@@ -76,16 +81,16 @@ let constructs_recursively env evd c trm : bool =
  *
  * Can generalize this further
  *)
-let all_constr_substs env evd c trm : types =
+let all_constr_substs env sigma c trm : types =
   snd
     (map_term_env_if
        constructs_recursively
-       (fun env evd _ t ->
+       (fun env sigma _ t ->
          let (_, args_t) = destApp t in
-         evd, List.find (types_convertible env evd t) (Array.to_list args_t))
+         sigma, List.find (types_convertible env sigma t) (Array.to_list args_t))
        shift
        env
-       evd
+       sigma
        c
        trm)
 

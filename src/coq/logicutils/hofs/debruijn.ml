@@ -66,7 +66,7 @@ let shift (t : types) : types  =
 let unshift (t : types) : types =
   unshift_by 1 t
 
-(* Shift everything and pray; workaround for bug *)
+(* Shift everything and pray; workaround for bug (TODO investigate) *)
 let shift_by_unconditional (n : int) (trm : types) : types =
   map_term
     (fun _ t ->

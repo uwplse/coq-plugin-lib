@@ -8,21 +8,10 @@ open Utilities
 open Debruijn
 open Idutils
 open Contextutils
+open Inference
 
-type reducer = env -> evar_map -> types -> types
-
-(* --- TODO for refactoring without breaking things --- *)
-
-(*
- * Infer the type of trm in env
- * Note: This does not yet use good evar map hygeine; will fix that
- * during the refactor.
- *)
-let infer_type (env : env) (evd : evar_map) (trm : types) : types =
-  let jmt = Typeops.infer env trm in
-  j_type jmt
-               
-(* --- End TODO --- *)
+type reducer = env -> evar_map -> types -> types                  
+type e_reducer = env -> evar_map -> types -> evar_map * types
 
 (* --- Top-level --- *)
 
@@ -52,14 +41,14 @@ let reduce_nf (env : env) (sigma : evar_map) (trm : types) : types =
 
 (* --- Combinators and converters --- *)
 
-let reduce_all (r : reducer) env evd (trms : types list) : types list =
-  List.map (r env evd) trms
+let reduce_all (r : reducer) env sigma (trms : types list) : types list =
+  List.map (r env sigma) trms
 
-let chain_reduce (r1 : reducer) (r2 : reducer) env evd trm : types =
-  r2 env evd (r1 env evd trm)
+let chain_reduce (r1 : reducer) (r2 : reducer) env sigma trm : types =
+  r2 env sigma (r1 env sigma trm)
 
-let try_reduce (r : reducer) (env : env) evd (trm : types) : types =
-  try r env evd trm with _ -> trm
+let try_reduce (r : reducer) (env : env) sigma (trm : types) : types =
+  try r env sigma trm with _ -> trm
 
 (*
  * Reduce the body of a term using the supplied reducer if
@@ -67,24 +56,33 @@ let try_reduce (r : reducer) (env : env) evd (trm : types) : types =
  * then this recurses into the body and checks the condition, and so on.
  * It reduces as soon as the condition holds.
  *)
-let rec reduce_body_if p (r : reducer) env evd trm =
-  if p env trm then
-    r env evd trm
+let rec reduce_body_if p (r : reducer) env sigma trm =
+  if p env sigma trm then
+    r env sigma trm
   else
     match kind trm with
     | Lambda (n, t, b) ->
-       reduce_body_if p r (push_rel CRD.(LocalAssum(n, t)) env) evd b
+       reduce_body_if p r (push_rel CRD.(LocalAssum(n, t)) env) sigma b
     | _ ->
        failwith "Could not specialize"
+
+(* Reduce the type *)
+let reduce_type_using r (env : env) sigma (trm : types) : evar_map * types =
+  let sigma, typ = infer_type env sigma trm in
+  sigma, r env sigma typ
+
+(* Reduce the type with the defualt reducer *)
+let reduce_type (env : env) sigma (trm : types) : evar_map * types =
+  reduce_type_using reduce_term env sigma trm
 
 (* --- Custom reducers --- *)
 
 (* Don't reduce *)
-let do_not_reduce (env : env) (evd : evar_map) (trm : types) : types =
+let do_not_reduce (env : env) sigma (trm : types) : types =
   trm
 
 (* Remove all applications of the identity function *)
-let remove_identities (env : env) (evd : evar_map) (trm : types) : types =
+let remove_identities (env : env) sigma (trm : types) : types =
   map_term_if
     (fun _ t -> applies_identity t)
     (fun _ t ->
@@ -102,23 +100,23 @@ let reduce_remove_identities : reducer =
   chain_reduce remove_identities reduce_term
 
 (* Reduce and also unfold definitions *)
-let reduce_unfold (env : env) (evd : evar_map) (trm : types) : types =
+let reduce_unfold (env : env) sigma (trm : types) : types =
   EConstr.to_constr
-    evd
-    (Reductionops.nf_all env evd (EConstr.of_constr trm))
+    sigma
+    (Reductionops.nf_all env sigma (EConstr.of_constr trm))
 
 (* Reduce and also unfold definitions, but weak head *)
-let reduce_unfold_whd (env : env) (evd : evar_map) (trm : types) : types =
+let reduce_unfold_whd (env : env) sigma (trm : types) : types =
   EConstr.to_constr
-    evd
-    (Reductionops.whd_all env evd (EConstr.of_constr trm))
+    sigma
+    (Reductionops.whd_all env sigma (EConstr.of_constr trm))
 
 (* Weak-head reduce a term if it is a let-in *)
-let reduce_whd_if_let_in (env : env) (evd : evar_map) (trm : types) : types  =
+let reduce_whd_if_let_in (env : env) sigma (trm : types) : types  =
   if isLetIn trm then
     EConstr.to_constr
-      evd
-      (Reductionops.whd_betaiotazeta evd (EConstr.of_constr trm))
+      sigma
+      (Reductionops.whd_betaiotazeta sigma (EConstr.of_constr trm))
   else
     trm
 
@@ -126,23 +124,23 @@ let reduce_whd_if_let_in (env : env) (evd : evar_map) (trm : types) : types  =
  * This function removes any terms from the hypothesis of a lambda
  * that are not referenced in the body, so that the term
  * has only hypotheses that are referenced.
+ *
+ * TODO this could feasibly sometimes pass and just change the term;
+ * fix that at some point. Really, no reason to be type-checking,
+ * even though this is cute and seems to often work in practice
  *)
-let rec remove_unused_hypos (env : env) (evd : evar_map) (trm : types) : types =
+let rec remove_unused_hypos (env : env) sigma (trm : types) : types =
   match kind trm with
   | Lambda (n, t, b) ->
      let env_b = push_rel CRD.(LocalAssum(n, t)) env in
-     let b' = remove_unused_hypos env_b evd b in
+     let b' = remove_unused_hypos env_b sigma b in
      (try
         let num_rels = nb_rel env in
         let env_ill = push_rel CRD.(LocalAssum (n, mkRel (num_rels + 1))) env in
-        let _ = infer_type env_ill evd b' in
-        remove_unused_hypos env evd (unshift b')
+        let _ = infer_type env_ill sigma b' in
+        remove_unused_hypos env sigma (unshift b')
       with _ ->
         mkLambda (n, t, b'))
   | _ ->
      trm
 
-(* Reduce the type (TODO empty here for rev. compat. for now *)
-let reduce_type (env : env) sigma (trm : types) : types =
-  let sigma, typ = Inference.infer_type env sigma trm in
-  reduce_term env Evd.empty typ

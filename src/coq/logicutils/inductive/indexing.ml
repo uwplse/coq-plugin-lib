@@ -87,8 +87,8 @@ let rec computes_ih_index off p i typ =
  * Given a type we are promoting to/forgetting from,
  * get all of the arguments to that type that aren't the new/forgotten index
  *)
-let non_index_args index_i env typ =
-  let typ = reduce_nf env Evd.empty typ in
+let non_index_args index_i env sigma typ =
+  let typ = reduce_nf env sigma typ in
   if is_or_applies sigT typ then
     let packer = (dest_sigT typ).packer in
     remove_index index_i (unfold_args (dummy_index env packer))
@@ -99,10 +99,10 @@ let non_index_args index_i env typ =
  * Given a term with the type we are promoting to/forgetting from,
  * get all of the arguments to that type that aren't the new/forgotten index
  *)
-let non_index_typ_args index_i env evd trm =
+let non_index_typ_args index_i env sigma trm =
   if is_or_applies existT trm then
     (* don't bother type-checking *)
     let packer = (dest_existT trm).packer in
     remove_index index_i (unfold_args (dummy_index env packer))
   else
-    on_type (non_index_args index_i env) env evd trm
+    on_type (non_index_args index_i) env sigma trm

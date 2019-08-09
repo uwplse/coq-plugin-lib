@@ -5,13 +5,15 @@ open Evd
 open Constr
 
 type reducer = env -> evar_map -> types -> types
+type e_reducer = env -> evar_map -> types -> evar_map * types
 
 (* --- Top-level --- *)
 
 (*
- * Default reducer (currently betaiotazeta)
+ * Default reducer (currently betaiotazeta) at term and type level
  *)
 val reduce_term : reducer
+val reduce_type : e_reducer
 
 (*
  * Other reducers
@@ -80,9 +82,10 @@ val try_reduce : reducer -> reducer
  * then this recurses into the body and checks the condition, and so on.
  * It reduces as soon as the condition holds.
  *)
-val reduce_body_if : (env -> types -> bool) -> reducer -> reducer
+val reduce_body_if : (env -> evar_map -> types -> bool) -> reducer -> reducer
 
 (*
- * Infer the type, then reduce using the default reducer
+ * Infer the type, then reduce using supplied reducer
+ * Update the evar_map appropriately
  *)
-val reduce_type : reducer
+val reduce_type_using : reducer -> e_reducer
