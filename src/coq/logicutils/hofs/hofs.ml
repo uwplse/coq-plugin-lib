@@ -90,27 +90,6 @@ type ('a, 'b) proposition_list_mapper =
   ('a, 'b) list_transformer
 
 (* --- Terms --- *)
-           
-(*
- * Recurse on a mapping function with an environment for a fixpoint
- *)
-let map_rec_env_fix map_rec d env sigma a ns ts =
-  let fix_bindings = bindings_for_fix ns ts in
-  let env_fix = push_rel_context fix_bindings env in
-  let n = List.length fix_bindings in
-  let d_n = List.fold_left (fun a' _ -> d a') a (range 0 n) in
-  map_rec env_fix sigma d_n
-
-(*
- * Recurse on a mapping function with an environment for a fixpoint
- * TODO do we need both of these?
- *)
-let map_rec_env_fix_cartesian (map_rec : ('a, 'b) list_transformer_with_env) d env sigma a ns ts =
-  let fix_bindings = bindings_for_fix ns ts in
-  let env_fix = push_rel_context fix_bindings env in
-  let n = List.length fix_bindings in
-  let d_n = List.fold_left (fun a' _ -> d a') a (range 0 n) in
-  map_rec env_fix sigma d_n
 
 (*
  * TODO explain
@@ -140,6 +119,27 @@ let map_rec_args_cartesian map_rec env sigma a args =
       (Array.to_list args)
       (sigma, [])
   in sigma, combine_cartesian_append (Array.of_list args')
+
+(*
+ * Recurse on a mapping function with an environment for a fixpoint
+ *)
+let map_rec_env_fix map_rec d env sigma a ns ts =
+  let fix_bindings = bindings_for_fix ns ts in
+  let env_fix = push_rel_context fix_bindings env in
+  let n = List.length fix_bindings in
+  let d_n = List.fold_left (fun a' _ -> d a') a (range 0 n) in
+  map_rec env_fix sigma d_n
+
+(*
+ * Recurse on a mapping function with an environment for a fixpoint
+ * TODO do we need both of these?
+ *)
+let map_rec_env_fix_cartesian (map_rec : ('a, 'b) list_transformer_with_env) d env sigma a ns ts =
+  let fix_bindings = bindings_for_fix ns ts in
+  let env_fix = push_rel_context fix_bindings env in
+  let n = List.length fix_bindings in
+  let d_n = List.fold_left (fun a' _ -> d a') a (range 0 n) in
+  map_rec env_fix sigma d_n
 
 (* 
  * TODO explain
@@ -174,11 +174,11 @@ let map_term_env_rec map_rec f d env sigma a trm =
      sigma, mkCase (ci, ct', m', bs')
   | Fix ((is, i), (ns, ts, ds)) ->
      let sigma, ts' = map_rec_args map_rec env sigma a ts in
-     let sigma, ds' = map_rec_args map_rec env sigma a ds in
+     let sigma, ds' = map_rec_args (fun env sigma a trm -> map_rec_env_fix map_rec d env sigma a ns ts trm) env sigma a ds in (* TODO refactor *)
      sigma, mkFix ((is, i), (ns, ts', ds'))
   | CoFix (i, (ns, ts, ds)) ->
      let sigma, ts' = map_rec_args map_rec env sigma a ts in
-     let sigma, ds' = map_rec_args map_rec env sigma a ds in
+     let sigma, ds' = map_rec_args (fun env sigma a trm -> map_rec_env_fix map_rec d env sigma a ns ts trm) env sigma a ds in (* TODO refactor *)
      sigma, mkCoFix (i, (ns, ts', ds'))
   | Proj (p, c) ->
      let sigma, c' = map_rec env sigma a c in
@@ -244,11 +244,11 @@ let map_subterms_env_rec map_rec f d env sigma a trm =
      sigma, combine_cartesian (fun ct' (m', bs') -> mkCase (ci, ct', m', bs')) cts' (cartesian ms' bss')
   | Fix ((is, i), (ns, ts, ds)) ->
      let sigma, tss' = map_rec_args_cartesian map_rec env sigma a ts in
-     let sigma, dss' = map_rec_args_cartesian map_rec env sigma a ds in
+     let sigma, dss' = map_rec_args_cartesian (fun env sigma a trm -> map_rec_env_fix map_rec d env sigma a ns ts trm) env sigma a ds in (* TODO refactor *)
      sigma, combine_cartesian (fun ts' ds' -> mkFix ((is, i), (ns, ts', ds'))) tss' dss'
   | CoFix (i, (ns, ts, ds)) ->
      let sigma, tss' = map_rec_args_cartesian map_rec env sigma a ts in
-     let sigma, dss' = map_rec_args_cartesian map_rec env sigma a ds in
+     let sigma, dss' = map_rec_args_cartesian (fun env sigma a trm -> map_rec_env_fix map_rec d env sigma a ns ts trm) env sigma a ds in (* TODO refactor *)
      sigma, combine_cartesian (fun ts' ds' -> mkCoFix (i, (ns, ts', ds'))) tss' dss'
   | Proj (p, c) ->
      let sigma, cs' = map_rec env sigma a c in
@@ -331,11 +331,11 @@ let map_term_env_rec_shallow map_rec f d env sigma a trm =
      sigma, mkCase (ci, ct', m', bs')
   | Fix ((is, i), (ns, ts, ds)) ->
      let sigma, ts' = map_rec_args map_rec env sigma a ts in
-     let sigma, ds' = map_rec_args map_rec env sigma a ds in
+     let sigma, ds' = map_rec_args (fun env sigma a trm -> map_rec_env_fix map_rec d env sigma a ns ts trm) env sigma a ds in (* TODO refactor *)
      sigma, mkFix ((is, i), (ns, ts', ds'))
   | CoFix (i, (ns, ts, ds)) ->
      let sigma, ts' = map_rec_args map_rec env sigma a ts in
-     let sigma, ds' = map_rec_args map_rec env sigma a ds in
+     let sigma, ds' = map_rec_args (fun env sigma a trm -> map_rec_env_fix map_rec d env sigma a ns ts trm) env sigma a ds in (* TODO refactor *)
      sigma, mkCoFix (i, (ns, ts', ds'))
   | Proj (p, c) ->
      let sigma, c' = map_rec env sigma a c in
