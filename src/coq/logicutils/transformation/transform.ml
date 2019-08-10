@@ -36,6 +36,7 @@ let force_constant_body const_body =
  * type from the given constant.
  *
  * NOTE: Global side effects.
+ * TODO is this the right way to deal w/ env and sigma? in this whole file
  *)
 let transform_constant ident tr_constr const_body =
   let env =
@@ -47,10 +48,10 @@ let transform_constant ident tr_constr const_body =
         Pp.(str "Universe polymorphism is not supported")
   in
   let term = force_constant_body const_body in
-  let evm = Evd.from_env env in
-  let evm, term' = tr_constr env evm term in
-  let evm, type' = tr_constr env evm const_body.const_type in
-  define_term ~typ:type' ident evm term' true |> Globnames.destConstRef
+  let sigma = Evd.from_env env in
+  let sigma, term' = tr_constr env sigma term in
+  let sigma, type' = tr_constr env sigma const_body.const_type in
+  define_term ~typ:type' ident sigma term' true |> Globnames.destConstRef
 
 (*
  * Declare a new inductive family under the given name with the transformed type
@@ -65,15 +66,15 @@ let transform_inductive ident tr_constr ((mind_body, ind_body) as ind_specif) =
   let env, univs, arity, cons_types =
     open_inductive ~global:true env ind_specif
   in
-  let evm = Evd.from_env env in
-  let evm, arity' = tr_constr env evm arity in
-  let evm, cons_types' =
+  let sigma = Evd.from_env env in
+  let sigma, arity' = tr_constr env sigma arity in
+  let sigma, cons_types' =
     List.fold_right
-      (fun tr (evm, trs) ->
-        let evm, tr = tr_constr env evm tr in
-        evm, tr :: trs)
+      (fun tr (sigma, trs) ->
+        let sigma, tr = tr_constr env sigma tr in
+        sigma, tr :: trs)
       cons_types
-      (evm, []) (* TODO right threading? *)
+      (sigma, []) (* TODO right threading? *)
   in (* TODO need evm? *)
   declare_inductive
     ident (Array.to_list ind_body.mind_consnames)
