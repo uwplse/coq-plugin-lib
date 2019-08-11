@@ -42,6 +42,23 @@ val unshift : types -> types
 (* Shift everything and pray; workaround for bug *)
 val shift_by_unconditional : int -> types -> types
 
+(*
+ * Gather the set of relative (de Bruijn) variables occurring in the term that
+ * are free (i.e., not bound) under nb levels of external relative binding.
+ *
+ * Use free_rels 0 Int.Set.empty if you do not wish to filter out any free
+ * relative variables below a certain binding level (nb) or supply the initial
+ * accumulator (frels).
+ *
+ * Examples:
+ * - free_rels 0 {} (Lambda(_, Rel 2, App(Rel 2, [Rel 1; Rel 4]))) = { 1, 2, 3 }
+ * - free_rels 1 {} (Lambda(_, Rel 2, App(Rel 2, [Rel 1; Rel 4]))) = { 2, 3 }
+ * - free_rels 2 {} (Lambda(_, Rel 2, App(Rel 2, [Rel 1; Rel 4]))) = { 3 }
+ *
+ * Like many functions, by Nate Yazdani from original DEVOID code
+ *)
+val free_rels : int -> Int.Set.t -> types -> Int.Set.t
+
 (* --- Lists --- *)
 
 (*
