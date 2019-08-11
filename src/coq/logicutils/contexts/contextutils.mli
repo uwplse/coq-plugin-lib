@@ -10,6 +10,7 @@ open Constr
 open Names
 open Environ
 open Declarations
+open Evd
 
 module CRD = Context.Rel.Declaration
 module CND = Context.Named.Declaration
@@ -98,6 +99,20 @@ val decompose_lam_n_zeta : int -> constr -> Context.Rel.t * constr
 val recompose_prod_assum : Context.Rel.t -> types -> types
 val recompose_lam_assum : Context.Rel.t -> types -> types
 
+(* --- Names in contexts --- *)
+
+(*
+ * Give a "reasonable" name to each anonymous local declaration in the relative
+ * context. Name generation is according to standard Coq policy (cf., Namegen)
+ * and does not guarantee freshness, but term type-checking is only sensitive to
+ * anonymity. (Names are freshened by subscription when printed.)
+ *)
+val deanonymize_context :
+  env ->
+  evar_map ->
+  (constr, types) CRD.pt list ->
+  (constr, types) CRD.pt list
+            
 (* --- Getting bindings for certain kinds of terms --- *)
 
 (*

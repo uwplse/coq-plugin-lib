@@ -157,6 +157,21 @@ let recompose_lam_assum decls term =
   let bind term decl = Term.mkLambda_or_LetIn decl term in
   Context.Rel.fold_inside bind ~init:term decls
 
+(* --- Names in contexts --- *)
+
+(*
+ * Give a "reasonable" name to each anonymous local declaration in the relative
+ * context. Name generation is according to standard Coq policy (cf., Namegen)
+ * and does not guarantee freshness, but term type-checking is only sensitive to
+ * anonymity. (Names are freshened by subscription when printed.)
+ *
+ * By Nate Yazdani, from the original DEVOID code
+ *)
+let deanonymize_context env sigma ctxt =
+  List.map EConstr.of_rel_decl ctxt |>
+  Namegen.name_context env sigma |>
+  List.map (EConstr.to_rel_decl sigma)
+
 (* --- Getting bindings for certain kinds of terms --- *)
 
 (*
