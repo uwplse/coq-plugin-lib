@@ -19,7 +19,7 @@ val on_type :
   types -> (* the type *)
   'a
 
-(* Like on_type, but reduce using the supplied reducer first *)
+(* Like on_type, but reduce the type using the supplied reducer first *)
 val on_red_type :
   reducer ->
   (env -> evar_map -> types -> 'a) ->
