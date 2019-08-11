@@ -24,6 +24,15 @@ val rel_assum : Name.t * 'types -> ('constr, 'types) CRD.pt
 val rel_defin : Name.t * 'constr * 'types -> ('constr, 'types) CRD.pt
 
 (*
+ * Instantiate a local assumption as a local definition, using the provided term
+ * as its definition.
+ *
+ * Raises an assertion error if the local declaration is not a local assumption.
+ *)
+val define_rel_decl :
+  'constr -> ('constr, 'types) CRD.pt -> ('constr, 'types) CRD.pt
+                                                               
+(*
  * Construct a named assumption/definition
  *)
 val named_assum : Id.t * 'types -> ('constr, 'types) CND.pt

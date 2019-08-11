@@ -1,5 +1,8 @@
 (*
  * Utilities for contexts
+ *
+ * Many of these are by Nate Yazdani from the original DEVOID code.
+ * Some are not. Just check the Git history of DEVOID if you are interested.
  *)
 
 open Constr
@@ -10,20 +13,6 @@ open Declarations
 
 module CRD = Context.Rel.Declaration
 module CND = Context.Named.Declaration
-
-(* --- Constructing declarations --- *)
-
-(* Make the rel declaration for a local assumption *)
-let rel_assum (name, typ) = CRD.LocalAssum (name, typ)
-
-(* Make the rel declaration for a local definition *)
-let rel_defin (name, def, typ) = CRD.LocalDef (name, def, typ)
-
-(* Make the named declaration for a local assumption *)
-let named_assum (id, typ) = CND.LocalAssum (id, typ)
-
-(* Make the named declaration for a local definition *)
-let named_defin (id, def, typ) = CND.LocalDef (id, def, typ)
 
 (* --- Questions about declarations --- *)
 
@@ -38,7 +27,7 @@ let is_named_assum = CND.is_local_assum
 
 (* Is the named declaration a definition? *)
 let is_named_defin = CND.is_local_def
-
+                       
 (* --- Deconstructing declarations --- *)
 
 (* Get the name of a rel declaration *)
@@ -58,6 +47,31 @@ let named_value decl = CND.get_value decl
 
 (* Get the type of a named declaration *)
 let named_type decl = CND.get_type decl
+    
+(* --- Constructing declarations --- *)
+
+(* Make the rel declaration for a local assumption *)
+let rel_assum (name, typ) = CRD.LocalAssum (name, typ)
+
+(* Make the rel declaration for a local definition *)
+let rel_defin (name, def, typ) = CRD.LocalDef (name, def, typ)
+
+(* Make the named declaration for a local assumption *)
+let named_assum (id, typ) = CND.LocalAssum (id, typ)
+
+(* Make the named declaration for a local definition *)
+let named_defin (id, def, typ) = CND.LocalDef (id, def, typ)
+
+(*
+ * Instantiate a local assumption as a local definition, using the provided term
+ * as its definition.
+ *
+ * Raises an assertion error if the local declaration is not a local assumption.
+ * TODO raise (and catch) a better error here
+ *)
+let define_rel_decl body decl =
+  assert (is_rel_assum decl);
+  rel_defin (rel_name decl, body, rel_type decl)
 
 (* --- Mapping over contexts --- *)
 
@@ -164,8 +178,6 @@ let recompose_lam_assum decls term =
  * context. Name generation is according to standard Coq policy (cf., Namegen)
  * and does not guarantee freshness, but term type-checking is only sensitive to
  * anonymity. (Names are freshened by subscription when printed.)
- *
- * By Nate Yazdani, from the original DEVOID code
  *)
 let deanonymize_context env sigma ctxt =
   List.map EConstr.of_rel_decl ctxt |>
