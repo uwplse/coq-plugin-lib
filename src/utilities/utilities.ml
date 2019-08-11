@@ -174,6 +174,10 @@ let twice (f : 'a -> 'a -> bool -> 'b) (a1 : 'a) (a2 : 'a) : 'b * 'b  =
 let reverse ((a, b) : 'a * 'b) : 'b * 'a =
   (b, a)
 
+(* Pair the outputs of two functions on the same input *)
+let pair (f : 'a -> 'b) (g : 'a -> 'c) (x : 'a) =
+  (f x, g x)
+
 (* --- Propositions --- *)
         
 (* Always true *)
