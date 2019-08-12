@@ -7,6 +7,7 @@ open Environ
 open Constr
 open Names
 open Contextutils
+open Evd
 
 (* Look up all indexes from a list in an environment *)
 val lookup_rels : int list -> env -> CRD.t list
@@ -38,3 +39,8 @@ val unwrap_definition : env -> types -> types
  *)
 val new_rels : env -> int -> int
 val new_rels2 : env -> env -> int
+
+(*
+ * Ignore the environment and evar_map in a function
+ *)
+val ignore_env : ('a -> 'b) -> (env -> evar_map -> 'a -> 'b)

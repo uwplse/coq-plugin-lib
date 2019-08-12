@@ -9,6 +9,7 @@ open Declarations
 open Decl_kinds
 open Constrextern
 open Contextutils
+open Evd
 
 (* Look up all indexes from is in env *)
 let lookup_rels (is : int list) (env : env) : CRD.t list =
@@ -66,3 +67,7 @@ let new_rels env npm = nb_rel env - npm
 
 (* Find the offset between two environments *)
 let new_rels2 env1 env2 = nb_rel env1 - nb_rel env2
+
+(* Ignore the environment and evar_map in a function *)
+let ignore_env (f : 'a -> 'b) : env -> evar_map -> 'a -> 'b =
+  (fun _ _ -> f)
