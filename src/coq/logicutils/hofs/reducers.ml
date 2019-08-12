@@ -1,4 +1,4 @@
-(* Strategies for reducing terms *)
+(* Strategies for reducing terms (TODO will be way better with EConstr) *)
 
 open Environ
 open Evd
