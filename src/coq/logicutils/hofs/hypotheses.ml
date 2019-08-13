@@ -15,7 +15,7 @@ open Funutils
 
 (* --- Eta expansion --- *)
                
-(* Eta expansion of an application or function (TODO do we need sigma?) *)
+(* Eta expansion of an application or function *)
 let expand_eta (env : env) sigma (trm : types) : evar_map * types =
   let sigma, typ = reduce_type env sigma trm in
   let curried_args = mk_n_rels (arity typ) in

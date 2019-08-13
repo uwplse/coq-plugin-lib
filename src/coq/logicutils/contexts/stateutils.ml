@@ -77,3 +77,17 @@ let find_state sigma p l =
             sigma, None)
       l
       (sigma, None))
+
+(*
+ * Filter
+ *)
+let filter_state sigma p l =
+  List.fold_right
+    (fun a (sigma, a_l) ->
+      let sigma, p_holds = p sigma a in
+      if p_holds then
+        sigma, a :: a_l
+      else
+        sigma, a_l)
+    l
+    (sigma, [])

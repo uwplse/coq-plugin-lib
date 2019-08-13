@@ -40,3 +40,9 @@ val find_state :
   (evar_map -> 'a -> evar_map * bool) ->
   'a list ->
   evar_map * 'a
+
+val filter_state :
+  evar_map ->
+  (evar_map -> 'a -> evar_map * bool) ->
+  'a list ->
+  evar_map * 'a list
