@@ -68,10 +68,12 @@ val computes_ih_index :
  * Given a type we are promoting to/forgetting from,
  * get all of the arguments to that type that aren't the new/forgotten index
  *)
-val non_index_args : int -> env -> evar_map -> types -> types list
+val non_index_args :
+  int -> env -> evar_map -> types -> types list
 
 (*
  * Given a term with the type we are promoting to/forgetting from,
  * get all of the arguments to that type that aren't the new/forgotten index
  *)
-val non_index_typ_args : int -> env -> evar_map -> types -> types list
+val non_index_typ_args :
+  int -> env -> evar_map -> types -> evar_map * types list

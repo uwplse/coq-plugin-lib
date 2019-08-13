@@ -13,6 +13,7 @@ open Declarations
 open Defutils
 open Indutils
 open Substitution
+open Stateutils
 
 (* Type-sensitive transformation of terms *)
 type constr_transformer = env -> evar_map -> constr -> evar_map * constr
@@ -51,7 +52,7 @@ let transform_constant ident tr_constr const_body =
   let sigma = Evd.from_env env in
   let sigma, term' = tr_constr env sigma term in
   let sigma, type' = tr_constr env sigma const_body.const_type in
-  define_term ~typ:type' ident sigma term' true |> Globnames.destConstRef
+  sigma, Globnames.destConstRef (define_term ~typ:type' ident sigma term' true)
 
 (*
  * Declare a new inductive family under the given name with the transformed type
@@ -68,18 +69,16 @@ let transform_inductive ident tr_constr ((mind_body, ind_body) as ind_specif) =
   in
   let sigma = Evd.from_env env in
   let sigma, arity' = tr_constr env sigma arity in
-  let sigma, cons_types' =
-    List.fold_right
-      (fun tr (sigma, trs) ->
-        let sigma, tr = tr_constr env sigma tr in
-        sigma, tr :: trs)
-      cons_types
-      (sigma, []) (* TODO right threading? *)
-  in (* TODO need evm? *)
-  declare_inductive
-    ident (Array.to_list ind_body.mind_consnames)
-    (is_ind_body_template ind_body) univs
-    mind_body.mind_nparams arity' cons_types'
+  let sigma, cons_types' = map_fold_state sigma (tr_constr env) cons_types in
+  Util.on_snd
+    (declare_inductive
+       ident
+       (Array.to_list ind_body.mind_consnames)
+       (is_ind_body_template ind_body)
+       univs
+       mind_body.mind_nparams
+       arity')
+    (sigma, cons_types')
     
 (*
  * Pull any functor parameters off the module signature, returning the list of
@@ -126,6 +125,8 @@ let declare_module_structure ?(params=[]) ident declare_elements =
  *
  * NOTE: Does not support functors or nested modules.
  * NOTE: Global side effects.
+ *
+ * TODO sigma handling, not sure how to do it here/if we need it
  *)
 let transform_module_structure ?(init=const Globnames.Refmap.empty) ident tr_constr mod_body =
   let mod_path = mod_body.mod_mp in
@@ -133,20 +134,20 @@ let transform_module_structure ?(init=const Globnames.Refmap.empty) ident tr_con
   assert (List.is_empty mod_arity); (* Functors are not yet supported *)
   let transform_module_element subst (label, body) =
     let ident = Label.to_id label in
-    let tr_constr env evm = subst_globals subst %> tr_constr env evm in
+    let tr_constr env sigma = subst_globals subst %> tr_constr env sigma in
     match body with
     | SFBconst const_body ->
       let const = Constant.make2 mod_path label in
       if Globnames.Refmap.mem (ConstRef const) subst then
         subst (* Do not transform schematic definitions. *)
       else
-        let const' = transform_constant ident tr_constr const_body in
+        let sigma, const' = transform_constant ident tr_constr const_body in
         Globnames.Refmap.add (ConstRef const) (ConstRef const') subst
     | SFBmind mind_body ->
       check_inductive_supported mind_body;
       let ind = (MutInd.make2 mod_path label, 0) in
       let ind_body = mind_body.mind_packets.(0) in
-      let ind' = transform_inductive ident tr_constr (mind_body, ind_body) in
+      let sigma, ind' = transform_inductive ident tr_constr (mind_body, ind_body) in
       let ncons = Array.length ind_body.mind_consnames in
       let list_cons ind = List.init ncons (fun i -> ConstructRef (ind, i + 1)) in
       let sorts = ind_body.mind_kelim in
