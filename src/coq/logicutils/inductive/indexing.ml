@@ -54,7 +54,7 @@ let reindex_body reindexer lam =
  * but we are not sure if the term is a lambda or curried
  *)
 let dummy_index env sigma f =
-  reduce_term env sigma (mkAppl (f, [mkRel 0]))
+  snd (reduce_term env sigma (mkAppl (f, [mkRel 0])))
 
 (*
  * Unshift arguments after index_i, since the index is no longer in
@@ -89,7 +89,7 @@ let rec computes_ih_index off p i typ =
  * get all of the arguments to that type that aren't the new/forgotten index
  *)
 let non_index_args index_i env sigma typ =
-  let typ = reduce_nf env sigma typ in
+  let sigma, typ = reduce_nf env sigma typ in
   if is_or_applies sigT typ then
     let packer = (dest_sigT typ).packer in
     remove_index index_i (unfold_args (dummy_index env sigma packer))
