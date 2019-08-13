@@ -22,10 +22,3 @@ val map_fold_state_array :
   (evar_map -> 'a -> evar_map * 'b) ->
   'a array ->
   evar_map * 'b array
-
-(* --- Other utilities --- *)
-
-(*
- * Ignore the state in the argument
- *)
-val ignore_state : ('a -> 'b) -> (evar_map -> 'a -> 'b)

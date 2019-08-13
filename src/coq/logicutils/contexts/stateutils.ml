@@ -30,11 +30,3 @@ let map_fold_state sigma f l =
  *)
 let map_fold_state_array sigma f arr =
   Util.on_snd Array.of_list (map_fold_state sigma f (Array.to_list arr))
-
-(* --- Other utilities --- *)              
-
-(*
- * Ignore the state in the argument
- *)
-let ignore_state f =
-  (fun _ -> f)
