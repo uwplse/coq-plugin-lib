@@ -12,6 +12,7 @@ open Inference
 open Stateutils
               
 type reducer = env -> evar_map -> types -> evar_map * types
+type stateless_reducer = env -> evar_map -> types -> types
 
 (* --- Top-level --- *)
 
@@ -145,3 +146,16 @@ let rec remove_unused_hypos (env : env) sigma (trm : types) : evar_map * types =
   | _ ->
      sigma, trm
 
+(*
+ * Given a reducer, get a stateless version of the reducer that ignores
+ * the resulting evar_map. This can be used when we know the evar_map
+ * will not change, for example with the normal reduction functions
+ * at the term level. If the evar_map is not identical to the input evar_map,
+ * then this fails with an error.
+ *)
+let reduce_stateless r env sigma trm =
+  let sigma', trm' = r env sigma trm in
+  if sigma == sigma' then
+    trm'
+  else
+    failwith "cannot call reduce_stateless when the evar_map actually changes"

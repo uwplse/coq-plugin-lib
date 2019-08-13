@@ -5,6 +5,7 @@ open Evd
 open Constr
 
 type reducer = env -> evar_map -> types -> evar_map * types
+type stateless_reducer = env -> evar_map -> types -> types
 
 (* --- Top-level --- *)
 
@@ -92,3 +93,12 @@ val reduce_body_if :
  * Update the evar_map appropriately
  *)
 val reduce_type_using : reducer -> reducer
+
+(*
+ * Given a reducer, get a stateless version of the reducer that ignores
+ * the resulting evar_map. This can be used when we know the evar_map
+ * will not change, for example with the normal reduction functions
+ * at the term level. If the evar_map is not identical to the input evar_map,
+ * then this fails with an error.
+ *)
+val reduce_stateless : reducer -> stateless_reducer
