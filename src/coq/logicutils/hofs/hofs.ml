@@ -7,6 +7,7 @@ open Envutils
 open Utilities
 open Names
 open Evd
+open Stateutils
 
 (* Predicates to determine whether to apply a mapped function *)
 type ('a, 'b) pred = 'a -> 'b -> bool
@@ -92,33 +93,20 @@ type ('a, 'b) proposition_list_mapper =
 (* --- Terms --- *)
 
 (*
- * TODO explain
- * TODO is this the right way to thread evar_maps?
+ * Map recursively on an array of arguments, threading the state through
+ * the result
  *)
 let map_rec_args map_rec env sigma a args =
-  let sigma, args' =
-    List.fold_right
-      (fun tr (sigma, trs) ->
-        let sigma, tr = map_rec env sigma a tr in
-        sigma, tr :: trs)
-      (Array.to_list args)
-      (sigma, [])
-  in sigma, Array.of_list args'
+  map_fold_state_array sigma (fun sigma tr -> map_rec env sigma a tr) args
 
 (*
- * TODO explain
- * TODO is this the right way to thread evar_maps?
- * TODO both?
+ * Same, but return all combinations of the results
+ * TODO can we reuse map_rec_args, or is the type system too weak?
  *)
 let map_rec_args_cartesian map_rec env sigma a args =
-  let sigma, args' =
-    List.fold_right
-      (fun tr (sigma, trs) ->
-        let sigma, tr = map_rec env sigma a tr in
-        sigma, tr :: trs)
-      (Array.to_list args)
-      (sigma, [])
-  in sigma, combine_cartesian_append (Array.of_list args')
+  Util.on_snd
+    combine_cartesian_append
+    (map_fold_state_array sigma (fun sigma tr -> map_rec env sigma a tr) args)
 
 (*
  * Recurse on a mapping function with an environment for a fixpoint
@@ -132,7 +120,7 @@ let map_rec_env_fix map_rec d env sigma a ns ts =
 
 (*
  * Recurse on a mapping function with an environment for a fixpoint
- * TODO do we need both of these?
+ * TODO do we need both of these, or is type system too weak?
  *)
 let map_rec_env_fix_cartesian (map_rec : ('a, 'b) list_transformer_with_env) d env sigma a ns ts =
   let fix_bindings = bindings_for_fix ns ts in

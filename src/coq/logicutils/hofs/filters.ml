@@ -11,17 +11,16 @@ open Inference
 type 'a filter_strategy = env -> evar_map -> 'a list -> 'a list
 
 (* Filter trms to those that have type typ in env *)
-(* TODO do we need to update sigma? If so, need to update sigma in has_type *)
 let filter_by_type typ (env : env) sigma (trms : types list) : types list =
   try
-    List.filter (has_type env sigma typ) trms
+    List.filter (fun tr -> snd (has_type env sigma typ tr)) trms (* TODO evar_map *)
   with
   | _ -> []
 
 (* Find the singleton list with the first term that has type typ *)
 let find_by_type typ (env : env) sigma (trms : types list) : types list =
   try
-    [List.find (has_type env sigma typ) trms]
+    [List.find (fun tr -> snd (has_type env sigma typ tr)) trms] (* TODO evar_map *)
   with
   | _ -> []
 

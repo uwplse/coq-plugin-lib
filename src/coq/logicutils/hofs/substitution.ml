@@ -45,12 +45,12 @@ let all_substs_combs p env sigma (src, dst) trm : types list =
    TODO do we want to thread the evar_map through for the conv ones
    and check the result? Does that gain us anything? How does it
    impact performance? *)
-let all_conv_substs : (types * types) type_substitution =
-  all_substs convertible
+let all_conv_substs : (types * types) type_substitution = (* TODO evar_maps *)
+  all_substs (fun env sigma t1 t2 -> snd (convertible env sigma t1 t2))
 
 (* In env, substitute all subterms of trm that have a convertible type to the type of src with dst *)
-let all_typ_substs : (types * types) type_substitution =
-  all_substs types_convertible
+let all_typ_substs : (types * types) type_substitution = (* TODO evar_maps *)
+  all_substs (fun env sigma t1 t2 -> snd (types_convertible env sigma t1 t2))
 
 (* Same, but equal *)
 let all_eq_substs =
@@ -64,8 +64,8 @@ let constructs_recursively env sigma c trm : bool =
   if isApp trm then
     try
       let (f, args) = destApp trm in
-      let conv = convertible env sigma in
-      let types_conv = types_convertible env sigma in
+      let conv t1 t2 = snd (convertible env sigma t1 t2) in (* TODO evar_map *)
+      let types_conv t1 t2 = snd (types_convertible env sigma t1 t2) in (* TODO evar_map *)
       conv f c && List.exists (types_conv trm) (Array.to_list args)
     with _ ->
       false
@@ -86,8 +86,8 @@ let all_constr_substs env sigma c trm : types =
     (map_term_env_if
        constructs_recursively
        (fun env sigma _ t ->
-         let (_, args_t) = destApp t in
-         sigma, List.find (types_convertible env sigma t) (Array.to_list args_t))
+         let (_, args_t) = destApp t in (* TODO evar_map *)
+         sigma, List.find (fun t' -> snd (types_convertible env sigma t t')) (Array.to_list args_t))
        shift
        env
        sigma
@@ -96,11 +96,11 @@ let all_constr_substs env sigma c trm : types =
 
 (* In env, return all substitutions of subterms of trm that are convertible to src with dst *)
 let all_conv_substs_combs : (types * types) comb_substitution =
-  all_substs_combs convertible
+  all_substs_combs (fun env sigma t1 t2 -> snd (convertible env sigma t1 t2)) (* TODO evar_maps *)
 
 (* In env, return all substitutions of subterms of trm that have a convertible type to the type of src with dst *)
 let all_typ_substs_combs : (types * types) comb_substitution =
-  all_substs_combs types_convertible
+  all_substs_combs (fun env sigma t1 t2 -> snd (types_convertible env sigma t1 t2)) (* TODO evar_maps *)
 
  (* --- Substituting global references --- *)
 
@@ -115,5 +115,4 @@ let subst_globals subst term =
       constr_of_pglobal
     with Not_found ->
       Constr.map aux term
-  in
-  aux term
+  in aux term
