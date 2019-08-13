@@ -17,7 +17,7 @@ open Names
  * well-typed even regardless of evar_map problems; it is up to you
  * to check the returned terms later on.
  *)
-type ('a, 'b) substitution = env -> evar_map -> 'a -> types -> 'b
+type ('a, 'b) substitution = env -> evar_map -> 'a -> types -> evar_map * 'b
 type 'a comb_substitution = ('a, types list) substitution
 type 'a type_substitution = ('a, types) substitution
 

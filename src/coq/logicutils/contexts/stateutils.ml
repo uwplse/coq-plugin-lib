@@ -30,3 +30,50 @@ let map_fold_state sigma f l =
  *)
 let map_fold_state_array sigma f arr =
   Util.on_snd Array.of_list (map_fold_state sigma f (Array.to_list arr))
+
+(*
+ * flat_map version
+ *)
+let flat_map_fold_state sigma f l =
+  let sigma, l = map_fold_state sigma f l in
+  List.fold_right
+    (fun bs (sigma, bss) ->
+      sigma, List.append bs bss)
+    l
+    (sigma, [])
+
+(*
+ * Predicate version, for exists
+ *)
+let exists_state sigma p l =
+  List.fold_right
+    (fun a (sigma, p_holds) ->
+      if p_holds then
+        sigma, p_holds
+      else
+        p sigma a)
+    l
+    (sigma, false)
+
+(*
+ * Predicate version, for find
+ *)
+let find_state sigma p l =
+  Util.on_snd
+    (fun a_opt ->
+      if Option.has_some a_opt then
+        Option.get a_opt
+      else
+        raise Not_found)
+    (List.fold_right
+      (fun a (sigma, a_opt) ->
+        if Option.has_some a_opt then
+          sigma, a_opt
+        else
+          let sigma, p_holds = p sigma a in
+          if p_holds then
+            sigma, Some a
+          else
+            sigma, None)
+      l
+      (sigma, None))

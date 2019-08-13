@@ -12,8 +12,8 @@ open Stateutils
 (* Predicates to determine whether to apply a mapped function *)
 type ('a, 'b) pred = 'a -> 'b -> bool
 type 'b unit_pred = 'b -> bool
-type ('a, 'b) pred_with_env = env -> evar_map -> ('a, 'b) pred
-type 'b unit_pred_with_env = env -> evar_map -> 'b unit_pred
+type ('a, 'b) pred_with_env = env -> evar_map -> 'a -> 'b -> evar_map * bool
+type 'b unit_pred_with_env = env -> evar_map -> 'b -> evar_map * bool
 
 (* Functions to use in maps *)
 type ('a, 'b) transformer = 'a -> 'b -> 'b
@@ -109,6 +109,12 @@ let map_rec_args_cartesian map_rec env sigma a args =
     (map_fold_state_array sigma (fun sigma tr -> map_rec env sigma a tr) args)
 
 (*
+ * Predicate version
+ *)
+let exists_args map_rec env sigma a args : evar_map * bool =
+  exists_state sigma (fun sigma tr -> map_rec env sigma a tr) (Array.to_list args)
+
+(*
  * Recurse on a mapping function with an environment for a fixpoint
  *)
 let map_rec_env_fix map_rec d env sigma a ns ts =
@@ -183,7 +189,6 @@ let map_term_env_rec map_rec f d env sigma a trm =
 let rec map_term_env f d env sigma a trm =
   map_term_env_rec (map_term_env f d) f d env sigma a trm
 
-
 (*
  * Map a function over a term, when the environment doesn't matter
  * Update the argument of type 'a using the a supplied update function
@@ -210,16 +215,16 @@ let map_subterms_env_rec map_rec f d env sigma a trm =
      sigma, combine_cartesian (fun c' t' -> mkCast (c', k, t')) cs' ts'
   | Prod (n, t, b) ->
      let sigma, ts' = map_rec env sigma a t in
-     let sigma, bs' = map_rec (push_rel CRD.(LocalAssum(n, t)) env) sigma (d a) b in
+     let sigma, bs' = map_rec (push_local (n, t) env) sigma (d a) b in
      sigma, combine_cartesian (fun t' b' -> mkProd (n, t', b')) ts' bs'
   | Lambda (n, t, b) ->
      let sigma, ts' = map_rec env sigma a t in
-     let sigma, bs' = map_rec (push_rel CRD.(LocalAssum(n, t)) env) sigma (d a) b in
+     let sigma, bs' = map_rec (push_local (n, t) env) sigma (d a) b in
      sigma, combine_cartesian (fun t' b' -> mkLambda (n, t', b')) ts' bs'
   | LetIn (n, trm, typ, e) ->
      let sigma, trms' = map_rec env sigma a trm in
      let sigma, typs' = map_rec env sigma a typ in
-     let sigma, es' = map_rec (push_rel CRD.(LocalDef(n, e, typ)) env) sigma (d a) e in
+     let sigma, es' = map_rec (push_let_in (n, e, typ) env) sigma (d a) e in
      sigma, combine_cartesian (fun trm' (typ', e') -> mkLetIn (n, trm', typ', e')) trms' (cartesian typs' es')
   | App (fu, args) ->
      let sigma, fus' = map_rec env sigma a fu in
@@ -278,7 +283,8 @@ let map_subterms f d a trm : types list =
  *)
 let rec map_term_env_if p f d env sigma a trm =
   let map_rec = map_term_env_if p f d in
-  if p env sigma a trm then
+  let sigma, p_holds = p env sigma a trm in
+  if p_holds then
     f env sigma a trm
   else
     map_term_env_rec map_rec (fun _ sigma _ tr -> sigma, tr) d env sigma a trm
@@ -342,7 +348,8 @@ let map_term_env_rec_shallow map_rec f d env sigma a trm =
  *)
 let rec map_term_env_if_shallow p f d env sigma a trm =
   let map_rec = map_term_env_if_shallow p f d in
-  if p env sigma a trm then
+  let sigma, p_holds = p env sigma a trm in
+  if p_holds then
     f env sigma a trm
   else
     map_term_env_rec_shallow
@@ -360,7 +367,8 @@ let rec map_term_env_if_shallow p f d env sigma a trm =
 let rec map_term_env_if_lazy p f d env sigma a trm =
   let map_rec = map_term_env_if_lazy p f d in
   let sigma, trm' = map_term_env_rec map_rec (fun _ sigma _ t -> sigma, t) d env sigma a trm in
-  if p env sigma a trm' then
+  let sigma, p_holds = p env sigma a trm' in
+  if p_holds then
     f env sigma a trm'
   else
     sigma, trm'
@@ -375,7 +383,7 @@ let rec map_term_env_if_lazy p f d env sigma a trm =
 let map_term_if p f d a trm : types =
   snd
     (map_term_env_if
-       (fun _ _ a t -> p a t)
+       (fun _ _ a t -> Evd.empty, p a t)
        (fun _ _ a t -> Evd.empty, f a t)
        d
        empty_env
@@ -387,7 +395,7 @@ let map_term_if p f d a trm : types =
 let map_term_if_lazy p f d a trm =
   snd
     (map_term_env_if_lazy
-       (fun _ _ a t -> p a t)
+       (fun _ _ a t -> Evd.empty, p a t)
        (fun _ _ a t -> Evd.empty, f a t)
        d
        empty_env
@@ -405,7 +413,8 @@ let map_term_if_lazy p f d a trm =
  *)
 let rec map_subterms_env_if p f d env sigma a trm =
   let map_rec = map_subterms_env_if p f d in
-  if p env sigma a trm then
+  let sigma, p_holds = p env sigma a trm in
+  if p_holds then
     f env sigma a trm
   else
     map_subterms_env_rec map_rec (fun _ sigma _ trm -> sigma, [trm]) d env sigma a trm
@@ -420,18 +429,33 @@ let rec map_subterms_env_if p f d env sigma a trm =
  *)
 let rec map_subterms_env_if_combs p f d env sigma a trm =
   let map_rec = map_subterms_env_if_combs p f d in
-  let sigma, trms = if p env sigma a trm then f env sigma a trm else sigma, [trm] in
-  sigma, flat_map (* TODO better sigma threading here *)
-           (fun trm ->
-             snd (map_subterms_env_rec map_rec (fun _ sigma _ trm -> sigma, [trm]) d env sigma a trm))
-           trms
+  let sigma, trms =
+    let sigma, p_holds = p env sigma a trm in
+    if p_holds then
+      f env sigma a trm
+    else
+      sigma, [trm]
+  in
+  flat_map_fold_state
+    sigma
+    (fun sigma trm ->
+      map_subterms_env_rec
+        map_rec
+        (fun _ sigma _ trm -> sigma, [trm])
+        d
+        env
+        sigma
+        a
+        trm)
+    trms
                                                   
 (*
  * Like map_term_env_if, but make a list of subterm results
  *)
 let rec map_term_env_if_list p f d env sigma a trm =
   let map_rec = map_term_env_if_list p f d in
-  if p env sigma a trm then
+  let sigma, p_holds = p env sigma a trm in
+  if p_holds then
     [(env, f env sigma a trm)]
   else
     match kind trm with
@@ -490,13 +514,15 @@ let rec map_subterms_env_if_lazy p f d env sigma a trm =
   let sigma, trms' =
     map_subterms_env_rec map_rec (fun _ sigma _ trm -> sigma, [trm]) d env sigma a trm
   in
-  sigma, flat_map (* TODO better sigma threading here *)
-           (fun trm ->
-             if p env sigma a trm then
-               snd (f env sigma a trm)
-             else
-               [trm])
-           trms'
+  flat_map_fold_state
+    sigma
+    (fun sigma trm ->
+      let sigma, p_holds = p env sigma a trm in
+      if p_holds then
+        f env sigma a trm
+      else
+        sigma, [trm])
+    trms'
 
 (* --- Propositions --- *)
 
@@ -507,68 +533,71 @@ let rec map_subterms_env_if_lazy p f d env sigma a trm =
  * We can make this even more general and just take a combinator
  * and a mapping function and so on, in the future.
  *)
-let rec exists_subterm_env p d env sigma (a : 'a) (trm : types) : bool =
-  let exists p a = List.exists p (Array.to_list a) in
+let rec exists_subterm_env p d env sigma (a : 'a) (trm : types) : evar_map * bool =
   let map_rec = exists_subterm_env p d in
-  if p env sigma a trm then
-    true
+  let sigma, p_holds = p env sigma a trm in
+  if p_holds then
+    sigma, true
   else
     match kind trm with
     | Cast (c, k, t) ->
-       let c' = map_rec env sigma a c in
-       let t' = map_rec env sigma a t in
-       c' || t'
+       let sigma, c' = map_rec env sigma a c in
+       let sigma, t' = map_rec env sigma a t in
+       sigma, c' || t'
     | Prod (n, t, b) ->
-       let t' = map_rec env sigma a t in
-       let b' = map_rec (push_local (n, t) env) sigma (d a) b in
-       t' || b'
+       let sigma, t' = map_rec env sigma a t in
+       let sigma, b' = map_rec (push_local (n, t) env) sigma (d a) b in
+       sigma, t' || b'
     | Lambda (n, t, b) ->
-       let t' = map_rec env sigma a t in
-       let b' = map_rec (push_local (n, t) env) sigma (d a) b in
-       t' || b'
+       let sigma, t' = map_rec env sigma a t in
+       let sigma, b' = map_rec (push_local (n, t) env) sigma (d a) b in
+       sigma, t' || b'
     | LetIn (n, trm, typ, e) ->
-       let trm' = map_rec env sigma a trm in
-       let typ' = map_rec env sigma a typ in
-       let e' = map_rec (push_let_in (n, e, typ) env) sigma (d a) e in
-       trm' || typ' || e'
+       let sigma, trm' = map_rec env sigma a trm in
+       let sigma, typ' = map_rec env sigma a typ in
+       let sigma, e' = map_rec (push_let_in (n, e, typ) env) sigma (d a) e in
+       sigma, trm' || typ' || e'
     | App (fu, args) ->
-       let fu' = map_rec env sigma a fu in
-       let args' = exists (map_rec env sigma a) args in
-       fu' || args'
+       let sigma, fu' = map_rec env sigma a fu in
+       let sigma, args' = exists_args map_rec env sigma a args in
+       sigma, fu' || args'
     | Case (ci, ct, m, bs) ->
-       let ct' = map_rec env sigma a ct in
-       let m' = map_rec env sigma a m in
-       let bs' = exists (map_rec env sigma a) bs in
-       ct' || m' || bs'
+       let sigma, ct' = map_rec env sigma a ct in
+       let sigma, m' = map_rec env sigma a m in
+       let sigma, bs' = exists_args map_rec env sigma a bs in
+       sigma, ct' || m' || bs'
     | Fix ((is, i), (ns, ts, ds)) ->
-       let ts' = exists (map_rec env sigma a) ts in
-       let ds' = exists (map_rec_env_fix map_rec d env sigma a ns ts) ds in
-       ts' || ds'
+       let sigma, ts' = exists_args map_rec env sigma a ts in
+       let sigma, ds' = exists_args map_rec env sigma a ds in
+       sigma, ts' || ds'
     | CoFix (i, (ns, ts, ds)) ->
-       let ts' = exists (map_rec env sigma a) ts in
-       let ds' = exists (map_rec_env_fix map_rec d env sigma a ns ts) ds in
-       ts' || ds'
+       let sigma, ts' = exists_args map_rec env sigma a ts in
+       let sigma, ds' = exists_args map_rec env sigma a ds in
+       sigma, ts' || ds'
     | Proj (pr, c) ->
        map_rec env sigma a c
     | _ ->
-       false
+       sigma, false
 
 (* exists_subterm_env with an empty environment *)
-let exists_subterm p d =
-  exists_subterm_env
-    (fun _ _ a t -> p a t)
-    d
-    empty_env
-    Evd.empty
+let exists_subterm p d a t =
+  snd
+    (exists_subterm_env
+       (fun _ _ a t -> Evd.empty, p a t)
+       d
+       empty_env
+       Evd.empty
+       a
+       t)
 
-(* all subterms that match a predicate *)
+(* all constant subterms that match a stateless predicate *)
 let all_const_subterms p d a t =
   List.map
     snd
     (List.map
        snd
        (map_term_env_if_list
-          (fun _ _ a t -> isConst t && p a t)
+          (fun _ sigma a t -> sigma, isConst t && p a t)
           (fun en sigma _ t -> sigma, t)
           d
           empty_env

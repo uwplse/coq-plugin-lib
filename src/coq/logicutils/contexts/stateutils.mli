@@ -22,3 +22,21 @@ val map_fold_state_array :
   (evar_map -> 'a -> evar_map * 'b) ->
   'a array ->
   evar_map * 'b array
+
+val flat_map_fold_state :
+  evar_map ->
+  (evar_map -> 'a -> evar_map * 'b list) ->
+  'a list ->
+  evar_map * 'b list
+
+val exists_state :
+  evar_map ->
+  (evar_map -> 'a -> evar_map * bool) ->
+  'a list ->
+  evar_map * bool
+
+val find_state :
+  evar_map ->
+  (evar_map -> 'a -> evar_map * bool) ->
+  'a list ->
+  evar_map * 'a
