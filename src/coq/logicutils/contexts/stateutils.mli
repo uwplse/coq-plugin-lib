@@ -17,6 +17,14 @@ val map_fold_state :
   'a list ->
   evar_map * 'b list
 
+val map2_fold_state :
+  evar_map ->
+  (evar_map -> 'a -> 'b -> evar_map * 'c) ->
+  'a list ->
+  'b list ->
+  evar_map * 'c list
+  
+
 val map_fold_state_array :
   evar_map ->
   (evar_map -> 'a -> evar_map * 'b) ->

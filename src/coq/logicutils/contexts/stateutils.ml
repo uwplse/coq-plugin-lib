@@ -26,6 +26,18 @@ let map_fold_state sigma f l =
     (sigma, [])
 
 (*
+ * map2 version
+ *)
+let map2_fold_state sigma f l1 l2 =
+  List.fold_right2
+    (fun a b (sigma, cs) ->
+      let sigma, c = f sigma a b in
+      sigma, c :: cs)
+    l1
+    l2
+    (sigma, [])
+
+(*
  * Array version
  *)
 let map_fold_state_array sigma f arr =
