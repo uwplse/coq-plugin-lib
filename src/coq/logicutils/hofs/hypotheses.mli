@@ -2,7 +2,7 @@
  * Functions to manage the hypotheses of a term
  *)
 
-open Constr
+open EConstr
 open Environ
 open Evd  
 

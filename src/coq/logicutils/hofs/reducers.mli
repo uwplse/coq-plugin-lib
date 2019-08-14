@@ -2,7 +2,7 @@
 
 open Environ
 open Evd
-open Constr
+open EConstr
 
 type reducer = env -> evar_map -> types -> evar_map * types
 type stateless_reducer = env -> evar_map -> types -> types
