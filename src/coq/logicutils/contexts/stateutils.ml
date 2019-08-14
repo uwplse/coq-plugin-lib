@@ -65,7 +65,7 @@ let flat_map_fold_state sigma f l =
  *)
 let exists_state sigma p l =
   List.fold_left
-    (fun a (sigma, p_holds) ->
+    (fun (sigma, p_holds) a ->
       if p_holds then
         sigma, p_holds
       else
