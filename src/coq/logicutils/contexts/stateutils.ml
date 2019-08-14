@@ -18,24 +18,28 @@ open Evd
  * significant.
  *)
 let map_fold_state sigma f l =
-  List.fold_right
-    (fun a (sigma, bs) ->
-      let sigma, b = f sigma a in
-      sigma, b :: bs)
-    l
-    (sigma, [])
+  Util.on_snd
+    List.rev
+    (List.fold_left
+       (fun (sigma, bs) a ->
+         let sigma, b = f sigma a in
+         sigma, b :: bs)
+       (sigma, [])
+       l)
 
 (*
  * map2 version
  *)
 let map2_fold_state sigma f l1 l2 =
-  List.fold_right2
-    (fun a b (sigma, cs) ->
-      let sigma, c = f sigma a b in
-      sigma, c :: cs)
-    l1
-    l2
-    (sigma, [])
+  Util.on_snd
+    List.rev
+    (List.fold_left2
+       (fun (sigma, cs) a b ->
+         let sigma, c = f sigma a b in
+         sigma, c :: cs)
+       (sigma, [])
+       l1
+       l2)
 
 (*
  * Array version
@@ -48,24 +52,26 @@ let map_fold_state_array sigma f arr =
  *)
 let flat_map_fold_state sigma f l =
   let sigma, l = map_fold_state sigma f l in
-  List.fold_right
-    (fun bs (sigma, bss) ->
-      sigma, List.append bs bss)
-    l
-    (sigma, [])
+  Util.on_snd
+    List.rev
+    (List.fold_left
+       (fun (sigma, bss) bs ->
+         sigma, List.append bs bss)
+       (sigma, [])
+       l)
 
 (*
  * Predicate version, for exists
  *)
 let exists_state sigma p l =
-  List.fold_right
+  List.fold_left
     (fun a (sigma, p_holds) ->
       if p_holds then
         sigma, p_holds
       else
         p sigma a)
-    l
     (sigma, false)
+    l
 
 (*
  * Predicate version, for find
@@ -77,8 +83,8 @@ let find_state sigma p l =
         Option.get a_opt
       else
         raise Not_found)
-    (List.fold_right
-      (fun a (sigma, a_opt) ->
+    (List.fold_left
+      (fun (sigma, a_opt) a ->
         if Option.has_some a_opt then
           sigma, a_opt
         else
@@ -87,19 +93,19 @@ let find_state sigma p l =
             sigma, Some a
           else
             sigma, None)
-      l
-      (sigma, None))
+      (sigma, None)
+      l)
 
 (*
  * Filter
  *)
 let filter_state sigma p l =
-  List.fold_right
-    (fun a (sigma, a_l) ->
+  List.fold_left
+    (fun (sigma, a_l) a ->
       let sigma, p_holds = p sigma a in
       if p_holds then
         sigma, a :: a_l
       else
         sigma, a_l)
-    l
     (sigma, [])
+    l
