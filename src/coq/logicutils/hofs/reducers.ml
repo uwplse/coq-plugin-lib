@@ -2,7 +2,7 @@
 
 open Environ
 open Evd
-open EConstr
+open Constr
 open Hofs
 open Utilities
 open Debruijn
@@ -18,19 +18,27 @@ type stateless_reducer = env -> evar_map -> types -> types
 
 (* Default reducer *)
 let reduce_term (env : env) (sigma : evar_map) (trm : types) =
-  sigma, Reductionops.nf_betaiotazeta env sigma trm
+  sigma, EConstr.to_constr
+    sigma
+    (Reductionops.nf_betaiotazeta env sigma (EConstr.of_constr trm))
 
 (* Delta reduction *)
 let delta (env : env) (sigma : evar_map) (trm : types) =
-  sigma, Reductionops.whd_delta env sigma trm
+  sigma, EConstr.to_constr
+    sigma
+    (Reductionops.whd_delta env sigma (EConstr.of_constr trm))
 
 (* Weak head reduction *)
 let whd (env : env) (sigma : evar_map) (trm : types) =
-  sigma, Reductionops.whd_all env sigma trm
+  sigma, EConstr.to_constr
+    sigma
+    (Reductionops.whd_all env sigma (EConstr.of_constr trm))
 
 (* nf_all *)
 let reduce_nf (env : env) (sigma : evar_map) (trm : types) =
-  sigma, Reductionops.nf_all env sigma trm
+  sigma, EConstr.to_constr
+    sigma
+    (Reductionops.nf_all env sigma (EConstr.of_constr trm))
 
 (* --- Combinators and converters --- *)
 
@@ -54,7 +62,7 @@ let rec reduce_body_if p (r : reducer) env sigma trm =
   if p_holds then
     r env sigma trm
   else
-    match kind sigma trm with
+    match kind trm with
     | Lambda (n, t, b) ->
        reduce_body_if p r (push_rel CRD.(LocalAssum(n, t)) env) sigma b
     | _ ->
@@ -62,8 +70,8 @@ let rec reduce_body_if p (r : reducer) env sigma trm =
 
 (* Reduce the type *)
 let reduce_type_using r (env : env) sigma (trm : types) : evar_map * types =
-  let sigma, typ = infer_type env sigma (EConstr.to_constr sigma trm) in
-  r env sigma (EConstr.of_constr typ)
+  let sigma, typ = infer_type env sigma trm in
+  r env sigma typ
 
 (* Reduce the type with the defualt reducer *)
 let reduce_type (env : env) sigma (trm : types) : evar_map * types =
@@ -77,17 +85,17 @@ let do_not_reduce (env : env) sigma (trm : types) =
 
 (* Remove all applications of the identity function *)
 let remove_identities (env : env) sigma (trm : types) =
-  sigma, EConstr.of_constr (map_term_if
+  sigma, map_term_if
     (fun _ t -> applies_identity t)
     (fun _ t ->
-      match Constr.kind t with
+      match kind t with
       | App (_, args) ->
          Array.get args 1
       | _ ->
          t)
     id
     ()
-    (EConstr.to_constr sigma trm))
+    trm
 
 (* Remove all applications of the identity function, then default reduce *)
 let reduce_remove_identities : reducer =
@@ -95,16 +103,22 @@ let reduce_remove_identities : reducer =
 
 (* Reduce and also unfold definitions *)
 let reduce_unfold (env : env) sigma (trm : types) =
-  sigma, Reductionops.nf_all env sigma trm
+  sigma, EConstr.to_constr
+    sigma
+    (Reductionops.nf_all env sigma (EConstr.of_constr trm))
 
 (* Reduce and also unfold definitions, but weak head *)
 let reduce_unfold_whd (env : env) sigma (trm : types) =
-  sigma, Reductionops.whd_all env sigma trm
+  sigma, EConstr.to_constr
+    sigma
+    (Reductionops.whd_all env sigma (EConstr.of_constr trm))
 
 (* Weak-head reduce a term if it is a let-in *)
 let reduce_whd_if_let_in (env : env) sigma (trm : types) =
-  if isLetIn sigma trm then
-    sigma, Reductionops.whd_betaiotazeta sigma trm
+  if isLetIn trm then
+    sigma, EConstr.to_constr
+      sigma
+      (Reductionops.whd_betaiotazeta sigma (EConstr.of_constr trm))
   else
     sigma, trm
 
@@ -118,16 +132,15 @@ let reduce_whd_if_let_in (env : env) sigma (trm : types) =
  * even though this is cute and seems to often work in practice
  *)
 let rec remove_unused_hypos (env : env) sigma (trm : types) : evar_map * types =
-  match kind sigma trm with
+  match kind trm with
   | Lambda (n, t, b) ->
      let env_b = push_rel CRD.(LocalAssum(n, t)) env in
      let sigma, b' = remove_unused_hypos env_b sigma b in
      (try
         let num_rels = nb_rel env in
         let env_ill = push_rel CRD.(LocalAssum (n, mkRel (num_rels + 1))) env in
-        let b' = EConstr.to_constr sigma b' in
         let sigma, _ = infer_type env_ill sigma b' in
-        remove_unused_hypos env sigma (EConstr.of_constr (unshift b'))
+        remove_unused_hypos env sigma (unshift b')
       with _ ->
         sigma, mkLambda (n, t, b'))
   | _ ->

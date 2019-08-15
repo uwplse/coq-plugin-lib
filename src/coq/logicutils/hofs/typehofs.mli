@@ -4,7 +4,7 @@
 
 open Environ
 open Evd
-open EConstr
+open Constr
 open Reducers
                                                       
 (* --- Higher-order functions --- *)

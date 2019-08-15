@@ -99,7 +99,7 @@ let apply_eliminator (ea : elim_app) : types =
 let deconstruct_eliminator env sigma app : evar_map * elim_app =
   let elim = first_fun app in
   let ip_args = unfold_args app in
-  let sigma, ip_typ = Util.on_snd (EConstr.to_constr sigma) (reduce_type env sigma (EConstr.of_constr elim)) in
+  let sigma, ip_typ = reduce_type env sigma elim in
   let from_i = Option.get (inductive_of_elim env (destConst elim)) in
   let from_m = lookup_mind from_i env in
   let npms = from_m.mind_nparams in
@@ -122,7 +122,7 @@ let deconstruct_eliminator env sigma app : evar_map * elim_app =
 let rec num_ihs env sigma rec_typ typ =
   match kind typ with
   | Prod (n, t, b) ->
-     let t_red = EConstr.to_constr sigma (reduce_stateless reduce_term env sigma (EConstr.of_constr t)) in
+     let t_red = reduce_stateless reduce_term env sigma t in
      if is_or_applies rec_typ t_red then
        let (n_b_t, b_t, b_b) = destProd b in
        1 + num_ihs (push_local (n, t) (push_local (n_b_t, b_t) env)) sigma rec_typ b_b
