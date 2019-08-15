@@ -2,7 +2,7 @@
  * Utilities for defining terms
  *)
 
-open Constr
+open EConstr
 open Names
 open Evd
 open Environ
@@ -60,12 +60,12 @@ val expr_of_global : global_reference -> constr_expr
 (*
  * Convert a term into a global reference with universes (or raise Not_found) 
  *)
-val pglobal_of_constr : constr -> global_reference Univ.puniverses
+val pglobal_of_constr : evar_map -> constr -> global_reference * EConstr.EInstance.t
 
 (* 
  * Convert a global reference with universes into a term
  *)
-val constr_of_pglobal : global_reference Univ.puniverses -> constr
+val constr_of_pglobal : global_reference * EConstr.EInstance.t -> constr
 
 (*
  * Safely instantiate a global reference, updating the evar map

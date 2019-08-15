@@ -1,6 +1,6 @@
 (* Filters *)
 
-open Constr
+open EConstr
 open Environ
 open Debruijn
 open Evd
@@ -27,7 +27,7 @@ let find_by_type typ (env : env) sigma (trms : types list) =
 
 (* Filter a list of terms to those not exactly the same as the supplied term *)
 let filter_not_same trm (_ : env) sigma (trms : types list) =
-  let same = equal trm in (* exact equality for constructors *)
+  let same = eq_constr sigma trm in (* exact equality for constructors *)
   sigma, List.filter (fun t -> not (same t)) trms
 
 (*
@@ -47,7 +47,7 @@ let filter_ihs (env : env) sigma (cs : types list) =
   filter_state
     sigma
     (fun sigma c ->
-      let c_no_ih = unshift c in
+      let c_no_ih = unshift sigma c in
       try
         let sigma, _ = infer_type env_no_ih sigma c_no_ih in
         sigma, true

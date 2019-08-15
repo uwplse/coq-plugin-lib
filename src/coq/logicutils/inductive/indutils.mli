@@ -3,7 +3,7 @@
  *)
 
 open Environ
-open Constr
+open EConstr
 open Evd
 open Names
 open Declarations
@@ -24,12 +24,12 @@ val num_constrs : mutual_inductive_body -> int
  * Determine if a term represents an inductive eliminator
  * For now, this is a naive syntactic check
  *)
-val is_elim : env -> types -> bool
+val is_elim : env -> evar_map -> types -> bool
 
 (*
  * Get an inductive type from an eliminator, if possible
  *)
-val inductive_of_elim : env -> pconstant -> mutual_inductive option
+val inductive_of_elim : env -> env -> mutual_inductive option
 
 (*
  * Lookup the eliminator over the type sort
@@ -71,7 +71,7 @@ val arity_of_ind_body : one_inductive_body -> types
  * levels and constraints. A descriptor for the inductive type's universe
  * properties is also returned.
  *)
-val open_inductive : ?global:bool -> env -> Inductive.mind_specif -> env * Entries.inductive_universes * types * types list
+val open_inductive : ?global:bool -> env -> evar_map -> Inductive.mind_specif -> env * Entries.inductive_universes * types * types list
 
 (*
  * Declare a new inductive type in the global environment. Note that the arity

@@ -2,7 +2,7 @@
 
 open Environ
 open Evd
-open Constr
+open EConstr
 open Hofs
 open Debruijn
 open Convertibility
@@ -23,7 +23,7 @@ let all_substs p env sigma (src, dst) trm : evar_map * types =
   map_term_env_if
     (fun env sigma (s, _) t -> p env sigma s t)
     (fun _ sigma (_, d) _ -> sigma, d)
-    (fun (s, d) -> (shift s, shift d))
+    (fun (s, d) -> (shift sigma s, shift sigma d))
     env
     sigma
     (src, dst)
@@ -34,7 +34,7 @@ let all_substs_combs p env sigma (src, dst) trm : evar_map * types list =
   map_subterms_env_if
     (fun env sigma (s, _) t -> p env sigma s t)
     (fun _ sigma (_, d) t -> sigma, [d; t])
-    (fun (s, d) -> (shift s, shift d))
+    (fun (s, d) -> (shift sigma s, shift sigma d))
     env
     sigma
     (src, dst)
@@ -51,11 +51,11 @@ let all_conv_substs : (types * types) type_substitution =
 let all_typ_substs : (types * types) type_substitution =
   all_substs types_convertible
 
-(* Same, but equal *)
+(* Same, but equal (TODO is this safe?) *)
 let all_eq_substs (src, dst) trm =
   snd
     (all_substs
-       (fun _ _ t1 t2 -> Evd.empty, equal t1 t2)
+       (fun _ _ t1 t2 -> Evd.empty, eq_constr Evd.empty t1 t2)
        empty_env
        Evd.empty
        (src, dst)
@@ -66,9 +66,9 @@ let all_eq_substs (src, dst) trm =
  * an argument with the type of itself
  *)
 let constructs_recursively env sigma c trm : evar_map * bool =
-  if isApp trm then
+  if isApp sigma trm then
     try
-      let (f, args) = destApp trm in
+      let (f, args) = destApp sigma trm in
       let sigma, conv = convertible env sigma f c in
       if conv then
         let types_conv sigma = types_convertible env sigma trm in
@@ -93,12 +93,12 @@ let all_constr_substs env sigma c trm : evar_map * types =
   map_term_env_if
     constructs_recursively
     (fun env sigma _ t ->
-      let (_, args_t) = destApp t in
+      let (_, args_t) = destApp sigma t in
       find_state
         sigma
         (fun sigma -> types_convertible env sigma t)
         (Array.to_list args_t))
-    shift
+    (shift sigma)
     env
     sigma
     c
@@ -116,13 +116,18 @@ let all_typ_substs_combs : (types * types) comb_substitution =
 
 type global_substitution = global_reference Globnames.Refmap.t
 
+(*
+ * From Coq standard library, but on EConstr
+ *)
+let map_puniverses f (x, u) = (f x, u)
+
 (* Substitute global references throughout a term *)
-let subst_globals subst term =
+let subst_globals sigma subst term =
   let rec aux term =
     try
-      pglobal_of_constr term |>
+      pglobal_of_constr sigma term |>
       map_puniverses (flip Globnames.Refmap.find subst) |>
       constr_of_pglobal
     with Not_found ->
-      Constr.map aux term
+      EConstr.map sigma aux term
   in aux term

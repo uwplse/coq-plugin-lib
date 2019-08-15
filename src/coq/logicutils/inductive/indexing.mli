@@ -2,7 +2,7 @@
  * Dealing with arguments of applications for indexing inductive types
  *)
 
-open Constr
+open EConstr
 open Environ
 open Evd
 
@@ -34,18 +34,18 @@ val dummy_index : env -> evar_map -> types -> types
 (*
  * Reindex the arguments of an application using a reindexer
  *)
-val reindex_app : (types list -> types list) -> types -> types
+val reindex_app : evar_map -> (types list -> types list) -> types -> types
                                                            
 (*
  * Reindex the body of a lambda
  *)
-val reindex_body : (types -> types) -> types -> types
+val reindex_body : evar_map -> (evar_map -> types -> types) -> types -> types
 
 (*
  * Unshift all arguments after the location of an argument, since
  * the index is no longer a hypothesis
  *)
-val adjust_no_index : int -> types list -> types list
+val adjust_no_index : evar_map -> int -> types list -> types list
 
 (*
  * Returns true if the hypothesis is used to compute the index at the supplied
@@ -56,6 +56,7 @@ val adjust_no_index : int -> types list -> types list
  * searching for ornaments.
  *)
 val computes_ih_index :
+  evar_map ->
   int -> (* index location *)
   types -> (* inductive property *)
   types -> (* hypothesis *)

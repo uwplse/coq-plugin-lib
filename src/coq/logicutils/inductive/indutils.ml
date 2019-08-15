@@ -4,7 +4,7 @@
 
 open Util
 open Environ
-open Constr
+open EConstr
 open Names
 open Utilities
 open Declarations
@@ -28,7 +28,7 @@ let check_inductive_supported mutind_body : unit =
  * Check if a constant is an inductive elminator
  * If so, return the inductive type
  *)
-let inductive_of_elim (env : env) (pc : pconstant) : mutual_inductive option =
+let inductive_of_elim (env : env) pc : mutual_inductive option =
   let (c, u) = pc in
   let kn = Constant.canonical c in
   let (modpath, dirpath, label) = KerName.repr kn in
@@ -73,8 +73,8 @@ let num_constrs (mutind_body : mutual_inductive_body) : int =
 (*
  * Boolean version of above that doesn't care about the term type
  *)
-let is_elim (env : env) (trm : types) =
-  isConst trm && Option.has_some (inductive_of_elim env (destConst trm))
+let is_elim (env : env) sigma (trm : types) =
+  isConst sigma trm && Option.has_some (inductive_of_elim env (destConst sigma trm))
 
 (* Lookup the eliminator over the type sort *)
 let type_eliminator (env : env) (ind : inductive) =
@@ -97,16 +97,16 @@ let apply_eliminator (ea : elim_app) : types =
 
 (* Deconstruct an eliminator application *)
 let deconstruct_eliminator env sigma app : evar_map * elim_app =
-  let elim = first_fun app in
-  let ip_args = unfold_args app in
-  let sigma, ip_typ = Util.on_snd (EConstr.to_constr sigma) (reduce_type env sigma (EConstr.of_constr elim)) in
-  let from_i = Option.get (inductive_of_elim env (destConst elim)) in
+  let elim = first_fun sigma app in
+  let ip_args = unfold_args sigma app in
+  let sigma, ip_typ = reduce_type env sigma elim in
+  let from_i = Option.get (inductive_of_elim env (destConst sigma elim)) in
   let from_m = lookup_mind from_i env in
   let npms = from_m.mind_nparams in
-  let from_arity = arity (type_of_inductive env 0 from_m) in
+  let from_arity = arity sigma (type_of_inductive env 0 from_m) in
   let num_indices = from_arity - npms in
   let num_props = 1 in
-  let num_constrs = arity ip_typ - npms - num_props - num_indices - 1 in
+  let num_constrs = arity sigma ip_typ - npms - num_props - num_indices - 1 in
   let (pms, pmd_args) = take_split npms ip_args in
   match pmd_args with
   | p :: cs_and_args ->
@@ -120,11 +120,11 @@ let deconstruct_eliminator env sigma app : evar_map * elim_app =
  * determine the number of inductive hypotheses
  *)
 let rec num_ihs env sigma rec_typ typ =
-  match kind typ with
+  match kind sigma typ with
   | Prod (n, t, b) ->
-     let t_red = EConstr.to_constr sigma (reduce_stateless reduce_term env sigma (EConstr.of_constr t)) in
-     if is_or_applies rec_typ t_red then
-       let (n_b_t, b_t, b_b) = destProd b in
+     let t_red = reduce_stateless reduce_term env sigma t in
+     if is_or_applies sigma rec_typ t_red then
+       let (n_b_t, b_t, b_b) = destProd sigma b in
        1 + num_ihs (push_local (n, t) (push_local (n_b_t, b_t) env)) sigma rec_typ b_b
      else
        num_ihs (push_local (n, t) env) sigma rec_typ b
@@ -138,13 +138,13 @@ let is_ind_body_template ind_body =
   | TemplateArity _ -> true
 
 (* Construct the arity of an inductive type from a one_inductive_body *)
-let arity_of_ind_body ind_body =
+let arity_of_ind_body sigma ind_body =
   match ind_body.mind_arity with
   | RegularArity { mind_user_arity; mind_sort } ->
     mind_user_arity
   | TemplateArity { template_param_levels; template_level } ->
-    let sort = Constr.mkType template_level in
-    recompose_prod_assum ind_body.mind_arity_ctxt sort
+    let sort = EConstr.mkType template_level in
+    EConstr.to_constr sigma (recompose_prod_assum (List.map EConstr.of_rel_decl ind_body.mind_arity_ctxt) sort)
 
 (* Create an Entries.local_entry from a Rel.Declaration.t *)
 let make_ind_local_entry decl =
@@ -177,15 +177,15 @@ let make_ind_univs_entry = function
     let univ_cumul = Univ.CumulativityInfo.make (univ_ctx, univ_var) in
     (Entries.Cumulative_ind_entry univ_cumul, univ_ctx)
 
-let open_inductive ?(global=false) env (mind_body, ind_body) =
+let open_inductive ?(global=false) env sigma (mind_body, ind_body) =
   let univs, univ_ctx = make_ind_univs_entry mind_body.mind_universes in
-  let subst_univs = Vars.subst_instance_constr (Univ.UContext.instance univ_ctx) in
   let env = Environ.push_context univ_ctx env in
   if global then
     Global.push_context false univ_ctx;
   let arity = arity_of_ind_body ind_body in
   let arity_ctx = [CRD.LocalAssum (Name.Anonymous, arity)] in
-  let ctors_typ = Array.map (recompose_prod_assum arity_ctx) ind_body.mind_user_lc in
+  let ctors_typ = Array.map (fun trm -> EConstr.to_constr sigma (recompose_prod_assum arity_ctx (EConstr.of_constr trm))) ind_body.mind_user_lc in
+  let subst_univs pty = EConstr.of_constr (Vars.subst_instance_constr (Univ.UContext.instance univ_ctx) pty) in
   env, univs, subst_univs arity, Array.map_to_list subst_univs ctors_typ
 
 let declare_inductive typename consnames template univs nparam arity constypes =

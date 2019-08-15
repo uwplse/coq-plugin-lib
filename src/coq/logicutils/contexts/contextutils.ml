@@ -5,9 +5,8 @@
  * Some are not. Just check the Git history of DEVOID if you are interested.
  *)
 
-open Constr
+open EConstr
 open Names
-open Environ
 open Inference
 open Declarations
 
@@ -125,11 +124,11 @@ let smash_lam_assum ctxt body =
  * Decompose the first n product bindings, zeta-reducing let bindings to reveal
  * further product bindings when necessary.
  *)
-let decompose_prod_n_zeta n term =
+let decompose_prod_n_zeta sigma n term =
   assert (n >= 0);
   let rec aux n ctxt body =
     if n > 0 then
-      match Constr.kind body with
+      match kind sigma body with
       | Prod (name, param, body) ->
         aux (n - 1) (Context.Rel.add (rel_assum (name, param)) ctxt) body
       | LetIn (name, def_term, def_type, body) ->
@@ -138,18 +137,17 @@ let decompose_prod_n_zeta n term =
         invalid_arg "decompose_prod_n_zeta: not enough products"
     else
       ctxt, body
-  in
-  aux n Context.Rel.empty term
+  in aux n Context.Rel.empty term
 
 (*
  * Decompose the first n lambda bindings, zeta-reducing let bindings to reveal
  * further lambda bindings when necessary.
  *)
-let decompose_lam_n_zeta n term =
+let decompose_lam_n_zeta sigma n term =
   assert (n >= 0);
   let rec aux n ctxt body =
     if n > 0 then
-      match Constr.kind body with
+      match kind sigma body with
       | Lambda (name, param, body) ->
         aux (n - 1) (Context.Rel.add (rel_assum (name, param)) ctxt) body
       | LetIn (name, def_term, def_type, body) ->
@@ -163,12 +161,12 @@ let decompose_lam_n_zeta n term =
 
 (* Bind the declarations of a local context as product/let-in bindings *)
 let recompose_prod_assum decls term =
-  let bind term decl = Term.mkProd_or_LetIn decl term in
+  let bind term decl = EConstr.mkProd_or_LetIn decl term in
   Context.Rel.fold_inside bind ~init:term decls
 
 (* Bind the declarations of a local context as lambda/let-in bindings *)
 let recompose_lam_assum decls term =
-  let bind term decl = Term.mkLambda_or_LetIn decl term in
+  let bind term decl = EConstr.mkLambda_or_LetIn decl term in
   Context.Rel.fold_inside bind ~init:term decls
 
 (* --- Names in contexts --- *)
@@ -180,9 +178,7 @@ let recompose_lam_assum decls term =
  * anonymity. (Names are freshened by subscription when printed.)
  *)
 let deanonymize_context env sigma ctxt =
-  List.map EConstr.of_rel_decl ctxt |>
-  Namegen.name_context env sigma |>
-  List.map (EConstr.to_rel_decl sigma)
+  Namegen.name_context env sigma ctxt
 
 (* --- Getting bindings for certain kinds of terms --- *)
 
@@ -194,7 +190,7 @@ let deanonymize_context env sigma ctxt =
 (*
  * Inductive types
  *)
-let bindings_for_inductive env mutind_body ind_bodies : CRD.t list =
+let bindings_for_inductive env mutind_body ind_bodies =
   Array.to_list
     (Array.mapi
        (fun i ind_body ->
@@ -206,7 +202,7 @@ let bindings_for_inductive env mutind_body ind_bodies : CRD.t list =
 (*
  * Fixpoints
  *)
-let bindings_for_fix (names : name array) (typs : types array) : CRD.t list =
+let bindings_for_fix (names : name array) (typs : types array) =
   Array.to_list
     (CArray.map2_i
        (fun i name typ -> CRD.LocalAssum (name, Vars.lift i typ))
@@ -214,10 +210,16 @@ let bindings_for_fix (names : name array) (typs : types array) : CRD.t list =
 
 (* --- Combining contexts --- *)
 
+(*
+ * From Coq standard library, but using EConstr
+ *)
+let lift_rel_context n =
+  Termops.map_rel_context_with_binders (Vars.liftn n)
+    
 (* 
  * Append two contexts (inner first, outer second), shifting internal indices. 
  *)
 let context_app inner outer =
   List.append
-    (Termops.lift_rel_context (Context.Rel.length outer) inner)
+    (lift_rel_context (Context.Rel.length outer) inner)
     outer

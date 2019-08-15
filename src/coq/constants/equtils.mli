@@ -2,7 +2,8 @@
  * Utilities for propositional equality
  *)
 
-open Constr
+open EConstr
+open Evd
 
 (* --- Constants --- *)
 
@@ -30,7 +31,7 @@ type eq_app =
  * Convert between a term and an eq_app
  *)
 val apply_eq : eq_app -> types
-val dest_eq : types -> eq_app
+val dest_eq : evar_map -> types -> eq_app
 
 (*
  * An application of eq_sym
@@ -45,7 +46,7 @@ type eq_sym_app =
  * Convert between a term and an eq_sym_app
  *)
 val apply_eq_sym : eq_sym_app -> types
-val dest_eq_sym : types -> eq_sym_app
+val dest_eq_sym : evar_map -> types -> eq_sym_app
 
 (*
  * An application of eq_ind
@@ -64,7 +65,7 @@ type eq_ind_app =
  * Convert between a term and an eq_app
  *)
 val apply_eq_ind : eq_ind_app -> types
-val dest_eq_ind : types -> eq_ind_app
+val dest_eq_ind : evar_map -> types -> eq_ind_app
                                 
 (*
  * An application of eq_refl
@@ -79,7 +80,7 @@ type eq_refl_app =
  * Convert between a term and an eq_refl
  *)
 val apply_eq_refl : eq_refl_app -> types
-val dest_eq_refl : types -> eq_refl_app
+val dest_eq_refl : evar_map -> types -> eq_refl_app
 
 (* --- Questions about constants --- *)
 
@@ -87,4 +88,4 @@ val dest_eq_refl : types -> eq_refl_app
  * Check if a term is a (exactly) rewrite via eq_ind or eq_ind_r
  * Don't consider convertible terms
  *)
-val is_rewrite : types -> bool
+val is_rewrite : evar_map -> types -> bool

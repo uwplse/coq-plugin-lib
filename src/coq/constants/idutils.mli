@@ -1,8 +1,9 @@
+
 (*
  * Utilities for identity types
  *)
 
-open Constr
+open EConstr
 open Environ
 open Evd
        
@@ -27,4 +28,4 @@ val identity_term : env -> evar_map -> types -> evar_map * types
  * Determine if a term (exactly) applies an identity term
  * For efficiency, don't consider convertible terms
  *)
-val applies_identity : types -> bool
+val applies_identity : evar_map -> types -> bool

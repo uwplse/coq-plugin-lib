@@ -2,7 +2,7 @@
  * Utilities for constants
  *)
 
-open Constr
+open EConstr
 open Environ
 open Names
 

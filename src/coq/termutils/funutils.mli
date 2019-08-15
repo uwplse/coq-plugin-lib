@@ -2,7 +2,8 @@
  * Utilities for functions (lambda) and function types (prod)
  *)
 
-open Constr
+open EConstr
+open Evd
 
 (* --- Constructing functions and function types --- *)
 
@@ -22,12 +23,12 @@ open Constr
  * functions that can be used in combination with these functions if this
  * is too restrictive for you.
  *)
-val prod_to_lambda : types -> types
-val lambda_to_prod : types -> types
+val prod_to_lambda : evar_map -> types -> types
+val lambda_to_prod : evar_map -> types -> types
 
 (* --- Basic questions about functions and functions types --- *)
 
 (*
  * Get the arity of a function or function type
  *)
-val arity : types -> int
+val arity : evar_map -> types -> int

@@ -4,7 +4,7 @@
 
 open Utilities
 open Environ
-open Constr
+open EConstr
 open Declarations
 open Decl_kinds
 open Constrextern
@@ -12,7 +12,7 @@ open Contextutils
 open Evd
 
 (* Look up all indexes from is in env *)
-let lookup_rels (is : int list) (env : env) : CRD.t list =
+let lookup_rels (is : int list) (env : env) =
  List.map (fun i -> lookup_rel i env) is
 
 (* Return a list of all indexes in env, starting with 1 *)
@@ -24,7 +24,7 @@ let mk_n_rels n =
   List.map mkRel (List.rev (from_one_to n))
 
 (* Return a list of all bindings in env, starting with the closest *)
-let lookup_all_rels (env : env) : CRD.t list =
+let lookup_all_rels (env : env) =
   lookup_rels (all_rel_indexes env) env
 
 (* Push a local binding to an environment *)
@@ -49,16 +49,16 @@ let force_constant_body const_body =
       (Pp.str "An axiom has no defining term")
 
 (* Lookup a definition *)
-let lookup_definition (env : env) (def : types) : types =
-  match kind def with
-  | Const (c, u) -> force_constant_body (lookup_constant c env)
+let lookup_definition (env : env) sigma (def : types) : types =
+  match kind sigma def with
+  | Const (c, u) -> EConstr.of_constr (force_constant_body (lookup_constant c env))
   | Ind _ -> def
   | _ -> failwith "not a definition"
 
 (* Fully lookup a def in env, but return the term if it is not a definition *)
-let rec unwrap_definition (env : env) (trm : types) : types =
+let rec unwrap_definition (env : env) sigma (trm : types) : types =
   try
-    unwrap_definition env (lookup_definition env trm)
+    unwrap_definition env sigma (lookup_definition env sigma trm)
   with _ ->
     trm
 

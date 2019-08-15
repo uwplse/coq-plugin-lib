@@ -1,10 +1,10 @@
 (* --- DeBruijn management --- *)
 
 open Environ
-open Constr
 open Utilities
 open Envutils
 open Hofs
+open EConstr
 
 (* --- Numbers --- *)
 
@@ -30,10 +30,10 @@ let shift_i (i : int) : int =
  * Unshifts a term by n if it is greater than the maximum index
  * max of a local binding
  *)
-let unshift_local (max : int) (n : int) (trm : types) : types =
+let unshift_local sigma (max : int) (n : int) (trm : types) : types =
   map_term
     (fun (m, adj) t ->
-      match kind t with
+      match kind sigma t with
       | Rel i ->
          let i' = if i > m then unshift_i_by adj i else i in
          mkRel i'
@@ -47,30 +47,30 @@ let unshift_local (max : int) (n : int) (trm : types) : types =
  * Shifts a term by n if it is greater than the maximum index
  * max of a local binding
  *)
-let shift_local (max : int) (n : int) (trm : types) : types =
-  unshift_local max (- n) trm
+let shift_local sigma (max : int) (n : int) (trm : types) : types =
+  unshift_local sigma max (- n) trm
 
 (* Decrement the relative indexes of a term t by n *)
-let unshift_by (n : int) (trm : types) : types =
-  unshift_local 0 n trm
+let unshift_by sigma (n : int) (trm : types) : types =
+  unshift_local sigma 0 n trm
 
 (* Increment the relative indexes of a term t by n *)
-let shift_by (n : int) (t : types) : types  =
-  unshift_by (- n) t
+let shift_by sigma (n : int) (t : types) : types  =
+  unshift_by sigma (- n) t
 
 (* Increment the relative indexes of a term t by one *)
-let shift (t : types) : types  =
-  shift_by 1 t
+let shift sigma (t : types) : types  =
+  shift_by sigma 1 t
 
 (* Decrement the relative indexes of a term t by one *)
-let unshift (t : types) : types =
-  unshift_by 1 t
+let unshift sigma (t : types) : types =
+  unshift_by sigma 1 t
 
 (* Shift everything and pray; workaround for bug (TODO investigate) *)
-let shift_by_unconditional (n : int) (trm : types) : types =
+let shift_by_unconditional sigma (n : int) (trm : types) : types =
   map_term
     (fun _ t ->
-      match kind t with
+      match kind sigma t with
       | Rel i ->
          let i' = shift_i_by n i in
          mkRel i'
@@ -86,8 +86,8 @@ let shift_by_unconditional (n : int) (trm : types) : types =
  * Inlined here to make this compatible with Coq 8.8.0
  * TODO remove with update
  *)
-let fold_constr_with_binders g f n acc c =
-  match kind c with
+let fold_constr_with_binders sigma g f n acc c =
+  match kind sigma c with
   | (Rel _ | Meta _ | Var _   | Sort _ | Const _ | Ind _
     | Construct _) -> acc
   | Cast (c,_, t) -> f n (f n acc c) t
@@ -122,43 +122,43 @@ let fold_constr_with_binders g f n acc c =
  *
  * Like many functions, by Nate Yazdani from original DEVOID code
  *)
-let rec free_rels nb frels term =
-  match Constr.kind term with
+let rec free_rels sigma nb frels term =
+  match kind sigma term with
   | Rel i ->
     if i > nb then Int.Set.add (unshift_i_by nb i) frels else frels
   | _ ->
-    fold_constr_with_binders succ free_rels nb frels term
+    fold_constr_with_binders sigma succ (free_rels sigma) nb frels term
 
 (* --- Lists --- *)
 
 (* Shift a list *)
-let shift_all = List.map shift
+let shift_all sigma = List.map (shift sigma)
 
 (* Shift all elements of a list by n *)
-let shift_all_by n = List.map (shift_by n)
+let shift_all_by sigma n = List.map (shift_by sigma n)
 
 (* Unshift a list *)
-let unshift_all = List.map unshift
+let unshift_all sigma = List.map (unshift sigma)
 
 (* Unshift all elements of a list by n *)
-let unshift_all_by n = List.map (unshift_by n)
+let unshift_all_by sigma n = List.map (unshift_by sigma n)
 
 (* --- Substitutions --- *)
 
 (* Shift substitutions *)
-let shift_subs = List.map (map_tuple shift)
+let shift_subs sigma = List.map (map_tuple (shift sigma))
 
 (* Shift from substitutions *)
-let shift_from = List.map (fun (s, d) -> (shift s, d))
+let shift_from sigma = List.map (fun (s, d) -> (shift sigma s, d))
 
 (* Shift to substitutions *)
-let shift_to = List.map (fun (s, d) -> (s, shift d))
+let shift_to sigma = List.map (fun (s, d) -> (s, shift sigma d))
                                 
 (* --- Environments --- *)
 
 (* Shift a term by the offset from env_o to env_n *)
-let shift_to_env (env_o, env_n) trm =
-  shift_by (new_rels2 env_n env_o) trm
+let shift_to_env sigma (env_o, env_n) trm =
+  shift_by sigma (new_rels2 env_n env_o) trm
 
 (* Unshifts indexes for terms in env by n *)
 let unshift_env_by (n : int) (env : env) : env =

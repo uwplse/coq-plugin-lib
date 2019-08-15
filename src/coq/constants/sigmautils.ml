@@ -2,7 +2,7 @@
  * Utilities for sigma types
  *)
 
-open Constr
+open EConstr
 open Names
 open Apputils
 
@@ -18,7 +18,7 @@ let sigT : types =
 
 (* Introduction for sigma types *)
 let existT : types =
-  mkConstruct (fst (destInd sigT), 1)
+  mkConstruct (fst (destInd (Evd.from_env (Global.env ())) sigT), 1)
 
 (* Elimination for sigma types *)
 let sigT_rect : types =
@@ -54,8 +54,8 @@ let pack_existT (app : existT_app) : types =
 (*
  * Deconstruct an existT term
  *)
-let dest_existT (trm : types) : existT_app =
-  let [index_type; packer; index; unpacked] = unfold_args trm in
+let dest_existT sigma (trm : types) : existT_app =
+  let [index_type; packer; index; unpacked] = unfold_args sigma trm in
   { index_type; packer; index; unpacked }
 
 (*
@@ -76,17 +76,17 @@ let pack_sigT (app : sigT_app) =
 (*
  * Deconsruct a sigT type from a type
  *)
-let dest_sigT (typ : types) =
-  let [index_type; packer] = unfold_args typ in
+let dest_sigT sigma (typ : types) =
+  let [index_type; packer] = unfold_args sigma typ in
   { index_type; packer }
 
 (*
  * Build the eta-expansion of a term known to have a sigma type.
  *)
-let eta_sigT (term : constr) (typ : types) =
-  let { index_type; packer } = dest_sigT typ in
-  let fst = mkApp (projT1, [|index_type; packer; term|]) in
-  let snd = mkApp (projT2, [|index_type; packer; term|]) in
+let eta_sigT sigma (trm : constr) (typ : types) =
+  let { index_type; packer } = dest_sigT sigma typ in
+  let fst = mkApp (projT1, [|index_type; packer; trm|]) in
+  let snd = mkApp (projT2, [|index_type; packer; trm|]) in
   mkApp (existT, [|index_type; packer; fst; snd|])
 
 (*
@@ -115,8 +115,8 @@ let elim_sigT (app : sigT_elim) =
 (*
  * Deconstruct an application of sigT_rect
  *)
-let dest_sigT_elim (trm : types) =
-  let [index_type; packer; packed_type; unpacked; arg] = unfold_args trm in
+let dest_sigT_elim sigma (trm : types) =
+  let [index_type; packer; packed_type; unpacked; arg] = unfold_args sigma trm in
   let to_elim = { index_type ; packer } in
   { to_elim; packed_type; unpacked; arg }
 

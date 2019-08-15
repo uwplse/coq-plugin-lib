@@ -2,7 +2,8 @@
  * Utilities for applications of terms
  *)
 
-open Constr
+open EConstr
+open Evd
 
 (* --- Constructing applications --- *)
 
@@ -17,22 +18,22 @@ val mkAppl : (types * types list) -> types
  * Get a list of all arguments of a type unfolded at the head
  * Return empty if it's not an application
  *)
-val unfold_args : types -> types list
+val unfold_args : evar_map -> types -> types list
 
 (*
  * Get the very last argument of an application
  *)
-val last_arg : types -> types
+val last_arg : evar_map -> types -> types
 
 (*
  * Get the very first function of an application
  *)
-val first_fun : types -> types
+val first_fun : evar_map -> types -> types
 
 (*
  * Fully unfold arguments, then get the argument at a given position
  *)
-val get_arg : int -> types -> types
+val get_arg : evar_map -> int -> types -> types
 
 (* --- Questions about application --- *)
 
@@ -42,16 +43,16 @@ val get_arg : int -> types -> types
  *
  * The plural version checks the conjunction on the second and third arguments.
  *)
-val applies : types -> types -> bool
-val apply : types -> types -> types -> bool
+val applies : evar_map -> types -> types -> bool
+val apply : evar_map -> types -> types -> types -> bool
 
 (*
  * Check whether a term either is exactly a function or applies it.
  *
  * The plural version checks the conjunction on the second and third arguments.
  *)
-val is_or_applies : types -> types -> bool
-val are_or_apply : types -> types -> types -> bool
+val is_or_applies : evar_map -> types -> types -> bool
+val are_or_apply : evar_map -> types -> types -> types -> bool
 
 (* 
  * Is the first term equal to a "head" (application prefix) of the second?
@@ -64,7 +65,8 @@ val are_or_apply : types -> types -> types -> bool
  * informative boolean result.
  *)
 val eq_constr_head :
-  ?eq_constr:(constr -> constr -> bool) ->
+  ?eq_constr:(evar_map -> constr -> constr -> bool) ->
+  evar_map ->
   constr ->
   constr ->
   constr array option

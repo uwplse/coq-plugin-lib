@@ -5,7 +5,7 @@
  * evar_map must be threaded through.
  *)
 
-open Constr
+open EConstr
 open Environ
 open Evd
 

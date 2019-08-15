@@ -1,13 +1,13 @@
 (* Higher-order functions on terms *)
 
 open Environ
-open Constr
 open Contextutils
 open Envutils
 open Utilities
 open Names
 open Evd
 open Stateutils
+open EConstr
 
 (* Predicates to determine whether to apply a mapped function *)
 type ('a, 'b) pred = 'a -> 'b -> bool
@@ -139,7 +139,7 @@ let map_rec_env_fix_cartesian (map_rec : ('a, 'b) list_transformer_with_env) d e
  * TODO explain
  *)
 let map_term_env_rec map_rec f d env sigma a trm =
-  match kind trm with
+  match kind sigma trm with
   | Cast (c, k, t) ->
      let sigma, c' = map_rec env sigma a c in
      let sigma, t' = map_rec env sigma a t in
@@ -208,7 +208,7 @@ let map_term f d a trm =
  * TODO explain
  *)
 let map_subterms_env_rec map_rec f d env sigma a trm =
-  match kind trm with
+  match kind sigma trm with
   | Cast (c, k, t) ->
      let sigma, cs' = map_rec env sigma a c in
      let sigma, ts' = map_rec env sigma a t in
@@ -293,7 +293,7 @@ let rec map_term_env_if p f d env sigma a trm =
  * TODO explain
  *)
 let map_term_env_rec_shallow map_rec f d env sigma a trm =
-  match kind trm with
+  match kind sigma trm with
   | Cast (c, k, t) ->
      let sigma, c' = map_rec env sigma a c in
      let sigma, t' = map_rec env sigma a t in
@@ -315,7 +315,7 @@ let map_term_env_rec_shallow map_rec f d env sigma a trm =
      let sigma, fu' = map_rec env sigma a fu in
      let sigma, args' =
        let map_rec_shallow env sigma a t =
-         if isLambda t then sigma, t else map_rec env sigma a t
+         if isLambda sigma t then sigma, t else map_rec env sigma a t
        in map_rec_args map_rec_shallow env sigma a args
      in sigma, mkApp (fu', args')
   | Case (ci, ct, m, bs) ->
@@ -458,7 +458,7 @@ let rec map_term_env_if_list p f d env sigma a trm =
   if p_holds then
     [(env, f env sigma a trm)]
   else
-    match kind trm with
+    match kind sigma trm with
     | Cast (c, k, t) ->
        let c' = map_rec env sigma a c in
        let t' = map_rec env sigma a t in
@@ -539,7 +539,7 @@ let rec exists_subterm_env p d env sigma (a : 'a) (trm : types) : evar_map * boo
   if p_holds then
     sigma, true
   else
-    match kind trm with
+    match kind sigma trm with
     | Cast (c, k, t) ->
        let sigma, c' = map_rec env sigma a c in
        let sigma, t' = map_rec env sigma a t in
@@ -597,7 +597,7 @@ let all_const_subterms p d a t =
     (List.map
        snd
        (map_term_env_if_list
-          (fun _ sigma a t -> sigma, isConst t && p a t)
+          (fun _ sigma a t -> sigma, isConst sigma t && p a t)
           (fun en sigma _ t -> sigma, t)
           d
           empty_env

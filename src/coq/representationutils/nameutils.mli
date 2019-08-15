@@ -2,11 +2,12 @@
  * Utilities for names, references, and identifiers
  *)
 
-open Constr
+open EConstr
 open Names
+open Evd
 
 (* Look up the name referenced by a term and append a suffix to it. *)
-val suffix_term_name : constr -> Names.Id.t -> Names.Id.t
+val suffix_term_name : evar_map -> constr -> Names.Id.t -> Names.Id.t
 
 (* Add a string suffix to a name identifier *)
 val with_suffix : Id.t -> string -> Id.t

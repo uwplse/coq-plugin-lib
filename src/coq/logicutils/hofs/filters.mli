@@ -1,6 +1,6 @@
 (* Filters for terms and eterms *)
 
-open Constr
+open EConstr
 open Environ
 open Evd
 

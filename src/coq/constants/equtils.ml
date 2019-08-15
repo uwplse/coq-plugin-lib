@@ -2,7 +2,7 @@
  * Utilities for propositional equality
  *)
 
-open Constr
+open EConstr
 open Names
 open Apputils
 
@@ -18,7 +18,7 @@ let eq : types =
 
 (* Constructor for quality *)
 let eq_refl : types =
-  mkConstruct (fst (destInd eq), 1)
+  mkConstruct (fst (destInd (Evd.from_env (Global.env ())) eq), 1)
         
 (* Symmetric eliminator for equality *)
 let eq_ind_r : types =
@@ -61,8 +61,8 @@ let apply_eq (app : eq_app) : types =
 (*
  * Deconstruct an eq type
  *)
-let dest_eq (trm : types) : eq_app =
-  let [at_type; trm1; trm2] = unfold_args trm in
+let dest_eq sigma (trm : types) : eq_app =
+  let [at_type; trm1; trm2] = unfold_args sigma trm in
   { at_type; trm1; trm2 }
 
 (*
@@ -84,8 +84,8 @@ let apply_eq_sym (app : eq_sym_app) : types =
 (*
  * Deconstruct an eq type
  *)
-let dest_eq_sym (trm : types) : eq_sym_app =
-  let [at_type; trm1; trm2; eq_proof] = unfold_args trm in
+let dest_eq_sym sigma (trm : types) : eq_sym_app =
+  let [at_type; trm1; trm2; eq_proof] = unfold_args sigma trm in
   let eq_typ = { at_type; trm1; trm2 } in
   { eq_typ; eq_proof }
     
@@ -111,8 +111,8 @@ let apply_eq_ind (app : eq_ind_app) : types =
 (* 
  * Deconstruct an eq_ind
  *)
-let dest_eq_ind (trm : types) : eq_ind_app =
-  let [at_type; trm1; p; b; trm2; h] = unfold_args trm in
+let dest_eq_ind sigma (trm : types) : eq_ind_app =
+  let [at_type; trm1; p; b; trm2; h] = unfold_args sigma trm in
   { at_type; trm1; p; b; trm2; h }
 
 (*
@@ -133,8 +133,8 @@ let apply_eq_refl (app : eq_refl_app) : types =
 (* 
  * Deconstruct an eq_refl
  *)
-let dest_eq_refl (trm : types) : eq_refl_app =
-  let [typ; trm] = unfold_args trm in
+let dest_eq_refl sigma (trm : types) : eq_refl_app =
+  let [typ; trm] = unfold_args sigma trm in
   { typ; trm }
 
 (* --- Questions about constants --- *)
@@ -143,6 +143,6 @@ let dest_eq_refl (trm : types) : eq_refl_app =
  * Check if a term is (exactly) a rewrite via eq_ind or eq_ind_r
  * Don't consider convertible terms
  *)
-let is_rewrite (trm : types) : bool =
-  let eq_term = equal trm in
+let is_rewrite sigma (trm : types) : bool =
+  let eq_term = eq_constr sigma trm in
   eq_term eq_ind_r || eq_term eq_ind || eq_term eq_rec_r || eq_term eq_rec

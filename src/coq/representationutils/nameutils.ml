@@ -2,13 +2,13 @@
  * Utilities for names, references, and identifiers
  *)
 
-open Constr
+open EConstr
 open Names
 open Util
 
 (* Look up the name referenced by a term and append a suffix to it. *)
-let suffix_term_name term suffix =
-  let base = Nametab.basename_of_global (Globnames.global_of_constr term) in
+let suffix_term_name sigma term suffix =
+  let base = Nametab.basename_of_global (Globnames.global_of_constr (EConstr.to_constr sigma term)) in
   Nameops.add_suffix base (Names.Id.to_string suffix)
 
 (* Add a suffix to a name identifier *)

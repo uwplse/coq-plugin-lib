@@ -4,11 +4,11 @@
  *)
 
 open Hofs
-open Constr
+open EConstr
 open Debruijn
 
 (*
  * Check recursively whether a term contains another term
  *)
-let contains_term c trm =
-  exists_subterm equal shift c trm
+let contains_term sigma c trm =
+  exists_subterm (eq_constr sigma) (shift sigma) c trm

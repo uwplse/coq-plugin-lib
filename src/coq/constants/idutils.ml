@@ -2,7 +2,7 @@
  * Utilities for identity types
  *)
 
-open Constr
+open EConstr
 open Names
 open Environ
 open Evd
@@ -35,10 +35,10 @@ let identity_term env sigma typ : evar_map * types =
 (* --- Questions about constants --- *)
 
 (* Determine if a term (exactly) applies an identity term *)
-let applies_identity (trm : types) : bool =
-  match kind trm with
+let applies_identity sigma (trm : types) : bool =
+  match kind sigma trm with
   | App (f, _) ->
-     equal f id_prop || equal f id_typ
+     eq_constr sigma f id_prop || eq_constr sigma f id_typ
   | _ ->
      false
  

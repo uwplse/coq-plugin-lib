@@ -62,8 +62,8 @@ let rec reduce_body_if p (r : reducer) env sigma trm =
 
 (* Reduce the type *)
 let reduce_type_using r (env : env) sigma (trm : types) : evar_map * types =
-  let sigma, typ = infer_type env sigma (EConstr.to_constr sigma trm) in
-  r env sigma (EConstr.of_constr typ)
+  let sigma, typ = infer_type env sigma trm in
+  r env sigma typ
 
 (* Reduce the type with the defualt reducer *)
 let reduce_type (env : env) sigma (trm : types) : evar_map * types =
@@ -77,17 +77,17 @@ let do_not_reduce (env : env) sigma (trm : types) =
 
 (* Remove all applications of the identity function *)
 let remove_identities (env : env) sigma (trm : types) =
-  sigma, EConstr.of_constr (map_term_if
-    (fun _ t -> applies_identity t)
+  sigma, map_term_if
+    (fun _ t -> applies_identity sigma t)
     (fun _ t ->
-      match Constr.kind t with
+      match kind sigma t with
       | App (_, args) ->
          Array.get args 1
       | _ ->
          t)
     id
     ()
-    (EConstr.to_constr sigma trm))
+    trm
 
 (* Remove all applications of the identity function, then default reduce *)
 let reduce_remove_identities : reducer =
@@ -125,9 +125,8 @@ let rec remove_unused_hypos (env : env) sigma (trm : types) : evar_map * types =
      (try
         let num_rels = nb_rel env in
         let env_ill = push_rel CRD.(LocalAssum (n, mkRel (num_rels + 1))) env in
-        let b' = EConstr.to_constr sigma b' in
         let sigma, _ = infer_type env_ill sigma b' in
-        remove_unused_hypos env sigma (EConstr.of_constr (unshift b'))
+        remove_unused_hypos env sigma (unshift sigma b')
       with _ ->
         sigma, mkLambda (n, t, b'))
   | _ ->

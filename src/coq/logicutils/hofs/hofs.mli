@@ -1,7 +1,7 @@
 (* Higher-order functions on terms *)
 
 open Environ
-open Constr
+open EConstr
 open Evd
 
 (* Predicates to determine whether to apply a mapped function *)

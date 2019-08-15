@@ -1,7 +1,7 @@
 (* Substitution auxiliary functions *)
 
 open Environ
-open Constr
+open EConstr
 open Evd
 open Names
 
@@ -79,4 +79,4 @@ val all_typ_substs_combs : (types * types) comb_substitution
 type global_substitution = global_reference Globnames.Refmap.t
 
 (* Substitute global references throughout a term *)
-val subst_globals : global_substitution -> constr -> constr
+val subst_globals : evar_map -> global_substitution -> constr -> constr

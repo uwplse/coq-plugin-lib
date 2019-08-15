@@ -2,20 +2,20 @@
  * Convertibility
  *)
 
-open Constr
+open EConstr
 open Contextutils
 open Utilities
 open Environ
 open Evd
 open Inference
 
+let push_rel = EConstr.push_rel
+
 (* 
  * Checks whether two terms may be convertible
  *)
 let convertible env sigma trm1 trm2 : evar_map * bool =
-  let etrm1 = EConstr.of_constr trm1 in
-  let etrm2 = EConstr.of_constr trm2 in
-  Reductionops.infer_conv env sigma etrm1 etrm2
+  Reductionops.infer_conv env sigma trm1 trm2
 
 (*
  * Checks whether the conclusions of two dependent types are convertible,
@@ -24,7 +24,7 @@ let convertible env sigma trm1 trm2 : evar_map * bool =
  * number of arguments in the same order.
  *)
 let rec concls_convertible (env : env) sigma (typ1 : types) (typ2 : types) =
-  match (kind typ1, kind typ2) with
+  match (kind sigma typ1, kind sigma typ2) with
   | (Prod (n1, t1, b1), Prod (n2, t2, b2)) ->
      let sigma, conv = convertible env sigma t1 t2 in
      if conv then

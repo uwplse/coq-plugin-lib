@@ -4,7 +4,7 @@
 
 open Environ
 open Evd
-open Constr
+open EConstr
 open Convertibility
 open Inference
                                                        
