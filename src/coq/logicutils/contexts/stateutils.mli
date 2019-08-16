@@ -66,6 +66,14 @@ val flat_map_state :
   evar_map ->
   ('b list) state
 
+val branch_state :
+  ('a -> evar_map -> bool state) ->
+  ('a -> evar_map -> 'b state) ->
+  ('a -> evar_map -> 'b state) ->
+  'a ->
+  evar_map ->
+  'b state
+            
 val exists_state :
   ('a -> evar_map -> bool state) ->
   'a list ->

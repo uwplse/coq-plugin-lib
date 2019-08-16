@@ -24,7 +24,7 @@ let sconsr bs b = ret (b :: bs)
 let srev l = ret (List.rev l)
 let sarray_of_list l = ret (Array.of_list l)
 let sappendr l1 l2 = ret (List.append l1 l2)
-                 
+      
 (*
  * fold_left with state
  *)
@@ -63,14 +63,29 @@ let map_state_array f arr =
 (*
  * flat_map version
  *)
-let flat_map_state  f l =
+let flat_map_state f l =
   bind (bind (map_state f l) (fold_left_state sappendr [])) srev
        
+(*
+ * Stateful if/else
+ *)
+let branch_state p f g a =
+  bind
+    (fun sigma_f ->
+      bind
+        (p a)
+        (fun b sigma_t -> ret b (if b then sigma_t else sigma_f))
+        sigma_f)
+    (fun b -> if b then f a else g a)
+
 (*
  * Predicate version, for exists
  *)
 let exists_state p l =
-  fold_left_state (fun b a -> if b then ret b else p a) false l
+  fold_left_state
+    (fun b -> branch_state (fun _ -> ret b) (fun _ -> ret b) p)
+    false
+    l
 
 (*
  * Predicate version, for find
@@ -81,15 +96,15 @@ let find_state p l sigma =
       if Option.has_some a_opt then
         Option.get a_opt
       else
-        raise Not_found)
+        raise Not_found)    
     (List.fold_left
       (fun (sigma, a_opt) a ->
         if Option.has_some a_opt then
           sigma, a_opt
         else
-          let sigma, p_holds = p a sigma in
+          let sigma_t, p_holds = p a sigma in
           if p_holds then
-            sigma, Some a
+            sigma_t, Some a
           else
             sigma, None)
       (sigma, None)
