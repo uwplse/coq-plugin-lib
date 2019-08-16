@@ -24,6 +24,10 @@ let sconsr bs b = ret (b :: bs)
 let srev l = ret (List.rev l)
 let sarray_of_list l = ret (Array.of_list l)
 let sappendr l1 l2 = ret (List.append l1 l2)
+let shas_some o = ret (Option.has_some o)
+let ssome a = ret (Some a)
+let snone = ret None
+let sget o = ret (Option.get o)
       
 (*
  * fold_left with state
@@ -90,36 +94,28 @@ let exists_state p l =
 (*
  * Predicate version, for find
  *)
-let find_state p l sigma =
-  Util.on_snd
-    (fun a_opt ->
-      if Option.has_some a_opt then
-        Option.get a_opt
-      else
-        raise Not_found)    
-    (List.fold_left
-      (fun (sigma, a_opt) a ->
-        if Option.has_some a_opt then
-          sigma, a_opt
-        else
-          let sigma_t, p_holds = p a sigma in
-          if p_holds then
-            sigma_t, Some a
-          else
-            sigma, None)
-      (sigma, None)
-      l)
+let find_state p l =
+  bind
+    (fold_left_state
+       (fun o a ->
+         branch_state
+           shas_some
+           ret
+           (fun _ -> branch_state p ssome (fun _ -> snone) a)
+           o)
+       None
+       l)
+    (branch_state shas_some sget (fun _ _ -> raise Not_found))
 
 (*
  * Filter
  *)
-let filter_state p l sigma =
-  List.fold_left
-    (fun (sigma, a_l) a ->
-      let sigma, p_holds = p a sigma in
-      if p_holds then
-        sigma, a :: a_l
-      else
-        sigma, a_l)
-    (sigma, [])
+let filter_state p l =
+  fold_left_state
+    (fun a_l ->
+      branch_state
+        p
+        (sconsr a_l)
+        (fun _ -> ret a_l))
+    []
     l
