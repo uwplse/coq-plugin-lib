@@ -34,38 +34,38 @@ val map_fold_state :
   ('b list) state
 
 val map2_fold_state :
-  evar_map ->
   ('a -> 'b -> evar_map -> 'c state) ->
   'a list ->
   'b list ->
+  evar_map ->
   ('c list) state
 
 val map_fold_state_array :
-  evar_map ->
   ('a -> evar_map -> 'b state) ->
   'a array ->
+  evar_map ->
   ('b array) state
 
 val flat_map_fold_state :
-  evar_map ->
   ('a -> evar_map -> ('b list) state) ->
   'a list ->
+  evar_map ->
   ('b list) state
 
 val exists_state :
-  evar_map ->
   ('a -> evar_map -> bool state) ->
   'a list ->
+  evar_map ->
   bool state
 
 val find_state :
-  evar_map ->
   ('a -> evar_map -> bool state) ->
   'a list ->
+  evar_map ->
   'a state
 
 val filter_state :
-  evar_map ->
   ('a -> evar_map -> bool state) ->
   'a list ->
+  evar_map ->
   ('a list) state

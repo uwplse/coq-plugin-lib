@@ -27,25 +27,25 @@ let ret a = fun sigma -> sigma, a
  * in Coq (arguments may depend on earlier arguments). This is sometimes
  * significant.
  *)
-let map_fold_state f l sigma =
-  Util.on_snd
-    List.rev
-    (List.fold_left
-       (fun (sigma, bs) a ->
-         bind (f a) (fun b -> ret (b :: bs)) sigma)
-       (sigma, [])
-       l)
+let map_fold_state f l =
+  (fun sigma ->
+    Util.on_snd
+      List.rev
+      (List.fold_left
+         (fun (sigma, bs) a ->
+           bind (f a) (fun b -> ret (b :: bs)) sigma)
+         (sigma, [])
+         l))
 
 (*
  * map2 version
  *)
-let map2_fold_state sigma f l1 l2 =
+let map2_fold_state f l1 l2 sigma =
   Util.on_snd
     List.rev
     (List.fold_left2
        (fun (sigma, cs) a b ->
-         let sigma, c = f a b sigma in
-         sigma, c :: cs)
+         bind (f a b) (fun c -> ret (c :: cs)) sigma)
        (sigma, [])
        l1
        l2)
@@ -53,13 +53,13 @@ let map2_fold_state sigma f l1 l2 =
 (*
  * Array version
  *)
-let map_fold_state_array sigma f arr =
+let map_fold_state_array f arr sigma =
   Util.on_snd Array.of_list (map_fold_state f (Array.to_list arr) sigma)
 
 (*
  * flat_map version
  *)
-let flat_map_fold_state sigma f l =
+let flat_map_fold_state  f l sigma =
   let sigma, l = map_fold_state f l sigma in
   Util.on_snd
     List.rev
@@ -72,7 +72,7 @@ let flat_map_fold_state sigma f l =
 (*
  * Predicate version, for exists
  *)
-let exists_state sigma p l =
+let exists_state p l sigma =
   List.fold_left
     (fun (sigma, p_holds) a ->
       if p_holds then
@@ -85,7 +85,7 @@ let exists_state sigma p l =
 (*
  * Predicate version, for find
  *)
-let find_state sigma p l =
+let find_state p l sigma =
   Util.on_snd
     (fun a_opt ->
       if Option.has_some a_opt then
@@ -108,7 +108,7 @@ let find_state sigma p l =
 (*
  * Filter
  *)
-let filter_state sigma p l =
+let filter_state p l sigma =
   List.fold_left
     (fun (sigma, a_l) a ->
       let sigma, p_holds = p a sigma in
