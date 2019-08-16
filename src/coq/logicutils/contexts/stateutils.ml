@@ -29,13 +29,15 @@ let ret a = fun sigma -> sigma, a
  *)
 let map_fold_state f l =
   (fun sigma ->
-    Util.on_snd
-      List.rev
-      (List.fold_left
-         (fun (sigma, bs) a ->
-           bind (f a) (fun b -> ret (b :: bs)) sigma)
-         (sigma, [])
-         l))
+    bind
+      (fun sigma ->
+        List.fold_left
+          (fun (sigma, bs) a ->
+            bind (f a) (fun b -> ret (b :: bs)) sigma)
+          (sigma, [])
+          l)
+      (fun l sigma -> sigma, List.rev l))
+    l
 
 (*
  * map2 version
