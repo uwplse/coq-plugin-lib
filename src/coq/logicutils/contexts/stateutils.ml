@@ -65,20 +65,12 @@ let map_state_array f arr =
  *)
 let flat_map_state  f l =
   bind (bind (map_state f l) (fold_left_state sappendr [])) srev
-
+       
 (*
- * TODO if/else above this
  * Predicate version, for exists
  *)
-let exists_state p l sigma =
-  List.fold_left
-    (fun (sigma, p_holds) a ->
-      if p_holds then
-        sigma, p_holds
-      else
-        p a sigma)
-    (sigma, false)
-    l
+let exists_state p l =
+  fold_left_state (fun b a -> if b then ret b else p a) false l
 
 (*
  * Predicate version, for find
