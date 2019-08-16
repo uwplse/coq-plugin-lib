@@ -32,10 +32,7 @@ let map_fold_state f l sigma =
     List.rev
     (List.fold_left
        (fun (sigma, bs) a ->
-         bind
-           (f a)
-           (fun b sigma -> sigma, b :: bs)
-           sigma)
+         bind (f a) (fun b -> ret (b :: bs)) sigma)
        (sigma, [])
        l)
 
