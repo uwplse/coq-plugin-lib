@@ -43,7 +43,7 @@ let reduce_nf (env : env) (sigma : evar_map) (trm : types) =
 (* --- Combinators and converters --- *)
 
 let reduce_all (r : reducer) env sigma (trms : types list) =
-  map_fold_state sigma (r env) trms
+  map_state (fun trm sigma -> r env sigma trm) trms sigma
 
 let chain_reduce (r1 : reducer) (r2 : reducer) env sigma trm =
   fold_tuple (r2 env) (r1 env sigma trm)
@@ -58,15 +58,17 @@ let try_reduce (r : reducer) (env : env) sigma (trm : types) =
  * It reduces as soon as the condition holds.
  *)
 let rec reduce_body_if p (r : reducer) env sigma trm =
-  let sigma, p_holds = p env sigma trm in
-  if p_holds then
-    r env sigma trm
-  else
-    match kind trm with
-    | Lambda (n, t, b) ->
-       reduce_body_if p r (push_rel CRD.(LocalAssum(n, t)) env) sigma b
-    | _ ->
-       failwith "Could not specialize"
+  branch_state
+    (fun trm sigma -> p env sigma trm)
+    (fun trm sigma -> r env sigma trm)
+    (fun trm sigma ->
+      match kind trm with
+      | Lambda (n, t, b) ->
+         reduce_body_if p r (push_rel CRD.(LocalAssum(n, t)) env) sigma b
+      | _ ->
+         failwith "Could not specialize")
+    trm
+    sigma
 
 (* Reduce the type *)
 let reduce_type_using r (env : env) sigma (trm : types) : evar_map * types =

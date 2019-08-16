@@ -14,14 +14,15 @@ type 'a stateless_filter_strategy = env -> evar_map -> 'a list -> 'a list
 
 (* Filter trms to those that have type typ in env *)
 let filter_by_type typ (env : env) sigma (trms : types list) =
-  filter_state sigma (fun sigma tr -> has_type env sigma typ tr) trms
+  filter_state (fun tr sigma -> has_type env sigma typ tr) trms sigma
 
 (* Find the singleton list with the first term that has type typ *)
 let find_by_type typ (env : env) sigma (trms : types list) =
   try
-    Util.on_snd
-      (fun tr -> [tr])
-      (find_state sigma (fun sigma tr -> has_type env sigma typ tr) trms)
+    bind
+      (find_state (fun tr sigma -> has_type env sigma typ tr) trms)
+      (fun tr -> ret [tr])
+      sigma
   with _ ->
     sigma, []
 
@@ -45,15 +46,17 @@ let filter_not_same trm (_ : env) sigma (trms : types list) =
 let filter_ihs (env : env) sigma (cs : types list) =
   let env_no_ih = pop_rel_context 1 env in
   filter_state
-    sigma
-    (fun sigma c ->
+    (fun c sigma ->
       let c_no_ih = unshift c in
       try
-        let sigma, _ = infer_type env_no_ih sigma c_no_ih in
-        sigma, true
+        bind
+          (fun sigma -> infer_type env_no_ih sigma c_no_ih)
+          (fun _ -> ret true)
+          sigma
       with _ ->
         sigma, false)
     cs
+    sigma
 
 (*
  * When we know sigma won't change, like in filter_not_same, ignore

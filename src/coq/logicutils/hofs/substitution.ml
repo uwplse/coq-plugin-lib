@@ -69,12 +69,15 @@ let constructs_recursively env sigma c trm : evar_map * bool =
   if isApp trm then
     try
       let (f, args) = destApp trm in
-      let sigma, conv = convertible env sigma f c in
-      if conv then
-        let types_conv sigma = types_convertible env sigma trm in
-        exists_state sigma types_conv (Array.to_list args)
-      else
-        sigma, conv
+      branch_state
+        (fun t sigma -> convertible env sigma f t)
+        (fun t ->
+          exists_state
+            (fun t sigma -> types_convertible env sigma trm t)
+            (Array.to_list args))
+        (fun _ -> ret false)
+        c
+        sigma
     with _ ->
       sigma, false
   else
@@ -95,9 +98,9 @@ let all_constr_substs env sigma c trm : evar_map * types =
     (fun env sigma _ t ->
       let (_, args_t) = destApp t in
       find_state
-        sigma
-        (fun sigma -> types_convertible env sigma t)
-        (Array.to_list args_t))
+        (fun trm sigma -> types_convertible env sigma t trm)
+        (Array.to_list args_t)
+        sigma)
     shift
     env
     sigma

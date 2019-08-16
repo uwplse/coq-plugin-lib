@@ -69,7 +69,7 @@ let transform_inductive ident tr_constr ((mind_body, ind_body) as ind_specif) =
   in
   let sigma = Evd.from_env env in
   let sigma, arity' = tr_constr env sigma arity in
-  let sigma, cons_types' = map_fold_state sigma (tr_constr env) cons_types in
+  let sigma, cons_types' = map_state (fun tr sigma -> tr_constr env sigma tr) cons_types sigma in
   Util.on_snd
     (declare_inductive
        ident
