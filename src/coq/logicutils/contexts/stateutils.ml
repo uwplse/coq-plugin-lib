@@ -15,9 +15,27 @@ open Evd
 
 type 'a state = evar_map * 'a
 let bind f1 f2 = (fun sigma -> let sigma, a = f1 sigma in f2 a sigma) 
-let ret a = fun sigma -> sigma, a 
+let ret a = fun sigma -> sigma, a
 
 (* --- Threading state through arguments --- *)
+
+(* Internal utilities *)
+let sconsr bs b = ret (b :: bs)
+let srev l = ret (List.rev l)
+let sarray_of_list l = ret (Array.of_list l)
+let sappendr l1 l2 = ret (List.append l1 l2)
+                 
+(*
+ * fold_left with state
+ *)
+let fold_left_state f b l sigma =
+  List.fold_left (fun (sigma, b) a -> f b a sigma) (ret b sigma) l
+
+(*
+ * fold_left with state
+ *)
+let fold_left2_state f c l1 l2 sigma =
+  List.fold_left2 (fun (sigma, c) a b -> f c a b sigma) (ret c sigma) l1 l2
 
 (*
  * For a function that takes and returns state, map that function over a 
@@ -27,51 +45,29 @@ let ret a = fun sigma -> sigma, a
  * in Coq (arguments may depend on earlier arguments). This is sometimes
  * significant.
  *)
-let map_fold_state f l =
-  (fun sigma ->
-    bind
-      (fun sigma ->
-        List.fold_left
-          (fun (sigma, bs) a ->
-            bind (f a) (fun b -> ret (b :: bs)) sigma)
-          (sigma, [])
-          l)
-      (fun l sigma -> sigma, List.rev l))
-    l
+let map_state f l =
+  bind (fold_left_state (fun bs a -> bind (f a) (sconsr bs)) [] l) srev
 
 (*
  * map2 version
  *)
-let map2_fold_state f l1 l2 sigma =
-  Util.on_snd
-    List.rev
-    (List.fold_left2
-       (fun (sigma, cs) a b ->
-         bind (f a b) (fun c -> ret (c :: cs)) sigma)
-       (sigma, [])
-       l1
-       l2)
+let map2_state f l1 l2 =
+  bind (fold_left2_state (fun cs a b -> bind (f a b) (sconsr cs)) [] l1 l2) srev
 
 (*
  * Array version
  *)
-let map_fold_state_array f arr sigma =
-  Util.on_snd Array.of_list (map_fold_state f (Array.to_list arr) sigma)
+let map_state_array f arr =
+  bind (map_state f (Array.to_list arr)) sarray_of_list
 
 (*
  * flat_map version
  *)
-let flat_map_fold_state  f l sigma =
-  let sigma, l = map_fold_state f l sigma in
-  Util.on_snd
-    List.rev
-    (List.fold_left
-       (fun (sigma, bss) bs ->
-         sigma, List.append bs bss)
-       (sigma, [])
-       l)
+let flat_map_state  f l =
+  bind (bind (map_state f l) (fold_left_state sappendr [])) srev
 
 (*
+ * TODO if/else above this
  * Predicate version, for exists
  *)
 let exists_state p l sigma =
