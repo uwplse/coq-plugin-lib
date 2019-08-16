@@ -5,6 +5,18 @@
 
 open Evd
 
+(* --- State monad --- *)
+
+type 'a state = 'a * evar_map
+
+val bind :
+  (evar_map -> 'a state) ->
+  ('a -> evar_map -> 'b state) ->
+  evar_map ->
+  'b state
+
+val ret : 'a -> evar_map -> 'a state
+
 (* --- Threading state through arguments --- *)
 
 (*

@@ -1,11 +1,21 @@
 (*
  * Utilities for evar_maps, which in Coq store state (evars, universe
  * constraints, and so on)
- *
- * TODO see if these exist in Coq API
  *)
 
 open Evd
+
+(* --- State monad --- *)
+
+(*
+ * I'm actually rarely sold on this style of programming. But here I think
+ * it can help define combinators that force good evar_map discipline.
+ * I expose these because people might like to use them more generally.
+ *)
+
+type 'a state = 'a * evar_map
+let bind f1 f2 = (fun sigma -> let a, sigma = f1 sigma in f2 a sigma) 
+let ret a = fun sigma -> a, sigma 
 
 (* --- Threading state through arguments --- *)
 
