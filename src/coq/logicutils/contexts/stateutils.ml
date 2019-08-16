@@ -13,9 +13,9 @@ open Evd
  * I expose these because people might like to use them more generally.
  *)
 
-type 'a state = 'a * evar_map
-let bind f1 f2 = (fun sigma -> let a, sigma = f1 sigma in f2 a sigma) 
-let ret a = fun sigma -> a, sigma 
+type 'a state = evar_map * 'a
+let bind f1 f2 = (fun sigma -> let sigma, a = f1 sigma in f2 a sigma) 
+let ret a = fun sigma -> sigma, a 
 
 (* --- Threading state through arguments --- *)
 
@@ -27,13 +27,15 @@ let ret a = fun sigma -> a, sigma
  * in Coq (arguments may depend on earlier arguments). This is sometimes
  * significant.
  *)
-let map_fold_state sigma f l =
+let map_fold_state f l sigma =
   Util.on_snd
     List.rev
     (List.fold_left
        (fun (sigma, bs) a ->
-         let sigma, b = f sigma a in
-         sigma, b :: bs)
+         bind
+           (f a)
+           (fun b sigma -> sigma, b :: bs)
+           sigma)
        (sigma, [])
        l)
 
@@ -45,7 +47,7 @@ let map2_fold_state sigma f l1 l2 =
     List.rev
     (List.fold_left2
        (fun (sigma, cs) a b ->
-         let sigma, c = f sigma a b in
+         let sigma, c = f a b sigma in
          sigma, c :: cs)
        (sigma, [])
        l1
@@ -55,13 +57,13 @@ let map2_fold_state sigma f l1 l2 =
  * Array version
  *)
 let map_fold_state_array sigma f arr =
-  Util.on_snd Array.of_list (map_fold_state sigma f (Array.to_list arr))
+  Util.on_snd Array.of_list (map_fold_state f (Array.to_list arr) sigma)
 
 (*
  * flat_map version
  *)
 let flat_map_fold_state sigma f l =
-  let sigma, l = map_fold_state sigma f l in
+  let sigma, l = map_fold_state f l sigma in
   Util.on_snd
     List.rev
     (List.fold_left
@@ -79,7 +81,7 @@ let exists_state sigma p l =
       if p_holds then
         sigma, p_holds
       else
-        p sigma a)
+        p a sigma)
     (sigma, false)
     l
 
@@ -98,7 +100,7 @@ let find_state sigma p l =
         if Option.has_some a_opt then
           sigma, a_opt
         else
-          let sigma, p_holds = p sigma a in
+          let sigma, p_holds = p a sigma in
           if p_holds then
             sigma, Some a
           else
@@ -112,7 +114,7 @@ let find_state sigma p l =
 let filter_state sigma p l =
   List.fold_left
     (fun (sigma, a_l) a ->
-      let sigma, p_holds = p sigma a in
+      let sigma, p_holds = p a sigma in
       if p_holds then
         sigma, a :: a_l
       else

@@ -7,7 +7,11 @@ open Evd
 
 (* --- State monad --- *)
 
-type 'a state = 'a * evar_map
+(*
+ * Putting the evar_map first here is deliberate for consistency with other
+ * functions from the Coq library.
+ *)
+type 'a state = evar_map * 'a
 
 val bind :
   (evar_map -> 'a state) ->
@@ -24,45 +28,44 @@ val ret : 'a -> evar_map -> 'a state
  * list of arguments, threading the state through the application to the result
  *)
 val map_fold_state :
-  evar_map ->
-  (evar_map -> 'a -> evar_map * 'b) ->
+  ('a -> evar_map -> 'b state) ->
   'a list ->
-  evar_map * 'b list
+  evar_map ->
+  ('b list) state
 
 val map2_fold_state :
   evar_map ->
-  (evar_map -> 'a -> 'b -> evar_map * 'c) ->
+  ('a -> 'b -> evar_map -> 'c state) ->
   'a list ->
   'b list ->
-  evar_map * 'c list
-  
+  ('c list) state
 
 val map_fold_state_array :
   evar_map ->
-  (evar_map -> 'a -> evar_map * 'b) ->
+  ('a -> evar_map -> 'b state) ->
   'a array ->
-  evar_map * 'b array
+  ('b array) state
 
 val flat_map_fold_state :
   evar_map ->
-  (evar_map -> 'a -> evar_map * 'b list) ->
+  ('a -> evar_map -> ('b list) state) ->
   'a list ->
-  evar_map * 'b list
+  ('b list) state
 
 val exists_state :
   evar_map ->
-  (evar_map -> 'a -> evar_map * bool) ->
+  ('a -> evar_map -> bool state) ->
   'a list ->
-  evar_map * bool
+  bool state
 
 val find_state :
   evar_map ->
-  (evar_map -> 'a -> evar_map * bool) ->
+  ('a -> evar_map -> bool state) ->
   'a list ->
-  evar_map * 'a
+  'a state
 
 val filter_state :
   evar_map ->
-  (evar_map -> 'a -> evar_map * bool) ->
+  ('a -> evar_map -> bool state) ->
   'a list ->
-  evar_map * 'a list
+  ('a list) state
