@@ -65,10 +65,16 @@ let map_state_array f arr =
   bind (map_state f (Array.to_list arr)) sarray_of_list
 
 (*
+ * flatten
+ *)
+let flatten_state l =
+  bind (fold_left_state sappendr [] l) srev
+
+(*
  * flat_map version
  *)
 let flat_map_state f l =
-  bind (bind (map_state f l) (fold_left_state sappendr [])) srev
+  bind (map_state f l) flatten_state
        
 (*
  * Stateful if/else

@@ -60,6 +60,11 @@ val map_state_array :
   evar_map ->
   ('b array) state
 
+val flatten_state :
+  'a list list ->
+  evar_map ->
+  'a list state
+
 val flat_map_state :
   ('a -> evar_map -> ('b list) state) ->
   'a list ->
