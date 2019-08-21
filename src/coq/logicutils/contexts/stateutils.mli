@@ -72,12 +72,34 @@ val flat_map_state :
   ('b list) state
 
 val branch_state :
-  ('a -> evar_map -> bool state) ->
-  ('a -> evar_map -> 'b state) ->
-  ('a -> evar_map -> 'b state) ->
+  ('a -> evar_map -> bool state) -> (* predicate *)
+  ('a -> evar_map -> 'b state) -> (* run if true *)
+  ('a -> evar_map -> 'b state) -> (* run if false *)
   'a ->
   evar_map ->
   'b state
+
+val and_state :
+  ('a -> evar_map -> bool state) -> (* first predicate *)
+  ('b -> evar_map -> bool state) -> (* second predicate *)
+  'a -> (* first argument *)
+  'b -> (* second argument *)
+  evar_map ->
+  bool state
+
+val or_state :
+  ('a -> evar_map -> bool state) -> (* first predicate *)
+  ('b -> evar_map -> bool state) -> (* second predicate *)
+  'a -> (* first argument *)
+  'b -> (* second argument *)
+  evar_map ->
+  bool state
+
+val not_state :
+  ('a -> evar_map -> bool state) ->
+  'a ->
+  evar_map ->
+  bool state
             
 val exists_state :
   ('a -> evar_map -> bool state) ->

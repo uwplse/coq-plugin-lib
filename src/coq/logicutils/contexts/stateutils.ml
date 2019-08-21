@@ -89,6 +89,26 @@ let branch_state p f g a =
     (fun b -> if b then f a else g a)
 
 (*
+ * Stateful and (pa a && pb b)
+ *)
+let and_state pa pb a b =
+  branch_state pa (fun _ -> pb b) (fun _ -> ret false) a
+
+(*
+ * Stateful or (pa a || pb b)
+ *)
+let or_state pa pb a b =
+  branch_state pa (fun _ -> ret true) (fun _ -> pb b) a
+
+(*
+ * Stateful not
+ * Note that if p holds, this returns false and the evar_map from p
+ * If p does not hold, this returns true and the evar_map argument
+ *)
+let not_state p a =
+  branch_state p (fun _ -> ret false) (fun _ -> ret true) a
+               
+(*
  * Predicate version, for exists
  *)
 let exists_state p l =
