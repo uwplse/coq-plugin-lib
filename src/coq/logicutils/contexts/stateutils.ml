@@ -137,11 +137,13 @@ let find_state p l =
  * Filter
  *)
 let filter_state p l =
-  fold_left_state
-    (fun a_l ->
-      branch_state
-        p
-        (sconsr a_l)
-        (fun _ -> ret a_l))
-    []
-    l
+  bind
+    (fold_left_state
+       (fun a_l ->
+         branch_state
+           p
+           (sconsr a_l)
+           (fun _ -> ret a_l))
+       []
+       l)
+    srev
