@@ -4,6 +4,7 @@
  *)
 
 open Evd
+open Utilities
 
 (* --- State monad --- *)
 
@@ -147,3 +148,18 @@ let filter_state p l =
        []
        l)
     srev
+
+(*
+ * Partition
+ *)
+let partition_state p l =
+  bind
+    (fold_left_state
+       (fun (a_l1, a_l2) ->
+         branch_state
+           p
+           (fun a -> ret (a :: a_l1, a_l2))
+           (fun a -> ret (a_l1, a :: a_l2)))
+       ([], [])
+       l)
+    (fun (l1, l2) -> ret (map_tuple List.rev (l1, l2)))

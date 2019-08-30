@@ -118,3 +118,9 @@ val filter_state :
   'a list ->
   evar_map ->
   ('a list) state
+
+val partition_state :
+  ('a -> evar_map -> bool state) ->
+  'a list ->
+  evar_map ->
+  ('a list * 'a list) state
