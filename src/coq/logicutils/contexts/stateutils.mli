@@ -107,6 +107,12 @@ val exists_state :
   evar_map ->
   bool state
 
+val forall_state :
+  ('a -> evar_map -> bool state) ->
+  'a list ->
+  evar_map ->
+  bool state
+
 val find_state :
   ('a -> evar_map -> bool state) ->
   'a list ->

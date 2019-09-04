@@ -119,6 +119,15 @@ let exists_state p l =
     l
 
 (*
+ * Stateful forall
+ *)
+let forall_state p l =
+  fold_left_state
+    (fun b -> branch_state p (fun _ -> ret b) (fun _ -> ret false))
+    true
+    l
+
+(*
  * Predicate version, for find
  *)
 let find_state p l =
