@@ -69,7 +69,7 @@ let map_state_array f arr =
  * flatten
  *)
 let flatten_state l =
-  bind (fold_left_state sappendr [] l) srev
+  fold_left_state sappendr [] l
 
 (*
  * flat_map version
