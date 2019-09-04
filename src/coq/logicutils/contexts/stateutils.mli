@@ -56,7 +56,7 @@ val fold_right2_state :
   evar_map ->
   'c state
 
-val fold_tuple_state:
+val map_tuple_state:
   ('a -> evar_map -> 'b state) ->
   ('a * 'a) ->
   evar_map ->

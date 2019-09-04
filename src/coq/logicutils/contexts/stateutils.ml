@@ -55,9 +55,9 @@ let fold_right2_state f l1 l2 b =
   fold_left2_state (fun c a b -> f a b c) b (List.rev l1) (List.rev l2)
 
 (*
- * folding over tuples
+ * mapping over tuples
  *)
-let fold_tuple_state f (p1, p2) =
+let map_tuple_state f (p1, p2) =
   bind (f p1) (fun r1 -> bind (f p2) (fun r2 -> ret (r1, r2)))
 
 (*
