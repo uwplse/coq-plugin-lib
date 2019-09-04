@@ -37,10 +37,28 @@ let fold_left_state f b l sigma =
   List.fold_left (fun (sigma, b) a -> f b a sigma) (ret b sigma) l
 
 (*
- * fold_left with state
+ * fold_left2 with state
  *)
 let fold_left2_state f c l1 l2 sigma =
   List.fold_left2 (fun (sigma, c) a b -> f c a b sigma) (ret c sigma) l1 l2
+
+(*
+ * for correct evar_map threading, fold_right is defined in terms of fold_left
+ *)
+let fold_right_state f l b =
+  fold_left_state (fun b a -> f a b) b (List.rev l)
+
+(*
+ * Same over two lists
+ *)
+let fold_right2_state f l1 l2 b =
+  fold_left2_state (fun c a b -> f a b c) b (List.rev l1) (List.rev l2)
+
+(*
+ * folding over tuples
+ *)
+let fold_tuple_state f (p1, p2) =
+  bind (f p1) (fun r1 -> bind (f p2) (fun r2 -> ret (r1, r2)))
 
 (*
  * For a function that takes and returns state, map that function over a 

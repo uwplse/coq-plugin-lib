@@ -40,6 +40,27 @@ val fold_left2_state :
   'b list ->
   evar_map ->
   'c state
+
+val fold_right_state :
+  ('a -> 'b -> evar_map -> 'b state) ->
+  'a list ->
+  'b ->
+  evar_map ->
+  'b state
+
+val fold_right2_state :
+  ('a -> 'b -> 'c -> evar_map -> 'c state) ->
+  'a list ->
+  'b list ->
+  'c ->
+  evar_map ->
+  'c state
+
+val fold_tuple_state:
+  ('a -> evar_map -> 'b state) ->
+  ('a * 'a) ->
+  evar_map ->
+  ('b * 'b) state
                                
 val map_state :
   ('a -> evar_map -> 'b state) ->
