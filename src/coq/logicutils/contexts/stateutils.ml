@@ -61,6 +61,12 @@ let map_tuple_state f (p1, p2) =
   bind (f p1) (fun r1 -> bind (f p2) (fun r2 -> ret (r1, r2)))
 
 (*
+ * folding over tuples
+ *)
+let fold_tuple_state f (p1, p2) sigma =
+  f p1 p2 sigma
+
+(*
  * For a function that takes and returns state, map that function over a 
  * list of arguments, threading the state through the application to the result.
  *
@@ -120,6 +126,18 @@ let or_state pa pb a b =
   branch_state pa (fun _ -> ret true) (fun _ -> pb b) a
 
 (*
+ * Stateful and (pa a && pb b)
+ *)
+let and_state_fold pa1 pa2 a =
+  and_state pa1 pa2 a a
+
+(*
+ * Stateful or (pa a || pb b)
+ *)
+let or_state_fold pa1 pa2 a =
+  or_state pa1 pa2 a a
+
+(*
  * Stateful not
  * Note that if p holds, this returns false and the evar_map from p
  * If p does not hold, this returns true and the evar_map argument
@@ -132,9 +150,17 @@ let not_state p a =
  *)
 let exists_state p l =
   fold_left_state
-    (fun b -> branch_state (fun _ -> ret b) (fun _ -> ret b) p)
+    (fun bool -> branch_state (fun _ -> ret bool) (fun _ -> ret bool) p)
     false
     l
+
+(*
+ * exists2
+ *)
+let exists2_state p l1 l2 =
+  exists_state
+    (fold_tuple_state p)
+    (List.combine l1 l2)
 
 (*
  * Stateful forall
@@ -144,6 +170,14 @@ let forall_state p l =
     (fun b -> branch_state p (fun _ -> ret b) (fun _ -> ret false))
     true
     l
+
+(*
+ * forall2
+ *)
+let forall2_state p l1 l2 =
+  forall_state
+    (fold_tuple_state p)
+    (List.combine l1 l2)
 
 (*
  * Predicate version, for find
@@ -162,6 +196,14 @@ let find_state p l =
     (branch_state shas_some sget (fun _ _ -> raise Not_found))
 
 (*
+ * find2
+ *)
+let find2_state p l1 l2 =
+  find_state
+    (fold_tuple_state p)
+    (List.combine l1 l2)
+
+(*
  * Filter
  *)
 let filter_state p l =
@@ -175,6 +217,14 @@ let filter_state p l =
        []
        l)
     srev
+
+(*
+ * filter2
+ *)
+let filter2_state p l1 l2 =
+  filter_state
+    (fold_tuple_state p)
+    (List.combine l1 l2)
 
 (*
  * Partition
