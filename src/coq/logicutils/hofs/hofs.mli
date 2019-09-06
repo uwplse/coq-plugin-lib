@@ -93,9 +93,9 @@ type ('a, 'b) proposition_list_mapper =
  * need this, too
  *)
 val map_rec_env_fix :
-  (env -> evar_map -> 'a -> 'b state) ->
+  (env -> evar_map -> 'a -> types -> 'b state) ->
   ('a -> 'a) ->
-  (env -> evar_map -> 'a -> Names.name array -> types array -> 'b state)
+  (env -> evar_map -> 'a -> Names.name array -> types array -> types -> 'b state)
 
 val map_rec_args :
   ('a, 'b) transformer_with_env ->

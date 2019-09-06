@@ -123,12 +123,12 @@ let exists_args map_rec env sigma a args =
 (*
  * Recurse on a mapping function with an environment for a fixpoint
  *)
-let map_rec_env_fix map_rec d env sigma a ns ts =
+let map_rec_env_fix map_rec d env (sigma : evar_map) a ns ts (trm : types) =
   let fix_bindings = bindings_for_fix ns ts in
   let env_fix = push_rel_context fix_bindings env in
   let n = List.length fix_bindings in
   let d_n = List.fold_left (fun a' _ -> d a') a (range 0 n) in
-  map_rec env_fix sigma d_n
+  map_rec env_fix sigma d_n trm
 
 (*
  * Recurse on a mapping function with an environment for a fixpoint
