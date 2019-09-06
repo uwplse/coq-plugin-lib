@@ -3,6 +3,7 @@
 open Environ
 open Constr
 open Evd
+open Stateutils
 
 (* Predicates to determine whether to apply a mapped function *)
 type ('a, 'b) pred = 'a -> 'b -> bool
@@ -85,6 +86,21 @@ type ('a, 'b) proposition_list_mapper =
   'a updater ->
   ('a, 'b) list_transformer
 
+(* --- Recursive mapping over fixpoints and arguments with state --- *)
+
+(*
+ * Type signature here needs work, but for now expose since other tools
+ * need this, too
+ *)
+val map_rec_env_fix :
+  (env -> evar_map -> 'a -> 'b state) ->
+  ('a -> 'a) ->
+  (env -> evar_map -> 'a -> Names.name array -> types array -> 'b state)
+
+val map_rec_args :
+  ('a, 'b) transformer_with_env ->
+  (env -> evar_map -> 'a -> 'b array -> ('b array) state)
+           
 (* --- Basic mapping over terms --- *)
     
 (*
