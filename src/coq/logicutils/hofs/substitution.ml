@@ -120,12 +120,24 @@ let all_typ_substs_combs : (types * types) comb_substitution =
 type global_substitution = global_reference Globnames.Refmap.t
 
 (* Substitute global references throughout a term *)
-let subst_globals subst term =
-  let rec aux term =
-    try
-      pglobal_of_constr term |>
-      map_puniverses (flip Globnames.Refmap.find subst) |>
-      constr_of_pglobal
-    with Not_found ->
-      Constr.map aux term
-  in aux term
+let rec subst_globals subst (term : constr) =
+  map_term_if
+    (fun _ t -> isConst t || isInd t || isConstruct t || isVar t || isCase t)
+    (fun _ t ->
+      try
+        pglobal_of_constr t |>
+        map_puniverses (flip Globnames.Refmap.find subst) |>
+        constr_of_pglobal
+      with _ ->
+        match kind t with
+        | Case (ci, p, b, bl) ->
+           let ci_ind' = destInd (subst_globals subst (mkInd ci.ci_ind)) in
+           let ci' = { ci with ci_ind = fst ci_ind' } in 
+           let b' = subst_globals subst b in
+           let p' = subst_globals subst p in
+           let bl' = Array.map (subst_globals subst) bl in
+           mkCase (ci', p', b', bl')               
+        | _ -> t)
+    (fun _ -> ())
+    ()
+    term
