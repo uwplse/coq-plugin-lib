@@ -128,9 +128,20 @@ let declare_module_structure ?(params=[]) ident declare_elements =
  *
  * TODO sigma handling, not sure how to do it here/if we need it
  *)
-let transform_module_structure ?(init=const Globnames.Refmap.empty) ident tr_constr mod_body =
+let transform_module_structure ?(init=const Globnames.Refmap.empty) ?(opaques=Globnames.Refset.empty) ident tr_constr mod_body =
   let mod_path = mod_body.mod_mp in
   let mod_arity, mod_elems = decompose_module_signature mod_body.mod_type in
+  let mod_elems =
+    List.filter
+      (fun (l, b) ->
+        match b with
+        | SFBconst const_body ->
+           let const = Constant.make2 mod_path l in
+           not (Globnames.Refset.mem (ConstRef const) opaques)
+        | _ ->
+           true)
+      mod_elems
+  in
   assert (List.is_empty mod_arity); (* Functors are not yet supported *)
   let transform_module_element subst (label, body) =
     let ident = Label.to_id label in
