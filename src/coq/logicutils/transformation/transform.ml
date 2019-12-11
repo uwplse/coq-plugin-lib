@@ -144,6 +144,7 @@ let transform_module_structure ?(init=const Globnames.Refmap.empty) ?(opaques=Gl
   in
   assert (List.is_empty mod_arity); (* Functors are not yet supported *)
   let transform_module_element subst (label, body) =
+    Feedback.msg_notice (Pp.(str "Transforming " ++ Label.print label));
     let ident = Label.to_id label in
     let tr_constr env sigma = subst_globals subst %> tr_constr env sigma in
     match body with
@@ -167,12 +168,10 @@ let transform_module_structure ?(init=const Globnames.Refmap.empty) ?(opaques=Gl
       List.fold_right2 Globnames.Refmap.add (list_cons ind) (list_cons ind') |>
       List.fold_right2 Globnames.Refmap.add (list_elim ind) (list_elim ind')
     | SFBmodule mod_body ->
-      Feedback.msg_warning
-        Pp.(str "Skipping nested module structure " ++ Label.print label);
+      Feedback.msg_warning (Pp.str "Skipping nested module structure");
       subst
     | SFBmodtype sig_body ->
-      Feedback.msg_warning
-        Pp.(str "Skipping nested module signature " ++ Label.print label);
+      Feedback.msg_warning (Pp.str "Skipping nested module signature");
       subst
   in
   declare_module_structure
