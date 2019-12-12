@@ -35,7 +35,13 @@ let edeclare ident (_, poly, _ as k) ~opaque sigma udecl body tyopt imps hook re
   let env = Global.env () in
   let sigma =
     if refresh then
-      fst (Typing.type_of ~refresh:true env sigma body)
+      fst (Typing.type_of ~refresh:false env sigma body)
+    else
+      sigma
+  in
+  let sigma =
+    if Option.has_some tyopt && refresh then
+      fst (Typing.type_of ~refresh:false env sigma (Option.get tyopt))
     else
       sigma
   in
