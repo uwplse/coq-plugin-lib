@@ -144,7 +144,7 @@ let transform_module_structure ?(init=const Globnames.Refmap.empty) ?(opaques=Gl
   in
   assert (List.is_empty mod_arity); (* Functors are not yet supported *)
   let transform_module_element subst (label, body) =
-    Feedback.msg_notice (Pp.(str "Transforming " ++ Label.print label));
+    Feedback.msg_info (Pp.(str "Transforming " ++ Label.print label));
     let ident = Label.to_id label in
     let tr_constr env sigma = subst_globals subst %> tr_constr env sigma in
     match body with
