@@ -61,8 +61,10 @@ let transform_constant ident tr_constr const_body =
  *
  * NOTE: Global side effects.
  *)
-let transform_inductive ident tr_constr ((mind_body, ind_body) as ind_specif) =
+let transform_inductive ident tr_constr (mind_body, ind) =
   (* TODO: Can we re-use this for ornamental lifting of inductive families? *)
+  let ind_body = mind_body.mind_packets.(0) in
+  let ind_specif = (mind_body, ind_body) in
   let env = Global.env () in
   let env, univs, arity, cons_types =
     open_inductive ~global:true env ind_specif
@@ -82,7 +84,7 @@ let transform_inductive ident tr_constr ((mind_body, ind_body) as ind_specif) =
   in
   try
     let open Recordops in
-    let r = lookup_structure i in
+    let r = lookup_structure ind in
     let pks = r.s_PROJKIND in
     let ps = r.s_PROJ in
     let c = (i, 1) in
@@ -171,7 +173,7 @@ let transform_module_structure ?(init=const Globnames.Refmap.empty) ?(opaques=Gl
       check_inductive_supported mind_body;
       let ind = (MutInd.make2 mod_path label, 0) in
       let ind_body = mind_body.mind_packets.(0) in
-      let sigma, ind' = transform_inductive ident tr_constr (mind_body, ind_body) in
+      let sigma, ind' = transform_inductive ident tr_constr (mind_body, ind) in
       let ncons = Array.length ind_body.mind_consnames in
       let list_cons ind = List.init ncons (fun i -> ConstructRef (ind, i + 1)) in
       let sorts = ind_body.mind_kelim in

@@ -30,7 +30,7 @@ val transform_constant :
  * NOTE: Global side effects.
  *)
 val transform_inductive :
-  Id.t -> constr_transformer -> Inductive.mind_specif -> evar_map * inductive
+  Id.t -> constr_transformer -> mutual_inductive_body * inductive -> evar_map * inductive
 
 (*
  * Declare a new module structure under the given name with the compositionally
