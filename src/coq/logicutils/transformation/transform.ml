@@ -70,15 +70,27 @@ let transform_inductive ident tr_constr ((mind_body, ind_body) as ind_specif) =
   let sigma = Evd.from_env env in
   let sigma, arity' = tr_constr env sigma arity in
   let sigma, cons_types' = map_state (fun tr sigma -> tr_constr env sigma tr) cons_types sigma in
-  Util.on_snd
-    (declare_inductive
-       ident
-       (Array.to_list ind_body.mind_consnames)
-       (is_ind_body_template ind_body)
-       univs
-       mind_body.mind_nparams
-       arity')
-    (sigma, cons_types')
+  let i =
+    declare_inductive
+      ident
+      (Array.to_list ind_body.mind_consnames)
+      (is_ind_body_template ind_body)
+      univs
+      mind_body.mind_nparams
+      arity'
+      cons_types'
+  in
+  try
+    let open Recordops in
+    let r = lookup_structure i in
+    let pks = r.s_PROJKIND in
+    let ps = r.s_PROJ in
+    let c = (i, 1) in
+    let structure = (i, c, pks, ps) in
+    let _ = declare_structure structure in
+    sigma, i
+  with _ ->
+    sigma, i
     
 (*
  * Pull any functor parameters off the module signature, returning the list of
