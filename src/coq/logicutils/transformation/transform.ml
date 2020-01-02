@@ -91,7 +91,7 @@ let transform_inductive ident tr_constr (mind_body, ind) =
     let structure = (i, c, pks, ps) in
     let _ = declare_structure structure in
     sigma, i
-  with _ ->
+  with Not_found ->
     sigma, i
     
 (*
