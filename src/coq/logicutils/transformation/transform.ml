@@ -85,7 +85,7 @@ let transform_inductive ident tr_constr (mind_body, ind) =
   try
     let open Recordops in
     let r = lookup_structure ind in
-    Feedback.msg_notice (Pp.str "Transformed a record");
+    Feedback.msg_info (Pp.str "Transformed a record");
     let pks = r.s_PROJKIND in
     let ps = r.s_PROJ in
     let c = (i, 1) in
