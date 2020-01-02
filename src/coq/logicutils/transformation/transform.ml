@@ -90,8 +90,12 @@ let transform_inductive ident tr_constr (mind_body, ind) =
     let ps = r.s_PROJ in
     let c = (i, 1) in
     let structure = (i, c, pks, ps) in
-    let _ = declare_structure structure in
-    sigma, i
+    try
+      let _ = declare_structure structure in
+      sigma, i
+    with _ ->
+      let _ = Feedback.msg_warning (Pp.str "Failed to register projections for transformed record") in
+      sigma, i
   with Not_found ->
     sigma, i
     
