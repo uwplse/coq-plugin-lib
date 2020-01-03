@@ -14,6 +14,7 @@ open Defutils
 open Indutils
 open Substitution
 open Stateutils
+open Recordops
 
 (* Type-sensitive transformation of terms *)
 type constr_transformer = env -> evar_map -> constr -> evar_map * constr
@@ -61,10 +62,8 @@ let transform_constant ident tr_constr const_body =
  *
  * NOTE: Global side effects.
  *)
-let transform_inductive ident tr_constr (mind_body, ind) =
+let transform_inductive ident tr_constr (mind_body, ind_body as ind_specif) =
   (* TODO: Can we re-use this for ornamental lifting of inductive families? *)
-  let ind_body = mind_body.mind_packets.(0) in
-  let ind_specif = (mind_body, ind_body) in
   let env = Global.env () in
   let env, univs, arity, cons_types =
     open_inductive ~global:true env ind_specif
@@ -72,33 +71,38 @@ let transform_inductive ident tr_constr (mind_body, ind) =
   let sigma = Evd.from_env env in
   let sigma, arity' = tr_constr env sigma arity in
   let sigma, cons_types' = map_state (fun tr sigma -> tr_constr env sigma tr) cons_types sigma in
-  let i =
-    declare_inductive
-      ident
-      (Array.to_list ind_body.mind_consnames)
-      (is_ind_body_template ind_body)
-      univs
-      mind_body.mind_nparams
-      arity'
-      cons_types'
-  in
+  Util.on_snd
+    (declare_inductive
+       ident
+       (Array.to_list ind_body.mind_consnames)
+       (is_ind_body_template ind_body)
+       univs
+       mind_body.mind_nparams
+       arity')
+    (sigma, cons_types')
+
+(*
+ * Try to register a transformed inductive type inside a module as a record,
+ * if appropriate
+ *)
+let try_register_record mod_path (ind, ind') =
   try
-    let open Recordops in
     let r = lookup_structure ind in
     Feedback.msg_info (Pp.str "Transformed a record");
     let pks = r.s_PROJKIND in
-    let ps = r.s_PROJ in
-    let c = (i, 1) in
-    let structure = (i, c, pks, ps) in
+    let ps =
+      List.map
+        (Option.map (fun p -> Constant.make2 mod_path (Constant.label p)))
+        r.s_PROJ
+    in
     (try
-       let _ = declare_structure structure in
-       sigma, i
+       declare_structure (ind', (ind', 1), pks, ps)
      with _ ->
-       let _ = Feedback.msg_warning (Pp.str "Failed to register projections for transformed record") in
-       sigma, i)
+       Feedback.msg_warning
+         (Pp.str "Failed to register projections for transformed record"))
   with Not_found ->
-    sigma, i
-    
+    ()
+       
 (*
  * Pull any functor parameters off the module signature, returning the list of
  * functor parameters and the list of module elements (i.e., fields).
@@ -131,7 +135,6 @@ let declare_module_structure ?(params=[]) ident declare_elements =
   Flags.if_verbose Feedback.msg_info
     Pp.(str "\nModule " ++ Id.print ident ++ str " is defined");
   mod_path
-
       
 (*
  * Declare a new module structure under the given name with the compositionally
@@ -178,7 +181,8 @@ let transform_module_structure ?(init=const Globnames.Refmap.empty) ?(opaques=Gl
       check_inductive_supported mind_body;
       let ind = (MutInd.make2 mod_path label, 0) in
       let ind_body = mind_body.mind_packets.(0) in
-      let sigma, ind' = transform_inductive ident tr_constr (mind_body, ind) in
+      let sigma, ind' = transform_inductive ident tr_constr (mind_body, ind_body) in
+      try_register_record mod_path (ind, ind');
       let ncons = Array.length ind_body.mind_consnames in
       let list_cons ind = List.init ncons (fun i -> ConstructRef (ind, i + 1)) in
       let sorts = ind_body.mind_kelim in
