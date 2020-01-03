@@ -182,7 +182,7 @@ let transform_module_structure ?(init=const Globnames.Refmap.empty) ?(opaques=Gl
       let ind = (MutInd.make2 mod_path label, 0) in
       let ind_body = mind_body.mind_packets.(0) in
       let sigma, ind' = transform_inductive ident tr_constr (mind_body, ind_body) in
-      try_register_record mod_path (ind, ind');
+      try_register_record mod_path' (ind, ind');
       let ncons = Array.length ind_body.mind_consnames in
       let list_cons ind = List.init ncons (fun i -> ConstructRef (ind, i + 1)) in
       let sorts = ind_body.mind_kelim in
