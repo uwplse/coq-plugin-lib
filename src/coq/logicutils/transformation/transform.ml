@@ -116,18 +116,14 @@ let decompose_module_signature mod_sign =
       mod_arity, mod_fields
   in
   aux [] mod_sign
-
+      
 (*
  * Define an interactive (i.e., elementwise) module structure, with the
  * functional argument called to populate the module elements.
  *
  * The optional argument specifies functor parameters.
  *)
-let declare_module_structure ?(params=[]) ident declare_elements =
-  let mod_sign = Vernacexpr.Check [] in
-  let mod_path =
-    Declaremods.start_module Modintern.interp_module_ast None ident params mod_sign
-  in
+let declare_module_structure mod_path ident declare_elements =
   Dumpglob.dump_moddef mod_path "mod";
   declare_elements ();
   let mod_path = Declaremods.end_module () in
@@ -164,6 +160,10 @@ let transform_module_structure ?(init=const Globnames.Refmap.empty) ?(opaques=Gl
            true)
       mod_elems
   in
+  let mod_sign = Vernacexpr.Check [] in
+  let mod_path' =
+    Declaremods.start_module Modintern.interp_module_ast None ident [] mod_sign
+  in
   assert (List.is_empty mod_arity); (* Functors are not yet supported *)
   let transform_module_element subst (label, body) =
     Feedback.msg_info (Pp.(str "Transforming " ++ Label.print label));
@@ -198,6 +198,7 @@ let transform_module_structure ?(init=const Globnames.Refmap.empty) ?(opaques=Gl
       subst
   in
   declare_module_structure
+    mod_path'
     ident
     (fun () ->
        ignore (List.fold_left transform_module_element (init ()) mod_elems))
