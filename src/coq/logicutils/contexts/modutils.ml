@@ -30,7 +30,7 @@ let declare_module_structure ?(params=[]) ident declare_elements =
     Declaremods.start_module Modintern.interp_module_ast None ident params mod_sign
   in
   Dumpglob.dump_moddef mod_path "mod";
-  declare_elements ();
+  declare_elements mod_path;
   let mod_path = Declaremods.end_module () in
   Dumpglob.dump_modref mod_path "mod";
   Flags.if_verbose Feedback.msg_info

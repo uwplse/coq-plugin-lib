@@ -102,36 +102,7 @@ let try_register_record mod_path (ind, ind') =
          (Pp.str "Failed to register projections for transformed record"))
   with Not_found ->
     ()
-       
-(*
- * Pull any functor parameters off the module signature, returning the list of
- * functor parameters and the list of module elements (i.e., fields).
- *)
-let decompose_module_signature mod_sign =
-  let rec aux mod_arity mod_sign =
-    match mod_sign with
-    | MoreFunctor (mod_name, mod_type, mod_sign) ->
-      aux ((mod_name, mod_type) :: mod_arity) mod_sign
-    | NoFunctor mod_fields ->
-      mod_arity, mod_fields
-  in
-  aux [] mod_sign
-      
-(*
- * Define an interactive (i.e., elementwise) module structure, with the
- * functional argument called to populate the module elements.
- *
- * The optional argument specifies functor parameters.
- *)
-let declare_module_structure mod_path ident declare_elements =
-  Dumpglob.dump_moddef mod_path "mod";
-  declare_elements ();
-  let mod_path = Declaremods.end_module () in
-  Dumpglob.dump_modref mod_path "mod";
-  Flags.if_verbose Feedback.msg_info
-    Pp.(str "\nModule " ++ Id.print ident ++ str " is defined");
-  mod_path
-      
+
 (*
  * Declare a new module structure under the given name with the compositionally
  * transformed (i.e., forward-substituted) components from the given module
@@ -147,6 +118,7 @@ let declare_module_structure mod_path ident declare_elements =
  * TODO sigma handling, not sure how to do it here/if we need it
  *)
 let transform_module_structure ?(init=const Globnames.Refmap.empty) ?(opaques=Globnames.Refset.empty) ident tr_constr mod_body =
+  let open Modutils in
   let mod_path = mod_body.mod_mp in
   let mod_arity, mod_elems = decompose_module_signature mod_body.mod_type in
   let mod_elems =
@@ -160,12 +132,8 @@ let transform_module_structure ?(init=const Globnames.Refmap.empty) ?(opaques=Gl
            true)
       mod_elems
   in
-  let mod_sign = Vernacexpr.Check [] in
-  let mod_path' =
-    Declaremods.start_module Modintern.interp_module_ast None ident [] mod_sign
-  in
   assert (List.is_empty mod_arity); (* Functors are not yet supported *)
-  let transform_module_element subst (label, body) =
+  let transform_module_element mod_path' subst (label, body) =
     Feedback.msg_info (Pp.(str "Transforming " ++ Label.print label));
     let ident = Label.to_id label in
     let tr_constr env sigma = subst_globals subst %> tr_constr env sigma in
@@ -198,7 +166,6 @@ let transform_module_structure ?(init=const Globnames.Refmap.empty) ?(opaques=Gl
       subst
   in
   declare_module_structure
-    mod_path'
     ident
-    (fun () ->
-       ignore (List.fold_left transform_module_element (init ()) mod_elems))
+    (fun mod_path' ->
+       ignore (List.fold_left (transform_module_element mod_path') (init ()) mod_elems))

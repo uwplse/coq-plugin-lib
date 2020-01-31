@@ -15,7 +15,7 @@ val decompose_module_signature : module_signature -> (Names.MBId.t * module_type
  *
  * The optional argument specifies functor parameters.
  *)
-val declare_module_structure : ?params:(Constrexpr.module_ast Declaremods.module_params) -> Id.t -> (unit -> unit) -> ModPath.t
+val declare_module_structure : ?params:(Constrexpr.module_ast Declaremods.module_params) -> Id.t -> (ModPath.t -> unit) -> ModPath.t
 
 (*
  * Fold over the constant/inductive definitions within a module structure,
