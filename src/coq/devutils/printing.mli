@@ -7,6 +7,9 @@ open Evd
 
 (* --- Coq terms --- *)
 
+(* Pretty-print a `global_reference` with fancy `constr` coloring. *)
+val pr_global_as_constr : global_reference -> Pp.t
+
 (* Gets a name as a string *)
 val name_as_string : Name.t -> string
 
@@ -34,4 +37,3 @@ val debug_env : env -> string -> unit
 
 (* Print a patch to stdout in the standard Coq format (TODO rename or move) *)
 val print_patch : env -> evar_map -> string -> types -> unit
-
