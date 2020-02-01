@@ -76,6 +76,9 @@ src/coq/logicutils/inductive/indexing.ml
 src/coq/logicutils/inductive/indutils.mli
 src/coq/logicutils/inductive/indutils.ml
 
+src/coq/logicutils/contexts/modutils.mli
+src/coq/logicutils/contexts/modutils.ml
+
 src/coq/logicutils/transformation/transform.mli
 src/coq/logicutils/transformation/transform.ml
 

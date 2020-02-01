@@ -20,6 +20,12 @@ open Contextutils
 
 module CRD = Context.Rel.Declaration
 
+(* Pretty-print a `global_reference` with fancy `constr` coloring. *)
+let pr_global_as_constr gref =
+  let env = Global.env () in
+  let sigma = Evd.from_env env in
+  pr_constr_env env sigma (Universes.constr_of_global gref)
+
 (* Using pp, prints directly to a string *)
 let print_to_string (pp : formatter -> 'a -> unit) (trm : 'a) : string =
   Format.asprintf "%a" pp trm
