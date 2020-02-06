@@ -58,7 +58,11 @@ let lookup_definition (env : env) (def : types) : types =
 (* Fully lookup a def in env, but return the term if it is not a definition *)
 let rec unwrap_definition (env : env) (trm : types) : types =
   try
-    unwrap_definition env (lookup_definition env trm)
+    let body = lookup_definition env trm in
+    if equal body trm then
+      trm
+    else
+      unwrap_definition env body
   with _ ->
     trm
 
