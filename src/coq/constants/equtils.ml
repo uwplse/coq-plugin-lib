@@ -28,14 +28,22 @@ let eq_ind_r : types =
 let eq_ind : types =
   mkConst (Constant.make2 coq_init_logic (Label.make "eq_ind"))
 
-(* Symmetric eleiminator for equality into type *)
+(* Symmetric eliminator for equality into type "P : A -> Set" *)
 let eq_rec_r : types =
   mkConst (Constant.make2 coq_init_logic (Label.make "eq_rec_r"))
 
-(* Eliminator for equality into type *)
+(* Eliminator for equality into type "P : A -> Set" *)
 let eq_rec : types =
   mkConst (Constant.make2 coq_init_logic (Label.make "eq_rec"))
 
+(* Symmetric eliminator for equality into type "P : A -> Type" *)
+let eq_rect_r : types =
+  mkConst (Constant.make2 coq_init_logic (Label.make "eq_rect_r"))
+  
+(* Eliminator for equality into type "P : A -> Type" *)
+let eq_rect : types =
+  mkConst (Constant.make2 coq_init_logic (Label.make "eq_rect"))
+  
 (* Symmetry *)
 let eq_sym : types =
   mkConst (Constant.make2 coq_init_logic (Label.make "eq_sym"))
@@ -139,10 +147,19 @@ let dest_eq_refl (trm : types) : eq_refl_app =
 
 (* --- Questions about constants --- *)
 
+(* Check if a term is eq_ind, eq_rec, or eq_rect *)
+let is_rewrite_l (trm : types) : bool =
+  let eq_term = equal trm in
+  eq_term eq_ind || eq_term eq_rec || eq_term eq_rect
+
+(* Check if a term is eq_ind_r, eq_rec_r, or eq_rect_r *)
+let is_rewrite_r (trm : types) : bool =
+  let eq_term = equal trm in
+  eq_term eq_ind_r || eq_term eq_rec_r || eq_term eq_rect_r
+
 (*
- * Check if a term is (exactly) a rewrite via eq_ind or eq_ind_r
+ * Check if a term is (exactly) a rewrite via eq_ind or eq_ind_r etc.
  * Don't consider convertible terms
  *)
 let is_rewrite (trm : types) : bool =
-  let eq_term = equal trm in
-  eq_term eq_ind_r || eq_term eq_ind || eq_term eq_rec_r || eq_term eq_rec
+  is_rewrite_l trm || is_rewrite_r trm
