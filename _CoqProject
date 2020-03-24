@@ -44,6 +44,8 @@ src/coq/constants/produtils.mli
 src/coq/constants/produtils.ml
 src/coq/constants/idutils.mli
 src/coq/constants/idutils.ml
+src/coq/constants/proputils.ml
+src/coq/constants/proputils.mli
 
 src/coq/logicutils/contexts/stateutils.mli
 src/coq/logicutils/contexts/stateutils.ml
