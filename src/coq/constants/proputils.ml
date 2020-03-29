@@ -22,7 +22,7 @@ let or_introl : types =
 
 (* right constructor of \/ *)
 let or_intror : types = 
-  mkConstruct (fst (destInd or), 2)
+  mkConstruct (fst (destInd logical_or), 2)
 
 
 (* Logical and *)
