@@ -10,6 +10,9 @@
  *)
 val map_default : ('a -> 'b) -> 'b -> 'a option -> 'b
 
+(* Monadic guard for option. *)
+val guard : bool -> unit option
+
 (* --- Lists --- *)
 
 val last : 'a list -> 'a

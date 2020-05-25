@@ -10,6 +10,10 @@ open Util
 let map_default f default x =
   if Option.has_some x then f (Option.get x) else default
 
+(* Monadic guard for option. *)
+let guard (b : bool) : unit option =
+  if b then Some () else None
+
 (* --- Lists --- *)
 
 (* Get the last element of a list *)
