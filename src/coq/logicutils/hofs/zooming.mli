@@ -5,6 +5,7 @@
 open Constr
 open Environ
 open Evd
+open Names
                  
 (* --- Zoom n deep --- *)
 
@@ -15,6 +16,9 @@ val zoom_n_lambda : env -> int -> types -> (env * types)
                                              
 val zoom_lambda_term : env -> types -> (env * types)
 val zoom_product_type : env -> types -> (env * types)
+
+(* --- Zoom all the way except last n, return bindings --- *)
+val zoom_lambda_names : env -> int -> types -> env * types * Id.t list 
 
 (* --- Projections of zooming --- *)
                                           

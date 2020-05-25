@@ -10,7 +10,10 @@ open Decl_kinds
 open Constrextern
 open Contextutils
 open Evd
-
+open Names
+open Nameutils
+open Tactics (* fresh_id_in_env *)
+   
 (* Look up all indexes from is in env *)
 let lookup_rels (is : int list) (env : env) : CRD.t list =
  List.map (fun i -> lookup_rel i env) is
@@ -26,6 +29,13 @@ let mk_n_rels n =
 (* Return a list of all bindings in env, starting with the closest *)
 let lookup_all_rels (env : env) : CRD.t list =
   lookup_rels (all_rel_indexes env) env
+
+(* Return a name-type pair from the given rel_declaration. *)
+let rel_name_type rel : Name.t * types =
+  match rel with
+  | CRD.LocalAssum (n, t) -> (n, t)
+  | CRD.LocalDef (n, _, t) -> (n, t)
+
 
 (* Push a local binding to an environment *)
 let push_local (n, t) = push_rel CRD.(LocalAssum (n, t))
@@ -75,3 +85,17 @@ let new_rels2 env1 env2 = nb_rel env1 - nb_rel env2
 (* Ignore the environment and evar_map in a function *)
 let ignore_env (f : 'a -> 'b) : env -> evar_map -> 'a -> 'b =
   (fun _ _ -> f)
+
+(* Finds all rel names pushed onto an environment. *)
+let get_pushed_names env : Id.Set.t =
+  let names = List.map (fun x -> fst (rel_name_type x))
+                (lookup_all_rels env) in
+  Id.Set.of_list (List.map expect_name names)
+
+(* If the given name is anonymous, generate a fresh one. *)
+let fresh_name env n =
+  let in_env = get_pushed_names env in
+  let name = match n with
+    | Anonymous -> Id.of_string "H"
+    | Name n -> n in
+  fresh_id_in_env in_env name env

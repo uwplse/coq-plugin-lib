@@ -21,6 +21,9 @@ val all_rel_indexes : env -> int list
 (* Return a list of relative indexes, from highest to lowest, of size n *)
 val mk_n_rels : int -> types list
 
+(* Return a name-type pair from the given rel_declaration. *)
+val rel_name_type : CRD.t -> Name.t * types
+
 (*
  * Push to an environment
  *)
@@ -44,3 +47,10 @@ val new_rels2 : env -> env -> int
  * Ignore the environment and evar_map in a function
  *)
 val ignore_env : ('a -> 'b) -> (env -> evar_map -> 'a -> 'b)
+
+                                 
+(* Finds all rel names pushed onto an environment. *)
+val get_pushed_names : env -> Id.Set.t
+  
+(* If the given name is anonymous, generate a fresh one. *)
+val fresh_name : env -> Name.t -> Id.t

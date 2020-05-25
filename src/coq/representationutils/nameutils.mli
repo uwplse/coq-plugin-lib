@@ -14,6 +14,9 @@ val with_suffix : Id.t -> string -> Id.t
 (* Turn a name into an optional identifier *)
 val ident_of_name : Name.t -> Id.t option
 
+(* Unwrap a Name.t expecting an Id.t. Fails if anonymous. *)
+val expect_name : Name.t -> Id.t
+
 (* Turn an identifier into an external (i.e., surface-level) reference *)
 val reference_of_ident : Id.t -> Libnames.reference
 

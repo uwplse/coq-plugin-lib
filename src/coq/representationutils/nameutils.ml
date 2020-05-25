@@ -20,7 +20,13 @@ let with_suffix id suffix =
 let ident_of_name = function
   | Name id -> Some id
   | Anonymous -> None
-
+            
+(* Unwrap a Name.t expecting an Id.t. Fails if anonymous. *)
+let expect_name = function
+  | Name n -> n
+  | Anonymous ->
+     failwith "Unexpected Anonymous Name.t."
+   
 (* Turn an identifier into an external (i.e., surface-level) reference *)
 let reference_of_ident id =
   Libnames.Ident id |> CAst.make
