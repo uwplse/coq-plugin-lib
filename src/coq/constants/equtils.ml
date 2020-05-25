@@ -163,3 +163,44 @@ let is_rewrite_r (trm : types) : bool =
  *)
 let is_rewrite (trm : types) : bool =
   is_rewrite_l trm || is_rewrite_r trm
+
+
+(* Information required to perform a rewrite. *)
+type rewrite_args = {
+    a : types;
+    x : constr;
+    p : constr;
+    px : constr;
+    y : constr;
+    eq : constr;
+    params : constr array;
+    left : bool
+  }
+
+(* Proof of x = x where x : A. *)
+type eq_refl_args = {
+    a : types;
+    x : constr;
+  }
+             
+let dest_rewrite trm : rewrite_args option =
+  match kind trm with
+  | App (f, args) ->
+     if Array.length args >= 6 && is_rewrite f then
+       let left = is_rewrite_l f in
+       let params = Array.sub args 6 (Array.length args - 6) in
+       Some { a = args.(0) ; x = args.(1) ; p = args.(2) ;
+              px = args.(3) ; y = args.(4) ; eq = args.(5) ;
+              left = left ; params = params } 
+     else
+       None
+  | _ -> None
+  
+let dest_eq_refl trm : eq_refl_args option =
+  match kind trm with
+  | App (f, args) ->
+     if equal f eq_refl && Array.length args == 2 then
+       Some { a = args.(0) ; x = args.(1)  }
+     else
+       None
+  | _ -> None    

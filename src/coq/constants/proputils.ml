@@ -32,3 +32,53 @@ let logical_and : types =
 (* constructor of /\ *)
 let conj : types =
   mkConstruct (fst (destInd logical_and), 1)
+
+  
+(* or_introl : forall A B : Prop, A -> A \/ B *)
+type or_introl_args = {
+    a : types;
+    b : types;
+    ltrm : constr;
+  }
+
+(* or_intror : forall A B : Prop, B -> A \/ B *)
+type or_intror_args = {
+    a : types;
+    b : types;
+    rtrm : constr;
+  }
+
+(* conj : forall A B : Prop, A -> B -> A /\ B *)
+type conj_args = {
+    a : types;
+    b : types;
+    ltrm : constr;
+    rtrm : constr;
+  }
+                    
+let dest_or_introl trm : or_introl_args option =
+  match kind trm with
+  | App (f, args) ->
+     if equal f or_introl && Array.length args == 3 then
+       Some { a = args.(0) ; b = args.(1) ; ltrm = args.(2)  }
+     else
+       None
+  | _ -> None
+
+let dest_or_intror trm : or_intror_args option =
+  match kind trm with
+  | App (f, args) ->
+     if equal f or_intror && Array.length args == 3 then
+       Some { a = args.(0) ; b = args.(1) ; rtrm = args.(2)  }
+     else
+       None
+  | _ -> None
+       
+let dest_conj trm : conj_args option =
+  match kind trm with
+  | App (f, args) ->
+     if equal f conj && Array.length args == 4 then
+       Some { a = args.(0) ; b = args.(1) ; ltrm = args.(2) ; rtrm = args.(3) }
+     else
+       None
+  | _ -> None
