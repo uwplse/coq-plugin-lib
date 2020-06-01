@@ -145,6 +145,19 @@ let dest_eq_refl (trm : types) : eq_refl_app =
   let [typ; trm] = unfold_args trm in
   { typ; trm }
 
+(*
+ * Deconstruct an eq_refl.
+ * None on failure, or if not actually an eq_refl.
+ *)
+let dest_eq_refl_opt (trm : types) : eq_refl_app option =
+  match kind trm with
+  | App (f, args) ->
+     if equal f eq_refl && Array.length args == 2 then
+       Some { typ = args.(0) ; trm = args.(1)  }
+     else
+       None
+  | _ -> None   
+  
 (* --- Questions about constants --- *)
 
 (* Check if a term is eq_ind, eq_rec, or eq_rect *)
@@ -177,12 +190,21 @@ type rewrite_args = {
     left : bool
   }
 
-(* Proof of x = x where x : A. *)
-type eq_refl_args = {
-    a : types;
-    x : constr;
-  }
-             
+let rewr_app f app =
+  mkAppl (f, [app.a; app.x; app.p; app.px; app.y; app.eq])
+                  
+let apply_rewrite_ind app =
+  let f = if app.left then eq_ind else eq_ind_r in
+  rewr_app f app
+
+let apply_rewrite_rec app =
+  let f = if app.left then eq_rec else eq_rec_r in
+  rewr_app f app
+  
+let apply_rewrite_rect app =
+  let f = if app.left then eq_rect else eq_rect_r in
+  rewr_app f app
+                  
 let dest_rewrite trm : rewrite_args option =
   match kind trm with
   | App (f, args) ->
@@ -195,12 +217,4 @@ let dest_rewrite trm : rewrite_args option =
      else
        None
   | _ -> None
-  
-let dest_eq_refl trm : eq_refl_args option =
-  match kind trm with
-  | App (f, args) ->
-     if equal f eq_refl && Array.length args == 2 then
-       Some { a = args.(0) ; x = args.(1)  }
-     else
-       None
-  | _ -> None    
+   

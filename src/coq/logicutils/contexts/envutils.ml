@@ -12,7 +12,6 @@ open Contextutils
 open Evd
 open Names
 open Nameutils
-open Tactics (* fresh_id_in_env *)
    
 (* Look up all indexes from is in env *)
 let lookup_rels (is : int list) (env : env) : CRD.t list =
@@ -98,4 +97,4 @@ let fresh_name env n =
   let name = match n with
     | Anonymous -> Id.of_string "H"
     | Name n -> n in
-  fresh_id_in_env in_env name env
+  Tactics.fresh_id_in_env in_env name env
