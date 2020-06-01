@@ -11,6 +11,7 @@ open Contextutils
 open Debruijn
 open Sigmautils
 open Evd
+open Names
 
 (* --- Zooming --- *)
 
@@ -46,6 +47,24 @@ let rec zoom_product_type (env : env) (typ : types) : env * types =
   | _ ->
      (env, typ)
 
+(* Zoom into a lambda term collecting names, stopping short
+   of the last specified number of arguments. *)
+let zoom_lambda_names env except trm : env * types * Id.t list =
+  let rec aux env limit trm =
+    match limit with
+    | 0 -> (env, trm, [])
+    | limit ->
+     match kind trm with
+     | Lambda (n, t, b) ->
+        let name = fresh_name env n in
+        let env' = push_local (Name name, t) env in
+        let env, trm, names =
+          aux env' (limit - 1) b in
+        (env, trm, name :: names)
+     | _ ->
+        (env, trm, []) in
+  aux env (arity trm - except) trm
+    
 (* Zoom into the environment *)
 let zoom_env zoom (env : env) (trm : types) : env =
   fst (zoom env trm)

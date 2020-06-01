@@ -82,7 +82,8 @@ type eq_refl_app =
  *)
 val apply_eq_refl : eq_refl_app -> types
 val dest_eq_refl : types -> eq_refl_app
-
+val dest_eq_refl_opt : types -> eq_refl_app option
+  
 (* --- Questions about constants --- *)
 
 (* Check if a term is eq_ind, eq_rec, or eq_rect *)
@@ -96,3 +97,33 @@ val is_rewrite_r : types ->  bool
  * Don't consider convertible terms
  *)
 val is_rewrite : types -> bool
+
+
+(* 
+ * Information required to perform a rewrite over Type, 
+ * Prop, or Set. Records direction of rewrite, as well
+ * as additional parameters applied to the end.
+ *)
+type rewrite_args = {
+    a : types;
+    (* x : A *)
+    x : constr;
+    (* motive P : A -> Type/Prop/Set *)
+    p : constr;
+    (* proof of P x *)
+    px : constr;
+    (* y : A *)
+    y : constr;
+    (* x = y if "<-", y = x otherwise *)
+    eq : constr;
+    (* additional arguments following equality *)
+    params : constr array;
+    (* direction of rewrite, <- *)
+    left : bool
+  }
+
+val apply_rewrite_ind  : rewrite_args -> constr
+val apply_rewrite_rec  : rewrite_args -> constr
+val apply_rewrite_rect : rewrite_args -> constr
+val dest_rewrite : constr -> rewrite_args option
+                               
