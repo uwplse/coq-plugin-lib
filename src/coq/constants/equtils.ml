@@ -191,7 +191,8 @@ type rewrite_args = {
   }
 
 let rewr_app f app =
-  mkAppl (f, [app.a; app.x; app.p; app.px; app.y; app.eq])
+  let args = [app.a; app.x; app.p; app.px; app.y; app.eq] in
+  mkAppl (f, args @ Array.to_list app.params)
                   
 let apply_rewrite_ind app =
   let f = if app.left then eq_ind else eq_ind_r in
