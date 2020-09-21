@@ -26,6 +26,12 @@ val map3 : ('a -> 'b -> 'c -> 'd) -> 'a list -> 'b list -> 'c list -> 'd list
 val take : int -> 'a list -> 'a list
 
 (*
+ * Drop first n elements from a list.
+ * Throws exception if n exceeds the length of the list.
+ *)
+val drop : int -> 'a list -> 'a list
+
+(*
  * Take all but n elements of a list
  *)
 val take_except : int -> 'a list -> 'a list
@@ -45,6 +51,11 @@ val unique : ('a -> 'a -> bool) -> 'a list -> 'a list
  *)
 val flat_map : ('a -> 'b list) -> 'a list -> 'b list
 
+(*
+ * Map elements of a list to optionals, then filter out Nones.
+ *)
+val filter_map : ('a -> 'b option) -> 'a list -> 'b list
+  
 (*
  * Return true if a list has length > 0
  *)

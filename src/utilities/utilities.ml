@@ -38,6 +38,12 @@ let rec take (i : int) (l : 'a list) : 'a list =
        []
     | h :: tl ->
        h :: (take (i - 1) tl)
+      
+(* Drop the first n elements from a list *)
+let rec drop n xs =
+  if n == 0
+  then xs
+  else drop (n - 1) (List.tl xs)
 
 (* Take all but n elements of a list *)
 let take_except (i : int) (l : 'a list) : 'a list =
@@ -68,6 +74,14 @@ let rec unique (eq : 'a -> 'a -> bool)  (l : 'a list) : 'a list =
  *)
 let flat_map (f : 'a -> 'b list) (l : 'a list) : 'b list =
   List.flatten (List.map f l)
+
+(*
+ * Map elements of a list to optionals, then filter out Nones.
+ * Only in OCaml 4.08.0 onward, so we implement ourselves.
+ *)
+let filter_map f l =
+  let f_somes = List.filter (fun o -> Option.has_some o) (List.map f l) in
+  List.map Option.get f_somes
                
 (*
  * Return true if a list has length > 0
