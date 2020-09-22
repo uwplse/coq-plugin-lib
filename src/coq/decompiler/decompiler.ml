@@ -264,7 +264,7 @@ and induction (f, args) (env, sigma, opts) : tact list option =
   let ind_pos = ari - List.length ind.pms in
   if ind_pos >= List.length ind.final_args
   then
-    (Feedback.msg_error (str "Failed to decompile induction");
+    (Feedback.msg_info (str "Failed to decompile induction");
      Printing.debug_term env app "term";
      None)
   else 
