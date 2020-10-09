@@ -55,7 +55,6 @@ val shift_by_unconditional : int -> types -> types
  * - free_rels 1 {} (Lambda(_, Rel 2, App(Rel 2, [Rel 1; Rel 4]))) = { 2, 3 }
  * - free_rels 2 {} (Lambda(_, Rel 2, App(Rel 2, [Rel 1; Rel 4]))) = { 3 }
  *
- * Like many functions, by Nate Yazdani from original DEVOID code
  *)
 val free_rels : int -> Int.Set.t -> types -> Int.Set.t
 

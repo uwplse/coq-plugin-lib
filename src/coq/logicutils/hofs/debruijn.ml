@@ -81,8 +81,6 @@ let shift_by_unconditional (n : int) (trm : types) : types =
     trm
 
 (*
- * Function from: 
- * https://github.com/coq/coq/commit/7ada864b7728c9c94b7ca9856b6b2c89feb0214e
  * Inlined here to make this compatible with Coq 8.8.0
  * TODO remove with update
  *)
@@ -120,7 +118,6 @@ let fold_constr_with_binders g f n acc c =
  * - free_rels 1 (Lambda(_, Rel 2, App(Rel 2, [Rel 1; Rel 4]))) = { 2, 3 }
  * - free_rels 2 (Lambda(_, Rel 2, App(Rel 2, [Rel 1; Rel 4]))) = { 3 }
  *
- * Like many functions, by Nate Yazdani from original DEVOID code
  *)
 let rec free_rels nb frels term =
   match Constr.kind term with

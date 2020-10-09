@@ -1,8 +1,6 @@
 (*
  * Utilities for contexts
  *
- * Many of these are by Nate Yazdani from the original DEVOID code.
- * Some are not. Just check the Git history of DEVOID if you are interested.
  *)
 
 open Constr

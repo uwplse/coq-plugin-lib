@@ -12,8 +12,6 @@ open Constrextern
 
 (* --- Defining Coq terms --- *)
 
-(* https://github.com/ybertot/plugin_tutorials/blob/master/tuto1/src/simple_declare.ml 
-
 TODO do we need to return the updated evar_map? *)
 let edeclare ident (_, poly, _ as k) ~opaque sigma udecl body tyopt imps hook refresh =
   let open EConstr in
