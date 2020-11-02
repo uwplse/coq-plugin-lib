@@ -64,14 +64,13 @@ type tact =
   | RewriteIn of env * types * types * bool
   | ApplyIn of env * types * types
   | Pose of env * types * Id.t
-  (* env, induction arg, binding lists, shared prefix, subgoals *)
+  (* env, induction arg, binding lists *)
   | Induction of env * types * Id.t list list
   | Reflexivity
   | Symmetry
   | Simpl
   | Left
   | Right
-  (* shared ";" tactics, left and right subgoals *)
   | Split
   | Revert of Id.t list
   | Exists of env * types
@@ -127,6 +126,17 @@ let try_rel (trm : constr) : int option =
   | Rel i -> Some i
   | _ -> None
 
+(* Option monad over global Gallina-variable. *)
+let try_name env (trm : constr) : string option =
+  match kind trm with
+  | Rel i ->
+     let n = expect_name (fst (rel_name_type (lookup_rel i env))) in
+     Some (Id.to_string n)
+  | Const (c, u) ->
+     let ker_name = Constant.canonical c in
+     Some (KerName.to_string ker_name)
+  | _ -> None
+
 (* Monadic guard for option. *)
 let guard (b : bool) : unit option =
   if b then Some () else None
@@ -138,13 +148,12 @@ let dot tac next = Some (Compose (tac, Empty, [ next ]))
 let rec simpl (tacs : tactical) : tactical =
   match tacs with
   | Empty -> Empty
-  | Compose (tac, prefix, goals) ->
+  | Compose (Rewrite (a, b, c), prefix, goals) ->
      let prefix' = simpl prefix in
      let goals'  = List.map simpl goals in
-     let tacs'   = Compose (tac, prefix', goals') in
-     (match tac with
-      | Rewrite _ -> Compose (Simpl, Empty, [ tacs' ])
-      | _ -> tacs')
+     Compose (Simpl, Empty, [ Compose (Rewrite (a, b, c), prefix', goals') ])
+  | Compose (tac, prefix, goals) ->
+     Compose (tac, simpl prefix, List.map simpl goals)
                   
 (* Combine adjacent intros and revert tactics if possible. *)
 let rec intros_revert (tacs : tactical) : tactical =
@@ -155,10 +164,18 @@ let rec intros_revert (tacs : tactical) : tactical =
      let xs' = take (List.length xs - n) xs in
      let ys' = drop n ys in
      let goals'  = List.map intros_revert goals in
-     Compose (Intros xs', Empty, [ Compose (Revert ys', Empty, goals') ])
+     (* Don't include empty name lists! *)
+     let c1 = if ys' == [] then goals' else [ Compose (Revert ys', Empty, goals') ] in
+     if xs' == [] then List.hd c1 else Compose (Intros xs', Empty, c1)
   | Compose (tac, prefix, goals) ->
      Compose (tac, intros_revert prefix, List.map intros_revert goals)
-     
+
+(* Convert a tactic expression into a semantic tactic. *)
+let parse_tac_str (s : string) : unit Proofview.tactic =
+  let raw = Pcoq.parse_string Pltac.tactic s in
+  let glob = Tacintern.intern_pure_tactic (Tacintern.make_empty_glob_sign ()) raw in
+  Tacinterp.eval_tactic glob
+    
 (* Returns true if the given tactic solves the goal. *)
 let solves env sigma (tac : unit Proofview.tactic) (goal : constr) =
   let p = Proof.start sigma [(env, EConstr.of_constr goal)] in
@@ -181,6 +198,20 @@ let try_solve env sigma opts trm =
          else aux opts'
     in aux opts
   with _ -> None
+
+(* Generates an apply tactic with implicit arguments if possible. *)
+let apply_implicit env sigma trm =
+  let def = Compose (Apply (env, trm), Empty, []) in
+  try
+    let goal = (Typeops.infer env trm).uj_type in
+    try_app trm >>= fun (f, args) ->
+    try_name env f >>= fun name ->
+    let s = String.concat " " [ "apply" ; name ] in
+    let opt = parse_tac_str s in
+    try_solve env sigma [ (opt, s) ] trm >>= fun tac ->
+    Some (Compose (tac, Empty, []))
+  with _ -> None
+  
           
 (* Performs the bulk of decompilation on a proof term.
    Opts are the optional goal solving tactics that can be inserted into
@@ -194,7 +225,8 @@ let rec first_pass env sigma (opts : (unit Proofview.tactic * string) list) trm 
   let solved = try_solve env sigma opts trm in
   if Option.has_some solved then Compose (Option.get solved, Empty, [])
   else
-    let def = Compose (Apply (env, trm), Empty, []) in
+    let def = Option.default (Compose (Apply (env, trm), Empty, []))
+                (apply_implicit env sigma trm) in
     let choose f x =
       Option.default def (f x (env, sigma, opts)) in
     match kind trm with
@@ -214,7 +246,7 @@ let rec first_pass env sigma (opts : (unit Proofview.tactic * string) list) trm 
          
 (* Application of a equality eliminator. *)
 and rewrite (f, args) (env, sigma, opts) : tactical option =
-  dest_rewrite (mkApp (f, args)) >>= fun rewr -> 
+  dest_rewrite (mkApp (f, args)) >>= fun rewr ->
   dot (Rewrite (env, rewr.eq, rewr.left)) (first_pass env sigma opts rewr.px)
 
 (* Applying an eliminator for induction on a hypothesis in context. *)
@@ -375,10 +407,9 @@ and show_tactic sigma tac : Pp.t =
   let prnt e = Printer.pr_constr_env e sigma in
   match tac with
   | Intros ns ->
-     if ns == [] then str "" else
-       let s = if List.tl ns == [] then "intro" else "intros" in
-       let names = String.concat " " (List.map Id.to_string ns) in
-       str (s ^ " " ^ names)
+     let s = if List.tl ns == [] then "intro" else "intros" in
+     let names = String.concat " " (List.map Id.to_string ns) in
+     str (s ^ " " ^ names)
   | Apply (env, trm) ->
      str "apply " ++ prnt env trm
   | Rewrite (env, trm, left) ->
@@ -407,9 +438,8 @@ and show_tactic sigma tac : Pp.t =
   | Right -> str "right"
   | Split -> str "split"
   | Revert ns ->
-     if ns == [] then str "" else
-       let names = String.concat " " (List.rev_map Id.to_string ns) in
-       str ("revert " ^ names)
+     let names = String.concat " " (List.rev_map Id.to_string ns) in
+     str ("revert " ^ names)
   | Symmetry -> str "symmetry"
   | Exists (env, trm) ->
      str "exists " ++ prnt env trm
