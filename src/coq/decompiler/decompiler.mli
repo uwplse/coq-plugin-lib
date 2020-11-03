@@ -15,24 +15,32 @@ type tact =
   | RewriteIn of env * types * types * bool
   | ApplyIn of env * types * types
   | Pose of env * types * Id.t
-  (* env, induction arg, binding lists, shared prefix, subgoals *)
-  | Induction of env * types * Id.t list list * tact list * tact list list
+  (* env, induction arg, binding lists *)
+  | Induction of env * types * Id.t list list
   | Reflexivity
   | Symmetry
   | Simpl
   | Left
   | Right
-  (* shared ";" tactics, left and right subgoals *)
-  | Split of tact list * tact list list
+  | Split
   | Revert of Id.t list
   | Exists of env * types
   | Auto
   (* Paste the literal expression into the script. *)
   | Expr of string
-          
+
+(* Represents a tactical proof script as a tree. *)
+type tactical =
+  | Empty
+  (* Single tactic, tactical applied to subgoals, subgoals *)
+  | Compose of tact * tactical * (tactical list)
+
+(* Parses a tactic string into Coq's semantic tactic. *)
+val parse_tac_str : string -> unit Proofview.tactic
+             
 (* Given a term and a list of tactics to try, decompile a term into an Ltac script.
    Each proofview tactic in the list must be paired with their string representation. *)
-val tac_from_term : env -> evar_map -> (unit Proofview.tactic * string) list -> constr -> tact list
+val tac_from_term : env -> evar_map -> (unit Proofview.tactic * string) list -> constr -> tactical
 
 (* Given a decompiled Ltac script, return its string representation. *)
-val tac_to_string : evar_map -> tact list -> Pp.t
+val tac_to_string : evar_map -> tactical -> Pp.t
