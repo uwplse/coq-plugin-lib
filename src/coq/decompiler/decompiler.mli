@@ -31,16 +31,15 @@ type tact =
 
 (* Represents a tactical proof script as a tree. *)
 type tactical =
-  | Empty
-  (* Single tactic, tactical applied to subgoals, subgoals *)
-  | Compose of tact * tactical * (tactical list)
-
+  (* Semicolon tactical followed by subgoals *)
+  | Compose of tact list * (tactical list)
+           
 (* Parses a tactic string into Coq's semantic tactic. *)
 val parse_tac_str : string -> unit Proofview.tactic
              
 (* Given a term and a list of tactics to try, decompile a term into an Ltac script.
    Each proofview tactic in the list must be paired with their string representation. *)
 val tac_from_term : env -> evar_map -> (unit Proofview.tactic * string) list -> constr -> tactical
-
+  
 (* Given a decompiled Ltac script, return its string representation. *)
 val tac_to_string : evar_map -> tactical -> Pp.t
