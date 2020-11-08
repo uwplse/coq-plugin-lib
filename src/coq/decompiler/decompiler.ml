@@ -19,7 +19,6 @@ open Nameutils
    
 open Ltac_plugin
 open Tacarg
-   
   
 (* Compare whether all elements of two lists of equal length are equal. *)
 let rec list_eq (cmp : 'a -> 'a -> bool) xs ys : bool =
@@ -80,40 +79,60 @@ type tact =
 
 (* Represents a tactical proof script as a tree. *)
 type tactical =
-  | Empty
-  (* Single tactic, tactical applied to subgoals, subgoals *)
-  | Compose of tact * tactical * (tactical list)
-  
-(* True if both tactics are "equal" (perform the same effect). *)
-let rec compare_tact (tac1 : tact) (tac2 : tact) : bool =
-  match tac1, tac2 with
-  | Intros ns1, Intros ns2 -> list_eq Id.equal ns1 ns2
-  | Apply (_, t1), Apply (_, t2) -> Constr.equal t1 t2
-  | Rewrite (_, t1, b1), Rewrite (_, t2, b2) -> b1 == b2 && Constr.equal t1 t2
-  | RewriteIn (_, t1, t1', b1), RewriteIn (_, t2, t2', b2) ->
-     b1 == b2 && Constr.equal t1 t2 && Constr.equal t1' t2'
-  | ApplyIn (_, t1, t1'), ApplyIn (_, t2, t2') ->
-     Constr.equal t1 t2 && Constr.equal t1' t2'
-  | Pose (_, t1, n1), Pose (_, t2, n2) -> Id.equal n1 n2 && Constr.equal t1 t2
-  (* Induction *)
-  | Reflexivity, Reflexivity -> true
-  | Symmetry, Symmetry -> true
-  | Simpl, Simpl -> true
-  | Left, Left -> true
-  | Right, Right -> true
-  | Split, Split -> true
-  | Revert ns1, Revert ns2 -> list_eq Id.equal ns1 ns2
-  | Exists (_, t1), Exists (_, t2) -> Constr.equal t1 t2
-  | Auto, Auto -> true
-  | _ -> false
+  (* Semicolon tactical followed by subgoals, semicolons are
+     stored in reverse order to push in constant time. *)
+  | Compose of tact list * (tactical list)
 
-let rec compare_tactical (tacs1 : tactical) (tacs2 : tactical) : bool =
-  match tacs1, tacs2 with
-  | Empty, Empty -> true
-  | Compose (tac1, prefix1, goals1), Compose (tac2, prefix2, goals2) ->
-     compare_tact tac1 tac2 && compare_tactical prefix1 prefix2 &&
-       List.for_all2 compare_tactical goals1 goals2
-    
+(* Return the string representation of a single tactic. *)
+let show_tactic sigma tac : Pp.t =
+  let prnt e = Printer.pr_constr_env e sigma in
+  match tac with
+  | Intros ns ->
+     let s = if List.tl ns == [] then "intro" else "intros" in
+     let names = String.concat " " (List.map Id.to_string ns) in
+     str (s ^ " " ^ names)
+  | Apply (env, trm) ->
+     str "apply " ++ prnt env trm
+  | Rewrite (env, trm, left) ->
+     let s = prnt env trm in
+     let arrow = if left then "<- " else "" in
+     str ("rewrite " ^ arrow) ++ s
+  | RewriteIn (env, prf, hyp, left) ->
+     let prf_s, hyp_s = prnt env prf, prnt env hyp in
+     let arrow = if left then "" else "<- " in
+     str ("rewrite " ^ arrow) ++ prf_s ++ str " in " ++ hyp_s
+  | ApplyIn (env, prf, hyp) ->
+     let prf_s, hyp_s = prnt env prf, prnt env hyp in
+     str "apply " ++ prf_s ++ str " in " ++ hyp_s
+  | Pose (env, hyp, n) ->
+     let n = str (Id.to_string n) in
+     str "pose " ++ prnt env hyp ++ str " as " ++ n
+  | Induction (env, trm, names) ->
+     let to_s ns = if ns == [] then " " (* prevent "||" *)
+                   else String.concat " " (List.map Id.to_string ns) in
+     let bindings = str (String.concat "|" (List.map to_s names)) in
+     str "induction " ++ prnt env trm ++
+       str " as [" ++ bindings ++ str "]"
+  | Reflexivity -> str "reflexivity"
+  | Simpl -> str "simpl"
+  | Left -> str "left"
+  | Right -> str "right"
+  | Split -> str "split"
+  | Revert ns ->
+     let names = String.concat " " (List.rev_map Id.to_string ns) in
+     str ("revert " ^ names)
+  | Symmetry -> str "symmetry"
+  | Exists (env, trm) ->
+     str "exists " ++ prnt env trm
+  | Auto -> str "auto"
+  | Expr s -> str s
+  
+(* True if both tactics are "equal" (syntactically). *)
+let compare_tact sigma (t1 : tact) (t2 : tact) : bool =
+  let s1 = show_tactic sigma t1 in
+  let s2 = show_tactic sigma t2 in
+  Pp.string_of_ppcmds s1 = Pp.string_of_ppcmds s2
+
 (* Option monad over function application. *)
 let try_app (trm : constr) : (constr * constr array) option =
   match kind trm with
@@ -142,34 +161,56 @@ let guard (b : bool) : unit option =
   if b then Some () else None
 
 (* Single dotted tactic. *)
-let dot tac next = Some (Compose (tac, Empty, [ next ]))
+let dot tac next = Some (Compose ([ tac ], [ next ]))
+
+(* Single tactic to finish proof. *)
+let qed tac = Some (Compose ([ tac ], []))
 
 (* Inserts "simpl." before every rewrite. *)
-let rec simpl (tacs : tactical) : tactical =
-  match tacs with
-  | Empty -> Empty
-  | Compose (Rewrite (a, b, c), prefix, goals) ->
-     let prefix' = simpl prefix in
+let rec simpl (t : tactical) : tactical =
+  match t with
+  | Compose ( [ Rewrite (a, b, c) ], goals) ->
      let goals'  = List.map simpl goals in
-     Compose (Simpl, Empty, [ Compose (Rewrite (a, b, c), prefix', goals') ])
-  | Compose (tac, prefix, goals) ->
-     Compose (tac, simpl prefix, List.map simpl goals)
+     Compose ([ Simpl ], [ Compose ([ Rewrite (a, b, c)], goals') ])
+  | Compose (tacs, goals) ->
+     Compose (tacs, List.map simpl goals)
                   
 (* Combine adjacent intros and revert tactics if possible. *)
-let rec intros_revert (tacs : tactical) : tactical =
-  match tacs with
-  | Empty -> Empty
-  | Compose (Intros xs, Empty, [ Compose (Revert ys, Empty, goals) ]) ->
+let rec intros_revert (t : tactical) : tactical =
+  match t with
+  | Compose ( [ Intros xs ], [ Compose ([ Revert ys ], goals) ]) ->
      let n = count_shared_prefix Id.equal (List.rev xs) ys in
      let xs' = take (List.length xs - n) xs in
      let ys' = drop n ys in
      let goals'  = List.map intros_revert goals in
      (* Don't include empty name lists! *)
-     let c1 = if ys' == [] then goals' else [ Compose (Revert ys', Empty, goals') ] in
-     if xs' == [] then List.hd c1 else Compose (Intros xs', Empty, c1)
-  | Compose (tac, prefix, goals) ->
-     Compose (tac, intros_revert prefix, List.map intros_revert goals)
-
+     let c1 = if ys' == [] then goals' else [ Compose ([ Revert ys' ], goals') ] in
+     if xs' == [] then List.hd c1 else Compose ([ Intros xs' ], c1)
+  | Compose (tacs, goals) ->
+     Compose (tacs, List.map intros_revert goals)
+  
+(* Combine common subgoal tactics into semicolons. *)
+let rec semicolons sigma (t : tactical) : tactical =
+  let first t = match t with
+    | Compose ( [ tac ], _) -> tac in
+  let subgoals t = match t with
+    | Compose ( _, goals) -> goals in
+  match t with
+  (* end of proof *)
+  | Compose (_, []) -> t
+  (* single subgoal, don't bother *)
+  | Compose ( tacs, [ goal ]) ->
+     Compose ( tacs, [ semicolons sigma goal ])
+  (* compare first tactic of each subgoal *)
+  | Compose ( tacs, goals ) ->
+     let firsts = List.map first goals in
+     if all_eq (compare_tact sigma) firsts
+     then
+       let goals' = List.concat (List.map subgoals goals) in
+       semicolons sigma (Compose ( (List.hd firsts) :: tacs, goals'))
+     else
+       Compose (tacs, List.map (semicolons sigma) goals)
+    
 (* Convert a tactic expression into a semantic tactic. *)
 let parse_tac_str (s : string) : unit Proofview.tactic =
   let raw = Pcoq.parse_string Pltac.tactic s in
@@ -201,7 +242,7 @@ let try_solve env sigma opts trm =
 
 (* Generates an apply tactic with implicit arguments if possible. *)
 let apply_implicit env sigma trm =
-  let def = Compose (Apply (env, trm), Empty, []) in
+  let def = Compose ([ Apply (env, trm) ], []) in
   try
     let goal = (Typeops.infer env trm).uj_type in
     try_app trm >>= fun (f, args) ->
@@ -209,7 +250,7 @@ let apply_implicit env sigma trm =
     let s = String.concat " " [ "apply" ; name ] in
     let opt = parse_tac_str s in
     try_solve env sigma [ (opt, s) ] trm >>= fun tac ->
-    Some (Compose (tac, Empty, []))
+    qed tac
   with _ -> None
   
           
@@ -223,9 +264,9 @@ let rec first_pass env sigma (opts : (unit Proofview.tactic * string) list) trm 
        be in eta expanded form. *)
   let trm = Reduction.whd_betaiota env trm in
   let solved = try_solve env sigma opts trm in
-  if Option.has_some solved then Compose (Option.get solved, Empty, [])
+  if Option.has_some solved then Compose ([ Option.get solved ], [])
   else
-    let def = Option.default (Compose (Apply (env, trm), Empty, []))
+    let def = Option.default (Compose ([ Apply (env, trm) ], []))
                 (apply_implicit env sigma trm) in
     let choose f x =
       Option.default def (f x (env, sigma, opts)) in
@@ -233,7 +274,7 @@ let rec first_pass env sigma (opts : (unit Proofview.tactic * string) list) trm 
     (* "fun x => ..." -> "intro x." *)
     | Lambda (n, t, b) ->
        let (env', trm', names) = zoom_lambda_names env 0 trm in
-       Compose (Intros names, Empty, [ first_pass env' sigma opts trm' ])
+       Compose ([ Intros names ], [ first_pass env' sigma opts trm' ])
     (* Match on well-known functions used in the proof. *)
     | App (f, args) ->
        choose (rewrite <|> induction <|> left <|> right <|> split
@@ -279,8 +320,8 @@ and induction (f, args) (env, sigma, opts) : tactical option =
     let goals = List.map (fun (env, trm, _) ->
                     simpl (first_pass env sigma opts trm)) zooms in
     (* let (prefix, goals) = tact_shared_prefix goals in *)
-    let ind = Compose (Induction (env, ind_var, names), Empty, goals) in
-    Some (if reverts == [] then ind else Compose (Revert reverts, Empty, [ ind ]))
+    let ind = Compose ([ Induction (env, ind_var, names) ], goals) in
+    if reverts == [] then Some ind else dot (Revert reverts) ind
     
 (* Choose left proof to construct or. *)
 and left (f, args) (env, sigma, opts) : tactical option =
@@ -298,12 +339,12 @@ and split (f, args) (env, sigma, opts) : tactical option =
   let lhs = first_pass env sigma opts args.ltrm in
   let rhs = first_pass env sigma opts args.rtrm in
   (*let (prefix, goals) = tact_shared_prefix [ lhs ; rhs ] in*)
-  Some (Compose (Split, Empty, [ lhs ; rhs ]))
+  Some (Compose ([ Split ], [ lhs ; rhs ]))
 
 (* Converts "apply eq_refl." into "reflexivity." *)
 and reflexivity (f, args) _ : tactical option =
   dest_eq_refl_opt (mkApp (f, args)) >>= fun _ ->
-  Some (Compose (Reflexivity, Empty, []))
+  qed Reflexivity
   
 (* Transform x = y to y = x. *)
 and symmetry (f, args) (env, sigma, opts) : tactical option =
@@ -347,7 +388,7 @@ and apply_in (n, valu, typ, body) (env, sigma, opts) : tactical option =
     try_rel f      >>= fun i ->
     guard (i == 1) >>= fun _ ->
     let args' = List.map (first_pass env' sigma opts) (Array.to_list args) in
-    Some (Compose (ApplyIn (env, prf, hyp), Empty, first_pass env' sigma opts f :: args'))
+    Some (Compose ([ ApplyIn (env, prf, hyp) ], first_pass env' sigma opts f :: args'))
   in 
   (* all other cases *)
   let default app_in (_, sigma) = dot (ApplyIn (env, prf, hyp))
@@ -367,7 +408,7 @@ and pose (n, valu, t, body) (env, sigma, opts) : tactical option =
 (* Decompile a term into its equivalent tactic list. *)
 let tac_from_term env sigma opts trm : tactical =
   (* Perform second pass to revise greedy tactic list. *)
-  (intros_revert (first_pass env sigma opts trm))
+  semicolons sigma (intros_revert (first_pass env sigma opts trm))
 
 (* Generate indentation space before bullet. *)
 let indent level =
@@ -385,67 +426,30 @@ let bullet level =
     | 1 -> '-'
     | 2 -> '+' in
   str (String.make num blt) ++ str " "
-
+  
+(* Concatenate list of pp.t with separator *)
+let pp_concat sep xs =
+  let rec aux xs =
+    match xs with
+    | [] -> []
+    | x :: [] -> [ x ]
+    | x :: xs' -> x :: sep :: aux xs'
+  in seq (aux xs)
+  
 (* Show tactical, composed of many tactics. *)
-let rec show_tactical sigma (level : int) (bulletted : bool) (tacs : tactical) : Pp.t =
+let rec show_tactical sigma (level : int) (bulletted : bool) (t : tactical) : Pp.t =
   let full_indent = if bulletted
                     then indent level ++ bullet level
                     else indent (level + 1) in
   let f i = show_tactical sigma (level + 1) (level + 1 > 0) in
-  match tacs with
-  | Empty -> str ""
-  | Compose (tac, Empty, [ goal ]) ->
-     full_indent ++ show_tactic sigma tac ++ str ".\n" ++
-       show_tactical sigma level false goal
-  | Compose (tac, Empty, goals) ->
-     full_indent ++ show_tactic sigma tac ++ str ".\n" ++
-       seq (List.mapi f goals)
-  | Compose (tac, prefix, goals) -> str "(PREFIX UNIMPLEMENTED)"
-                                  
-(* Return the string representation of a single tactic. *)
-and show_tactic sigma tac : Pp.t =
-  let prnt e = Printer.pr_constr_env e sigma in
-  match tac with
-  | Intros ns ->
-     let s = if List.tl ns == [] then "intro" else "intros" in
-     let names = String.concat " " (List.map Id.to_string ns) in
-     str (s ^ " " ^ names)
-  | Apply (env, trm) ->
-     str "apply " ++ prnt env trm
-  | Rewrite (env, trm, left) ->
-     let s = prnt env trm in
-     let arrow = if left then "<- " else "" in
-     str ("rewrite " ^ arrow) ++ s
-  | RewriteIn (env, prf, hyp, left) ->
-     let prf_s, hyp_s = prnt env prf, prnt env hyp in
-     let arrow = if left then "" else "<- " in
-     str ("rewrite " ^ arrow) ++ prf_s ++ str " in " ++ hyp_s
-  | ApplyIn (env, prf, hyp) ->
-     let prf_s, hyp_s = prnt env prf, prnt env hyp in
-     str "apply " ++ prf_s ++ str " in " ++ hyp_s
-  | Pose (env, hyp, n) ->
-     let n = str (Id.to_string n) in
-     str "pose " ++ prnt env hyp ++ str " as " ++ n
-  | Induction (env, trm, names) ->
-     let to_s ns = if ns == [] then " " (* prevent "||" *)
-                   else String.concat " " (List.map Id.to_string ns) in
-     let bindings = str (String.concat "|" (List.map to_s names)) in
-     str "induction " ++ prnt env trm ++
-       str " as [" ++ bindings ++ str "]"
-  | Reflexivity -> str "reflexivity"
-  | Simpl -> str "simpl"
-  | Left -> str "left"
-  | Right -> str "right"
-  | Split -> str "split"
-  | Revert ns ->
-     let names = String.concat " " (List.rev_map Id.to_string ns) in
-     str ("revert " ^ names)
-  | Symmetry -> str "symmetry"
-  | Exists (env, trm) ->
-     str "exists " ++ prnt env trm
-  | Auto -> str "auto"
-  | Expr s -> str s
-    
+  match t with
+  | Compose (tacs, goals) ->
+     let to_semi = List.rev (List.map (show_tactic sigma) tacs) in
+     let tac_s = full_indent ++ pp_concat (str "; ") to_semi ++ str ".\n" in
+     tac_s ++ match goals with
+              | [ goal ] ->  show_tactical sigma level false goal
+              | goals -> seq (List.mapi f goals)
+                
 (* Represent tactics as a string. *)
 let tac_to_string sigma = show_tactical sigma 0 false
   
