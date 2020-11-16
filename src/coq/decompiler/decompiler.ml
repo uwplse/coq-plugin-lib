@@ -3,11 +3,8 @@ open Names
 open Constr
 open Environ
 open Envutils
-open Tactics
 open Pp
-open Contextutils
 open Equtils
-open Apputils
 open Proputils
 open Indutils
 open Funutils
@@ -18,7 +15,6 @@ open Zooming
 open Nameutils
    
 open Ltac_plugin
-open Tacarg
   
 (* Compare whether all elements of two lists of equal length are equal. *)
 let rec list_eq (cmp : 'a -> 'a -> bool) xs ys : bool =
@@ -194,7 +190,7 @@ let qed tac = Some (Compose ([ tac ], []))
 let rec simpl (t : tactical) : tactical =
   match t with
   | Compose ( [ Rewrite (a, b, c, d) ], goals) ->
-     let goals'  = List.map simpl goals in
+     let goals' = List.map simpl goals in
      Compose ([ Simpl ], [ Compose ([ Rewrite (a, b, c, d) ], goals') ])
   | Compose (tacs, goals) ->
      Compose (tacs, List.map simpl goals)
@@ -252,13 +248,8 @@ let rec rewrite_implicit sigma (t : tactical) : tactical =
          let goals2, sigma = run_tac env sigma (coq_tac sigma r2) goal in
          let goals1 = List.map (Goal.V82.abstract_type sigma) goals1 in
          let goals2 = List.map (Goal.V82.abstract_type sigma) goals2 in
-         let goals1 = List.map (EConstr.to_constr sigma) goals1 in
-         let goals2 = List.map (EConstr.to_constr sigma) goals2 in
-         let p1 = List.map (Printer.pr_constr_env env sigma) goals1 in
-         let p2 = List.map (Printer.pr_constr_env env sigma) goals2 in
-         List.iter (Feedback.msg_info) p1;
-         List.iter (Feedback.msg_info) p2;
-         let choice = if list_eq equal goals1 goals2 then r2 else r1 in
+         let choice = if list_eq (EConstr.eq_constr sigma) goals1 goals2
+                      then r2 else r1 in 
          Compose ( [ choice ], rest )
       | _ -> Compose ( [ r1 ], rest ))
   | Compose ( tacs, goals ) ->
@@ -282,9 +273,7 @@ let try_solve env sigma opts trm =
 
 (* Generates an apply tactic with implicit arguments if possible. *)
 let apply_implicit env sigma trm =
-  let def = Compose ([ Apply (env, trm) ], []) in
   try
-    let goal = (Typeops.infer env trm).uj_type in
     try_app trm >>= fun (f, args) ->
     try_name env f >>= fun name ->
     let s = String.concat " " [ "apply" ; name ] in
@@ -338,7 +327,6 @@ and induction (f, args) (env, sigma, opts) : tactical option =
   guard (not (is_rewrite f)) >>= fun _ ->
   let app = mkApp (f, args) in
   let sigma, ind = deconstruct_eliminator env sigma app in
-  let ind_args = ind.final_args in
   inductive_of_elim env (destConst f) >>= fun from_i ->
   let from_m = lookup_mind from_i env in
   let ari = arity (type_of_inductive env 0 from_m) in
@@ -359,9 +347,7 @@ and induction (f, args) (env, sigma, opts) : tactical option =
     (* Compute bindings and goals for each case. *)
     let zooms = List.map (zoom_lambda_names env zoom_but) ind.cs in
     let names = List.map (fun (_, _, names) -> names) zooms in
-    let goals = List.map (fun (env, trm, _) ->
-                    simpl (first_pass env sigma opts trm)) zooms in
-    (* let (prefix, goals) = tact_shared_prefix goals in *)
+    let goals = List.map (fun (env, trm, _) -> first_pass env sigma opts trm) zooms in
     let ind = Compose ([ Induction (env, ind_var, names) ], goals) in
     if reverts == [] then Some ind else dot (Revert reverts) ind
     
@@ -450,7 +436,7 @@ and pose (n, valu, t, body) (env, sigma, opts) : tactical option =
 (* Decompile a term into its equivalent tactic list. *)
 let tac_from_term env sigma opts trm : tactical =
   (* Perform second pass to revise greedy tactic list. *)
-  semicolons sigma (rewrite_implicit sigma (intros_revert (first_pass env sigma opts trm)))
+  semicolons sigma (simpl (rewrite_implicit sigma (intros_revert (first_pass env sigma opts trm))))
 
 (* Generate indentation space before bullet. *)
 let indent level =
