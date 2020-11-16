@@ -9,9 +9,9 @@ open Constr
 type tact =
   | Intros of Id.t list
   | Apply of env * types
-  (* Proof that x = y if true, y = x if false. *)
-  | Rewrite of env * types * bool
-  (* Proof that y = x if true, etc. *)
+  (* Proof that x = y if true, y = x if false, goal being transformed. *)
+  | Rewrite of env * types * bool * types option
+  (* Proof that y = x if true, x = y if false. *)
   | RewriteIn of env * types * types * bool
   | ApplyIn of env * types * types
   | Pose of env * types * Id.t

@@ -3,11 +3,8 @@ open Names
 open Constr
 open Environ
 open Envutils
-open Tactics
 open Pp
-open Contextutils
 open Equtils
-open Apputils
 open Proputils
 open Indutils
 open Funutils
@@ -18,7 +15,6 @@ open Zooming
 open Nameutils
    
 open Ltac_plugin
-open Tacarg
   
 (* Compare whether all elements of two lists of equal length are equal. *)
 let rec list_eq (cmp : 'a -> 'a -> bool) xs ys : bool =
@@ -50,6 +46,30 @@ let (<|>) f g x y =
   | Some z, _ -> Some z
   | None, z -> z
 
+
+(* Convert a tactic expression into a semantic tactic. *)
+let parse_tac_str (s : string) : unit Proofview.tactic =
+  let raw = Pcoq.parse_string Pltac.tactic s in
+  let glob = Tacintern.intern_pure_tactic (Tacintern.make_empty_glob_sign ()) raw in
+  Tacinterp.eval_tactic glob
+
+(* Run a coq tactic against a given goal, returning generated subgoals. *)
+let run_tac env sigma (tac : unit Proofview.tactic) (goal : constr)
+    : Goal.goal list * Evd.evar_map =
+  let p = Proof.start sigma [(env, EConstr.of_constr goal)] in
+  let (p', _) = Proof.run_tactic env tac p in
+  let (subgoals, _, _, _, sigma) = Proof.proof p' in
+  subgoals, sigma
+    
+(* Returns true if the given tactic solves the goal. *)
+let solves env sigma (tac : unit Proofview.tactic) (goal : constr) =
+  fst (run_tac env sigma tac goal) = []
+
+(* Compute the type of a term if possible, otherwise None. *)
+let type_of env (trm : constr) : types option =
+  try Some (Typeops.infer env trm).uj_type
+  with _ -> None
+  
             
 (* Abstraction of Coq tactics supported by this decompiler.
    Serves as an intermediate representation that can be either
@@ -57,9 +77,9 @@ let (<|>) f g x y =
 type tact =
   | Intros of Id.t list
   | Apply of env * types
-  (* Proof that x = y if true, y = x if false. *)
-  | Rewrite of env * types * bool
-  (* Proof that y = x if true, etc. *)
+  (* Proof that x = y if true, y = x if false, goal being transformed. *)
+  | Rewrite of env * types * bool * types option
+  (* Proof that y = x if true, x = y if false. *)
   | RewriteIn of env * types * types * bool
   | ApplyIn of env * types * types
   | Pose of env * types * Id.t
@@ -93,7 +113,7 @@ let show_tactic sigma tac : Pp.t =
      str (s ^ " " ^ names)
   | Apply (env, trm) ->
      str "apply " ++ prnt env trm
-  | Rewrite (env, trm, left) ->
+  | Rewrite (env, trm, left, _) ->
      let s = prnt env trm in
      let arrow = if left then "<- " else "" in
      str ("rewrite " ^ arrow) ++ s
@@ -169,9 +189,9 @@ let qed tac = Some (Compose ([ tac ], []))
 (* Inserts "simpl." before every rewrite. *)
 let rec simpl (t : tactical) : tactical =
   match t with
-  | Compose ( [ Rewrite (a, b, c) ], goals) ->
-     let goals'  = List.map simpl goals in
-     Compose ([ Simpl ], [ Compose ([ Rewrite (a, b, c)], goals') ])
+  | Compose ( [ Rewrite (a, b, c, d) ], goals) ->
+     let goals' = List.map simpl goals in
+     Compose ([ Simpl ], [ Compose ([ Rewrite (a, b, c, d) ], goals') ])
   | Compose (tacs, goals) ->
      Compose (tacs, List.map simpl goals)
                   
@@ -210,25 +230,36 @@ let rec semicolons sigma (t : tactical) : tactical =
        semicolons sigma (Compose ( (List.hd firsts) :: tacs, goals'))
      else
        Compose (tacs, List.map (semicolons sigma) goals)
-    
-(* Convert a tactic expression into a semantic tactic. *)
-let parse_tac_str (s : string) : unit Proofview.tactic =
-  let raw = Pcoq.parse_string Pltac.tactic s in
-  let glob = Tacintern.intern_pure_tactic (Tacintern.make_empty_glob_sign ()) raw in
-  Tacinterp.eval_tactic glob
-    
-(* Returns true if the given tactic solves the goal. *)
-let solves env sigma (tac : unit Proofview.tactic) (goal : constr) =
-  let p = Proof.start sigma [(env, EConstr.of_constr goal)] in
-  let (p', _) = Proof.run_tactic (Global.env()) tac p in
-  let (result, _, _, _, _) = Proof.proof p' in
-  List.length result == 0
 
+(* Try implicit arguments to rewrite functions. *)
+let rec rewrite_implicit sigma (t : tactical) : tactical =
+  let coq_tac sigma r =
+    let s = show_tactic sigma r in
+    let s' = Format.asprintf "%a" Pp.pp_with s in
+    parse_tac_str s' in
+  match t with
+  | Compose ( [ Rewrite (env, fx, dir, Some goal) ], [ goal_prf ]) ->
+     let rest = [ rewrite_implicit sigma goal_prf ] in
+     let r1 = Rewrite (env, fx, dir, Some goal) in
+     (match kind fx with
+      | App (f, args) ->
+         let r2 = Rewrite (env, f, dir, Some goal) in
+         let goals1, sigma = run_tac env sigma (coq_tac sigma r1) goal in
+         let goals2, sigma = run_tac env sigma (coq_tac sigma r2) goal in
+         let goals1 = List.map (Goal.V82.abstract_type sigma) goals1 in
+         let goals2 = List.map (Goal.V82.abstract_type sigma) goals2 in
+         let choice = if list_eq (EConstr.eq_constr sigma) goals1 goals2
+                      then r2 else r1 in 
+         Compose ( [ choice ], rest )
+      | _ -> Compose ( [ r1 ], rest ))
+  | Compose ( tacs, goals ) ->
+     Compose ( tacs, List.map (rewrite_implicit sigma) goals )
+    
 (* Given the list of tactics and their corresponding string
    expressions, try to solve the goal (type of trm),
    return None otherwise. *)
 let try_solve env sigma opts trm =
-  try 
+  try
     let goal = (Typeops.infer env trm).uj_type in
     let rec aux opts =
       match opts with
@@ -242,9 +273,7 @@ let try_solve env sigma opts trm =
 
 (* Generates an apply tactic with implicit arguments if possible. *)
 let apply_implicit env sigma trm =
-  let def = Compose ([ Apply (env, trm) ], []) in
   try
-    let goal = (Typeops.infer env trm).uj_type in
     try_app trm >>= fun (f, args) ->
     try_name env f >>= fun name ->
     let s = String.concat " " [ "apply" ; name ] in
@@ -287,8 +316,10 @@ let rec first_pass env sigma (opts : (unit Proofview.tactic * string) list) trm 
          
 (* Application of a equality eliminator. *)
 and rewrite (f, args) (env, sigma, opts) : tactical option =
-  dest_rewrite (mkApp (f, args)) >>= fun rewr ->
-  dot (Rewrite (env, rewr.eq, rewr.left)) (first_pass env sigma opts rewr.px)
+  let fx = mkApp (f, args) in
+  dest_rewrite fx >>= fun rewr ->
+  let goal = type_of env fx in
+  dot (Rewrite (env, rewr.eq, rewr.left, goal)) (first_pass env sigma opts rewr.px)
 
 (* Applying an eliminator for induction on a hypothesis in context. *)
 and induction (f, args) (env, sigma, opts) : tactical option =
@@ -296,7 +327,6 @@ and induction (f, args) (env, sigma, opts) : tactical option =
   guard (not (is_rewrite f)) >>= fun _ ->
   let app = mkApp (f, args) in
   let sigma, ind = deconstruct_eliminator env sigma app in
-  let ind_args = ind.final_args in
   inductive_of_elim env (destConst f) >>= fun from_i ->
   let from_m = lookup_mind from_i env in
   let ari = arity (type_of_inductive env 0 from_m) in
@@ -317,9 +347,7 @@ and induction (f, args) (env, sigma, opts) : tactical option =
     (* Compute bindings and goals for each case. *)
     let zooms = List.map (zoom_lambda_names env zoom_but) ind.cs in
     let names = List.map (fun (_, _, names) -> names) zooms in
-    let goals = List.map (fun (env, trm, _) ->
-                    simpl (first_pass env sigma opts trm)) zooms in
-    (* let (prefix, goals) = tact_shared_prefix goals in *)
+    let goals = List.map (fun (env, trm, _) -> first_pass env sigma opts trm) zooms in
     let ind = Compose ([ Induction (env, ind_var, names) ], goals) in
     if reverts == [] then Some ind else dot (Revert reverts) ind
     
@@ -408,7 +436,7 @@ and pose (n, valu, t, body) (env, sigma, opts) : tactical option =
 (* Decompile a term into its equivalent tactic list. *)
 let tac_from_term env sigma opts trm : tactical =
   (* Perform second pass to revise greedy tactic list. *)
-  semicolons sigma (intros_revert (first_pass env sigma opts trm))
+  semicolons sigma (simpl (rewrite_implicit sigma (intros_revert (first_pass env sigma opts trm))))
 
 (* Generate indentation space before bullet. *)
 let indent level =
