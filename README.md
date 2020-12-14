@@ -32,7 +32,7 @@ See [PUMPKIN PATCH](https://github.com/uwplse/PUMPKIN-PATCH) and [DEVOID](https:
       
 ## Contributors
 
-This library was developed by Talia Ringer and Nate Yazdani.
+This library was developed by Talia Ringer, Nate Yazdani, and RanDair Porter.
 
 ## Licensing
 
