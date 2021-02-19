@@ -14,7 +14,7 @@ open Names
 open Nameutils
    
 (* Look up all indexes from is in env *)
-let lookup_rels (is : int list) (env : env) : CRD.t list =
+let lookup_rels (is : int list) (env : env) : rel_declaration list =
  List.map (fun i -> lookup_rel i env) is
 
 (* Return a list of all indexes in env, starting with 1 *)
@@ -26,7 +26,7 @@ let mk_n_rels n =
   List.map mkRel (List.rev (from_one_to n))
 
 (* Return a list of all bindings in env, starting with the closest *)
-let lookup_all_rels (env : env) : CRD.t list =
+let lookup_all_rels (env : env) : rel_declaration list =
   lookup_rels (all_rel_indexes env) env
 
 (* Return a name-type pair from the given rel_declaration. *)

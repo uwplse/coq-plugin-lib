@@ -17,11 +17,3 @@ val ident_of_name : Name.t -> Id.t option
 (* Unwrap a Name.t expecting an Id.t. Fails if anonymous. *)
 val expect_name : Name.t -> Id.t
 
-(* Turn an identifier into an external (i.e., surface-level) reference *)
-val reference_of_ident : Id.t -> Libnames.reference
-
-(* Turn a name into an optional external (i.e., surface-level) reference *)
-val reference_of_name : Name.t -> Libnames.reference option
-
-(* Convert an external reference into a qualid *)
-val qualid_of_reference : Libnames.reference -> Libnames.qualid

@@ -24,7 +24,7 @@ val declare_module_structure : ?params:(Constrexpr.module_ast Declaremods.module
  *
  * Elimination schemes (e.g., `Ind_rect`) are filtered out from the definitions.
  *)
-val fold_module_structure_by_decl : 'a -> ('a -> constant -> constant_body -> 'a) -> ('a -> inductive -> Inductive.mind_specif -> 'a) -> module_body -> 'a
+val fold_module_structure_by_decl : 'a -> ('a -> Constant.t -> constant_body -> 'a) -> ('a -> inductive -> Inductive.mind_specif -> 'a) -> module_body -> 'a
 
 (*
  * Same as `fold_module_structure_by_decl` except a single step function
