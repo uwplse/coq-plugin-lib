@@ -18,6 +18,9 @@ type ('a, 'b) list_transformer = 'a -> 'b -> 'b list
 type ('a, 'b) transformer_with_env = env -> evar_map -> 'a -> 'b -> evar_map * 'b
 type 'b unit_transformer_with_env = env -> evar_map -> 'b -> evar_map * 'b
 type ('a, 'b) list_transformer_with_env = env -> evar_map -> 'a -> 'b -> evar_map * 'b list
+type ('a, 'b) transformer_with_env_types = env -> evar_map -> 'a -> types -> evar_map * 'b
+type ('a, 'b) list_transformer_with_env_types = env -> evar_map -> 'a -> types -> (evar_map * 'b) list
+                                             
 
 (* Updating arguments *)
 type 'a updater = 'a -> 'a
@@ -162,6 +165,14 @@ val map_unit_env_if_lazy : types conditional_unit_mapper_with_env
  * Like map_term_env_if, but don't recurse into lambda arguments
  *)
 val map_term_env_if_shallow : ('a, types) conditional_mapper_with_env
+
+(*
+ * Like map_term_env_if, but return a list of matched results
+ *)
+val map_term_env_if_list : ('a, types) pred_with_env ->
+                           ('a, env * types) transformer_with_env_types ->
+                           'a updater ->
+                           ('a, env * types) list_transformer_with_env_types
 
 (*
  * Like map_term_env_if, but in the empty environment
