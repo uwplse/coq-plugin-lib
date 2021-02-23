@@ -485,10 +485,10 @@ let rec map_subterms_env_if_combs p f d env sigma a trm =
 let rec map_term_env_if_list p f d env sigma a trm =
   let map_rec = map_term_env_if_list p f d in
   let sigma_t, p_holds = p env sigma a trm in
-  if p_holds then
-    [f env sigma_t a trm]
-  else
-    match kind trm with
+  let new_subterms = if p_holds
+                     then [f env sigma_t a trm]
+                     else [] in
+  let rest = match kind trm with
     | Cast (c, k, t) ->
        let c' = map_rec env sigma a c in
        let t' = map_rec env sigma a t in
@@ -526,7 +526,8 @@ let rec map_term_env_if_list p f d env sigma a trm =
     | Proj (pr, c) ->
        map_rec env sigma a c
     | _ ->
-       []
+       [] in
+  List.append new_subterms rest
 
 (*
  * Map a function over subterms of a term in an environment

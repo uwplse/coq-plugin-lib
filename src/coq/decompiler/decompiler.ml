@@ -37,6 +37,13 @@ let compare_envs env1 env2 sigma : bool state =
       sigma
   else
     sigma, false
+
+(* Try to get the second element of a list, defaulting
+   to the first, raising NotFound if empty. *)
+let list_snd (xs : 'a list) : 'a =
+  match xs with
+  | x :: y :: _ -> y
+  | xs -> List.hd xs
   
 (* Compare whether all elements of two lists of equal length are equal. *)
 let rec list_eq (cmp : 'a -> 'a -> bool) xs ys : bool =
@@ -367,14 +374,11 @@ and try_custom_tacs env sigma all_opts trm =
     let goal = (Typeops.infer env trm).uj_type  in
     let goal_env env sigma g =
       let typ = EConstr.to_constr sigma (Goal.V82.abstract_type sigma g) in
-      Printf.printf "Zooming!\n";
-      Printing.debug_term (Environ.reset_context env) typ "Zoom into: ";
       Zooming.zoom_product_type (Environ.reset_context env) typ in
     let rec aux opts =
       match opts with
       | [] -> None
       | (tac, expr) :: opts' ->
-         Printf.printf "Trying %s\n" expr;
          try 
            let subgoals, sigma = run_tac env sigma tac goal in
            let subgoals = List.map (goal_env env sigma) subgoals in
@@ -384,17 +388,10 @@ and try_custom_tacs env sigma all_opts trm =
            else
              let new_env = fst (List.hd subgoals) in
              let sigma, same_env = compare_envs env new_env sigma in
-             Printf.printf "Test if context/goals unchanged ...\n";
-             Printing.debug_env env "Env #1: ";
-             Printing.debug_env new_env "Env #2: ";
-             Printing.debug_term env goal "Goal #1: ";
-             Printing.debug_term env (snd (List.hd subgoals)) "Goal #2: " ;
              if equal goal (snd (List.hd subgoals)) && same_env
              then (* Both goal and context are unchanged *)
-               let _ = Printf.printf "Didn't change :/\n" in
                aux opts'
              else (* Intermediate goal generating or context modifying tactic *)
-               let _ = Printf.printf "Applying %s!!\n" expr in 
                let subterms = List.map (fun (env', goal) ->
                                   (subterm_with_type env sigma goal trm, env')) subgoals in
                (* could not find subterms to satisfy all subgoals? *)
@@ -402,25 +399,13 @@ and try_custom_tacs env sigma all_opts trm =
                then aux opts'
                else
                  (* doesn't matter which subterm we found, it's a proof of the subgoal *)
-                 let subterms = List.map (fun (g, e) ->
-                                    List.iteri (fun n (s, (_, t)) ->
-                                      Printf.printf "Subterm #%d\n" n;
-                                      Printing.debug_term env t "") g;
-                                    (List.hd (List.rev g), e)
-                                  ) subterms in
+                 let subterms = List.map (fun (g, e) -> (list_snd g, e)) subterms in
                  let proofs = List.map (fun ((sigma, (_, trm)), env') ->
-                                  Printf.printf "please work please work please work\n";
-                                  Printing.debug_env  env "old env!!!";
-                                  Printing.debug_env  env' "new env!!!";
                                   first_pass env' sigma all_opts trm) subterms in
                  Some (Compose ([ Expr expr ], proofs))
-         with e ->
-           let msg = Printexc.to_string e
-           and stack = Printexc.get_backtrace () in
-           Printf.eprintf "error: %s%s\n" msg stack;
-           aux opts'
+         with _ -> aux opts'
     in aux all_opts
-  with e -> (* raise e *)  None
+  with e -> (* raise e *) None
           
 (* Application of a equality eliminator. *)
 and rewrite (f, args) (env, sigma, opts) : tactical option =
