@@ -98,18 +98,6 @@ let solves env sigma (tac : unit Proofview.tactic) (goal : constr) =
 let type_of env (trm : constr) : types option =
   try Some (Typeops.infer env trm).uj_type
   with _ -> None
-
-let subterm_with_type env sigma : types -> constr -> (Evd.evar_map * (env * constr)) list =
-  Hofs.map_term_env_if_list
-    (fun env sigma typ trm ->
-      sigma, match type_of env trm with
-      | Some t -> equal t typ
-      | None -> false)
-    (fun env sigma typ trm -> sigma, (env, trm))
-    Debruijn.shift
-    env
-    sigma
- 
               
 (* Abstraction of Coq tactics supported by this decompiler.
    Serves as an intermediate representation that can be either
@@ -344,7 +332,6 @@ let rec first_pass env sigma (opts : (unit Proofview.tactic * string) list) trm 
   (* Apply single reduction to terms that *might*
        be in eta expanded form. *)
   let trm = Reduction.whd_betaiota env trm in
-  Printing.debug_env env "first_pass call";
   let custom = try_custom_tacs env sigma opts trm in
   if Option.has_some custom then Option.get custom
   else
@@ -356,7 +343,6 @@ let rec first_pass env sigma (opts : (unit Proofview.tactic * string) list) trm 
     (* "fun x => ..." -> "intro x." *)
     | Lambda (n, t, b) ->
        let (env', trm', names) = zoom_lambda_names env 0 trm in
-       Printf.printf "ADDED NAME TO CONTEXT\n";
        Compose ([ Intros names ], [ first_pass env' sigma opts trm' ])
     (* Match on well-known functions used in the proof. *)
     | App (f, args) ->
@@ -368,6 +354,8 @@ let rec first_pass env sigma (opts : (unit Proofview.tactic * string) list) trm 
     (* Remainder of body, simply apply it. *)
     | _ -> def
 
+(* If successful, uses a custom tactic and decompiles subterms solving
+   any generated subgoals. *)
 and try_custom_tacs env sigma all_opts trm =
   guard (not (isLambda trm)) >>= fun _ ->
   try
@@ -393,7 +381,8 @@ and try_custom_tacs env sigma all_opts trm =
                aux opts'
              else (* Intermediate goal generating or context modifying tactic *)
                let subterms = List.map (fun (env', goal) ->
-                                  (subterm_with_type env sigma goal trm, env')) subgoals in
+                                  (Typehofs.subterms_with_type env sigma goal trm, env'))
+                                subgoals in
                (* could not find subterms to satisfy all subgoals? *)
                if List.exists (fun x -> fst x = []) subterms
                then aux opts'
