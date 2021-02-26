@@ -14,7 +14,7 @@ open Utilities
 open Zooming
 open Nameutils
 open Ltac_plugin
-
+open Stateutils
   
 (* Monadic bind on option types. *)
 let (>>=) = Option.bind
@@ -42,8 +42,11 @@ let run_tac env sigma (tac : unit Proofview.tactic) (goal : constr)
   subgoals, sigma
     
 (* Returns true if the given tactic solves the goal. *)
-let solves env sigma (tac : unit Proofview.tactic) (goal : constr) =
-  let subgoals, _ = run_tac env sigma tac goal in subgoals = []
+let solves env sigma (tac : unit Proofview.tactic) (goal : constr) : bool state =
+  try
+    let subgoals, sigma = run_tac env sigma tac goal in
+    sigma, subgoals = []
+  with _ -> sigma, false
 
 (* Compute the type of a term if possible, otherwise None. *)
 let type_of env (trm : constr) : types option =
@@ -253,14 +256,15 @@ let rec rewrite_implicit sigma (t : tactical) : tactical =
 let try_solve env sigma opts trm =
   try
     let goal = (Typeops.infer env trm).uj_type in
-    let rec aux opts =
+    let rec aux sigma opts =
       match opts with
       | [] -> None
       | (tac, expr) :: opts' ->
-         if solves env sigma tac goal
+         let sigma, solved = solves env sigma tac goal in
+         if solved
          then Some (Expr expr)
-         else aux opts'
-    in aux opts
+         else aux sigma opts'
+    in aux sigma opts
   with _ -> None
 
 (* Generates an apply tactic with implicit arguments if possible. *)
@@ -278,8 +282,8 @@ let apply_implicit env sigma trm =
        
 (* Performs the bulk of decompilation on a proof term.
    Opts are the optional goal solving tactics that can be inserted into
-     the generated script. If at any point one of these tactics solves the
-     remaining goal, use the provided string representation of that tactic.
+     the generated script. If one of these tactics solves the focused goal or 
+     can be used intermediately, use the provided string representation of that tactic.
    Returns a list of tactics. *)
 let rec first_pass env sigma (opts : (unit Proofview.tactic * string) list) trm  =
   (* Apply single reduction to terms that *might*
