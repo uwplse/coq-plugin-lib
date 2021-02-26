@@ -12,6 +12,7 @@ open Contextutils
 open Evd
 open Names
 open Nameutils
+open Stateutils
    
 (* Look up all indexes from is in env *)
 let lookup_rels (is : int list) (env : env) : CRD.t list =
@@ -98,3 +99,26 @@ let fresh_name env n =
     | Anonymous -> Id.of_string "H"
     | Name n -> n in
   Tactics.fresh_id_in_env in_env name env
+
+
+(* Returns true if the relative bindings in each environment
+   are syntactically equal. *)
+let compare_envs env1 env2 sigma =
+  let rels1 = lookup_all_rels env1 in
+  let rels2 = lookup_all_rels env2 in
+  if List.length rels1 = List.length rels2 then
+    fold_left2_state
+      (fun b rel1 rel2 sigma ->
+        sigma,
+        b &&  match rel1, rel2 with
+              | CRD.LocalAssum (n1, t1), CRD.LocalAssum (n2, t2)
+                -> equal t1 t2
+              | CRD.LocalDef (n1, t1, b1), CRD.LocalDef (n2, t2, b2)
+                -> equal t1 t2 && equal b1 b2
+              | _ -> false)
+      true
+      rels1
+      rels2
+      sigma
+  else
+    sigma, false

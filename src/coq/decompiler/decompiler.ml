@@ -13,57 +13,8 @@ open Vars
 open Utilities
 open Zooming
 open Nameutils
-open Stateutils
 open Ltac_plugin
 
-module CRD = Context.Rel.Declaration
-
-let compare_envs env1 env2 sigma : bool state =
-  let rels1 = lookup_all_rels env1 in
-  let rels2 = lookup_all_rels env2 in
-  if List.length rels1 = List.length rels2 then
-    fold_left2_state
-      (fun b rel1 rel2 sigma ->
-        sigma,
-        b &&  match rel1, rel2 with
-              | CRD.LocalAssum (n1, t1), CRD.LocalAssum (n2, t2)
-                -> equal t1 t2
-              | CRD.LocalDef (n1, t1, b1), CRD.LocalDef (n2, t2, b2)
-                -> equal t1 t2 && equal b1 b2
-              | _ -> false)
-      true
-      rels1
-      rels2
-      sigma
-  else
-    sigma, false
-
-(* Try to get the second element of a list, defaulting
-   to the first, raising NotFound if empty. *)
-let list_snd (xs : 'a list) : 'a =
-  match xs with
-  | x :: y :: _ -> y
-  | xs -> List.hd xs
-  
-(* Compare whether all elements of two lists of equal length are equal. *)
-let rec list_eq (cmp : 'a -> 'a -> bool) xs ys : bool =
-  match xs, ys with
-  | [], [] -> true
-  | x :: xs', y :: ys' -> cmp x y && list_eq cmp xs' ys'
-  | _, _ -> false
-          
-(* Compare if all elements of a single list are equal. *)
-let all_eq (cmp : 'a -> 'a -> bool) xs : bool =
-  match xs with
-  | [] -> true
-  | x :: xs' -> List.for_all (fun y -> cmp x y) xs'
- 
-(* Count length of shared prefix between lists. *)
-let rec count_shared_prefix (cmp : 'a -> 'a -> bool) xs ys  : int =
-  match xs, ys with
-  | x :: xs', y :: ys' ->
-     if cmp x y then 1 + count_shared_prefix cmp xs' ys' else 0
-  | _, _ -> 0
   
 (* Monadic bind on option types. *)
 let (>>=) = Option.bind
@@ -346,7 +297,7 @@ let rec first_pass env sigma (opts : (unit Proofview.tactic * string) list) trm 
        Compose ([ Intros names ], [ first_pass env' sigma opts trm' ])
     (* Match on well-known functions used in the proof. *)
     | App (f, args) ->
-       choose (rewrite <|> induction <|> left <|> right(* <|> split*)
+       choose (rewrite <|> induction <|> left <|> right <|> split
                <|> reflexivity <|> symmetry <|> exists) (f, args)
     (* Hypothesis transformations or generation tactics. *)
     | LetIn (n, valu, typ, body) ->
@@ -375,7 +326,7 @@ and try_custom_tacs env sigma all_opts trm =
              Some (Compose ([ Expr expr ], []))
            else
              let new_env = fst (List.hd subgoals) in
-             let sigma, same_env = compare_envs env new_env sigma in
+             let sigma, same_env = Envutils.compare_envs env new_env sigma in
              if equal goal (snd (List.hd subgoals)) && same_env
              then (* Both goal and context are unchanged *)
                aux opts'

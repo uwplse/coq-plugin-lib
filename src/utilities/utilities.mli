@@ -104,6 +104,27 @@ val from_one_to : int -> int list
  *)
 val split_at : int -> 'a list -> (('a list) * ('a list))
 
+(* 
+ * Try to get the second element of a list, defaulting
+ * to the first, raising NotFound if empty. 
+ *)
+val list_snd : 'a list -> 'a
+  
+(* 
+ *Compare whether all elements of two lists of equal length are equal. 
+ *)
+val list_eq : ('a -> 'a -> bool) -> 'a list -> 'a list -> bool
+          
+(*
+ * Compare if all elements of a single list are equal.
+ *)
+val all_eq : ('a -> 'a -> bool) -> 'a list ->  bool
+
+(* 
+ * Count length of shared prefix between lists.
+ *)
+val count_shared_prefix : ('a -> 'a -> bool) -> 'a list -> 'a list -> int
+  
 (* --- Tuples --- *)
 
 val map_tuple : ('a -> 'b) -> ('a * 'a) -> ('b * 'b)
