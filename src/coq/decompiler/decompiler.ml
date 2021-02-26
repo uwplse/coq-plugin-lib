@@ -227,24 +227,26 @@ let rec semicolons sigma (t : tactical) : tactical =
 
 (* Try implicit arguments to rewrite functions. *)
 let rec rewrite_implicit sigma (t : tactical) : tactical =
-  match t with
-  | Compose ( [ Rewrite (env, fx, dir, Some goal) ], [ goal_prf ]) ->
-     let rest = [ rewrite_implicit sigma goal_prf ] in
-     let r1 = Rewrite (env, fx, dir, Some goal) in
-     (match kind fx with
-      | App (f, args) ->
-         let r2 = Rewrite (env, f, dir, Some goal) in
-         let goals1, sigma = run_tac env sigma (coq_tac sigma r1 "") goal in
-         let goals2, sigma = run_tac env sigma (coq_tac sigma r2 "") goal in
-         let goals1 = List.map (Goal.V82.abstract_type sigma) goals1 in
-         let goals2 = List.map (Goal.V82.abstract_type sigma) goals2 in
-         let choice = if list_eq (EConstr.eq_constr sigma) goals1 goals2
-                      then r2 else r1 in 
-         Compose ( [ choice ], rest )
-      | _ -> Compose ( [ r1 ], rest ))
-  | Compose ( tacs, goals ) ->
-     Compose ( tacs, List.map (rewrite_implicit sigma) goals )
-    
+  try
+    match t with
+    | Compose ( [ Rewrite (env, fx, dir, Some goal) ], [ goal_prf ]) ->
+       let rest = [ rewrite_implicit sigma goal_prf ] in
+       let r1 = Rewrite (env, fx, dir, Some goal) in
+       (match kind fx with
+        | App (f, args) ->
+           let r2 = Rewrite (env, f, dir, Some goal) in
+           let goals1, sigma = run_tac env sigma (coq_tac sigma r1 "") goal in
+           let goals2, sigma = run_tac env sigma (coq_tac sigma r2 "") goal in
+           let goals1 = List.map (Goal.V82.abstract_type sigma) goals1 in
+           let goals2 = List.map (Goal.V82.abstract_type sigma) goals2 in
+           let choice = if list_eq (EConstr.eq_constr sigma) goals1 goals2
+                        then r2 else r1 in 
+           Compose ( [ choice ], rest )
+        | _ -> Compose ( [ r1 ], rest ))
+    | Compose ( tacs, goals ) ->
+       Compose ( tacs, List.map (rewrite_implicit sigma) goals )
+  with _ -> t
+ 
 (* Given the list of tactics and their corresponding string
    expressions, try to solve the goal (type of trm),
    return None otherwise. *)
