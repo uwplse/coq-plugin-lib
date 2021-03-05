@@ -176,21 +176,24 @@ let qed tac = Some (Compose ([ tac ], []))
 
 (* Inserts "simpl." before every rewrite. *)
 let rec simpl sigma (t : tactical) : tactical =
-  match t with
-  | Compose ( [ Rewrite (env, b, c, Some goal) ], goal_prfs) ->
-     let r = Rewrite (env, b, c, Some goal) in
-     let goals1, sigma = run_tac env sigma (coq_tac sigma r "") goal in
-     let goals2, sigma = run_tac env sigma (coq_tac sigma r "simpl;") goal in
-     let goals1 = List.map (Goal.V82.abstract_type sigma) goals1 in
-     let goals2 = List.map (Goal.V82.abstract_type sigma) goals2 in
-     let rest = Compose ([ r ], List.map (simpl sigma) goal_prfs) in
-     if list_eq (EConstr.eq_constr sigma) goals1 goals2
-     then rest else Compose ([ Simpl ], [ rest ])
-  | Compose ( [ Rewrite (a, b, c, d) ], goals) ->
-     Compose ([ Simpl ], [ Compose ([ Rewrite (a, b, c, d) ],
-                                    List.map (simpl sigma) goals)])
-  | Compose (tacs, goals) ->
-     Compose (tacs, List.map (simpl sigma) goals)
+  try
+    match t with
+    | Compose ( [ Rewrite (env, b, c, Some goal) ], goal_prfs) ->
+       let r = Rewrite (env, b, c, Some goal) in
+       let goals1, sigma = run_tac env sigma (coq_tac sigma r "") goal in
+       let goals2, sigma = run_tac env sigma (coq_tac sigma r "simpl;") goal in
+       let goals1 = List.map (Goal.V82.abstract_type sigma) goals1 in
+       let goals2 = List.map (Goal.V82.abstract_type sigma) goals2 in
+       let rest = Compose ([ r ], List.map (simpl sigma) goal_prfs) in
+       if list_eq (EConstr.eq_constr sigma) goals1 goals2
+       then rest else Compose ([ Simpl ], [ rest ])
+    | Compose ( [ Rewrite (a, b, c, d) ], goals) ->
+       Compose ([ Simpl ], [ Compose ([ Rewrite (a, b, c, d) ],
+                                      List.map (simpl sigma) goals)])
+    | Compose (tacs, goals) ->
+       Compose (tacs, List.map (simpl sigma) goals)
+  with _ ->
+    t
                   
 (* Combine adjacent intros and revert tactics if possible. *)
 let rec intros_revert (t : tactical) : tactical =
