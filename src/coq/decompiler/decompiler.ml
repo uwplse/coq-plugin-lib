@@ -49,9 +49,12 @@ let solves env sigma (tac : unit Proofview.tactic) (goal : constr) : bool state 
   with _ -> sigma, false
 
 (* Compute the type of a term if possible, otherwise None. *)
-let type_of env (trm : constr) : types option =
-  try Some (Typeops.infer env trm).uj_type
-  with _ -> None
+let type_of env (trm : constr) sigma : (types option) state =
+  try
+    let sigma, typ = Inference.infer_type env sigma trm in
+    sigma, Some typ
+  with _ ->
+    sigma, None
               
 (* Abstraction of Coq tactics supported by this decompiler.
    Serves as an intermediate representation that can be either
@@ -176,24 +179,26 @@ let qed tac = Some (Compose ([ tac ], []))
 
 (* Inserts "simpl." before every rewrite. *)
 let rec simpl sigma (t : tactical) : tactical =
-  try
     match t with
-    | Compose ( [ Rewrite (env, b, c, Some goal) ], goal_prfs) ->
+    (*| Compose ( [ Rewrite (env, b, c, Some goal) ], goal_prfs) ->
        let r = Rewrite (env, b, c, Some goal) in
-       let goals1, sigma = run_tac env sigma (coq_tac sigma r "") goal in
-       let goals2, sigma = run_tac env sigma (coq_tac sigma r "simpl;") goal in
-       let goals1 = List.map (Goal.V82.abstract_type sigma) goals1 in
-       let goals2 = List.map (Goal.V82.abstract_type sigma) goals2 in
        let rest = Compose ([ r ], List.map (simpl sigma) goal_prfs) in
-       if list_eq (EConstr.eq_constr sigma) goals1 goals2
-       then rest else Compose ([ Simpl ], [ rest ])
+       (try
+          Printing.debug_term env b "REWRITE: ";
+          Printing.debug_term env goal "GOAL: ";
+          let goals1, sigma = run_tac env sigma (coq_tac sigma r "") goal in
+          let goals2, sigma = run_tac env sigma (coq_tac sigma r "simpl;") goal in
+          let goals1 = List.map (Goal.V82.abstract_type sigma) goals1 in
+          let goals2 = List.map (Goal.V82.abstract_type sigma) goals2 in
+          if list_eq (EConstr.eq_constr sigma) goals1 goals2
+          then rest else Compose ([ Simpl ], [ rest ])
+        with _ -> rest) *)
     | Compose ( [ Rewrite (a, b, c, d) ], goals) ->
        Compose ([ Simpl ], [ Compose ([ Rewrite (a, b, c, d) ],
                                       List.map (simpl sigma) goals)])
     | Compose (tacs, goals) ->
        Compose (tacs, List.map (simpl sigma) goals)
-  with _ ->
-    t
+  
                   
 (* Combine adjacent intros and revert tactics if possible. *)
 let rec intros_revert (t : tactical) : tactical =
@@ -360,7 +365,7 @@ and try_custom_tacs env sigma all_opts trm =
 and rewrite (f, args) (env, sigma, opts) : tactical option =
   let fx = mkApp (f, args) in
   dest_rewrite fx >>= fun rewr ->
-  let goal = type_of env fx in
+  let sigma, goal = type_of env fx sigma in
   dot (Rewrite (env, rewr.eq, rewr.left, goal)) (first_pass env sigma opts rewr.px)
 
 (* Applying an eliminator for induction on a hypothesis in context. *)
