@@ -295,12 +295,12 @@ let apply_implicit env sigma trm =
 let rec first_pass
           (env : env)
           (sigma : Evd.evar_map)
-          (get_hints : env -> Evd.evar_map -> constr -> (unit Proofview.tactic * string) list)
+          (get_hints : env -> Evd.evar_map -> constr -> (unit Proofview.tactic * string) list state)
           (trm : constr) =
   (* Apply single reduction to terms that *might*
        be in eta expanded form. *)
   let trm = Reduction.whd_betaiota env trm in
-  let hints = get_hints env sigma trm in
+  let sigma, hints = get_hints env sigma trm in
   let custom = try_custom_tacs env sigma get_hints hints trm in
   if Option.has_some custom then Option.get custom
   else

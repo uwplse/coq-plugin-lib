@@ -2,6 +2,7 @@ open Environ
 open Evd
 open Names
 open Constr
+open Stateutils
    
 (* Abstraction of Coq tactics supported by this decompiler.
    Serves as an intermediate representation that can be either
@@ -41,7 +42,7 @@ val parse_tac_str : string -> unit Proofview.tactic
    Each proofview tactic in the list must be paired with their string representation. *)
 val tac_from_term : env ->
                     evar_map ->
-                    (env -> evar_map -> constr -> (unit Proofview.tactic * string) list) ->
+                    (env -> evar_map -> constr -> (unit Proofview.tactic * string) list state) ->
                     constr ->
                     tactical
   
