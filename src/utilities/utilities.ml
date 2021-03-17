@@ -172,6 +172,34 @@ let rec split_at (n : int) (l : 'a list) : (('a list) * ('a list)) =
     | [] ->
        ([], [])
 
+(* Try to get the second element of a list, defaulting
+   to the first, raising NotFound if empty. *)
+let list_snd (xs : 'a list) : 'a =
+  match xs with
+  | x :: y :: _ -> y
+  | xs -> List.hd xs
+  
+(* Compare whether all elements of two lists of equal length are equal. *)
+let rec list_eq (cmp : 'a -> 'a -> bool) xs ys : bool =
+  match xs, ys with
+  | [], [] -> true
+  | x :: xs', y :: ys' -> cmp x y && list_eq cmp xs' ys'
+  | _, _ -> false
+          
+(* Compare if all elements of a single list are equal. *)
+let all_eq (cmp : 'a -> 'a -> bool) xs : bool =
+  match xs with
+  | [] -> true
+  | x :: xs' -> List.for_all (fun y -> cmp x y) xs'
+ 
+(* Count length of shared prefix between lists. *)
+let rec count_shared_prefix (cmp : 'a -> 'a -> bool) xs ys  : int =
+  match xs, ys with
+  | x :: xs', y :: ys' ->
+     if cmp x y then 1 + count_shared_prefix cmp xs' ys' else 0
+  | _, _ -> 0
+
+      
 (* --- Tuples --- *)
              
 (* Map f over a tuple *)

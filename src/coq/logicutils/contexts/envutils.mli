@@ -7,6 +7,7 @@ open Environ
 open Constr
 open Names
 open Evd
+open Stateutils
 
 (* Look up all indexes from a list in an environment *)
 val lookup_rels : int list -> env -> rel_declaration list
@@ -53,3 +54,8 @@ val get_pushed_names : env -> Id.Set.t
   
 (* If the given name is anonymous, generate a fresh one. *)
 val fresh_name : env -> Name.t -> Id.t
+
+                                    
+(* Returns true if the relative bindings in each environment
+   are syntactically equal. *)
+val compare_envs : env -> env -> evar_map -> bool state

@@ -17,3 +17,11 @@ let on_red_type_default f env sigma trm =
 
 let on_type f env sigma trm =
   on_red_type do_not_reduce f env sigma trm
+
+let subterms_with_type env sigma =
+  Hofs.map_term_env_if_list
+    Checking.has_type
+    (fun env sigma typ trm -> sigma, (env, trm))
+    Debruijn.shift
+    env
+    sigma

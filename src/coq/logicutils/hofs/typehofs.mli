@@ -35,3 +35,11 @@ val on_red_type_default :
   evar_map ->
   types ->
   'a
+
+(* Returns a list of all subterms of a term with a given type. *)
+val subterms_with_type :
+  env ->
+  evar_map ->
+  types ->
+  constr ->
+  (evar_map * (env * constr)) list
