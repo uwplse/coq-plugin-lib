@@ -15,6 +15,12 @@ open Zooming
 open Nameutils
 open Ltac_plugin
 open Stateutils
+
+(*
+ * This is a minimal, sound version of the decompiler with our own heuristics
+ * and improvements disabled. We can add those back later, but I think it's
+ * easier to start with this to experiment with the decompiler.
+ *)
   
 (* Monadic bind on option types. *)
 let (>>=) = Option.bind
@@ -177,87 +183,6 @@ let dot tac next = Some (Compose ([ tac ], [ next ]))
 (* Single tactic to finish proof. *)
 let qed tac = Some (Compose ([ tac ], []))
 
-(* Inserts "simpl." before every rewrite. *)
-let rec simpl sigma (t : tactical) : tactical =
-    match t with
-    (*| Compose ( [ Rewrite (env, b, c, Some goal) ], goal_prfs) ->
-       let r = Rewrite (env, b, c, Some goal) in
-       let rest = Compose ([ r ], List.map (simpl sigma) goal_prfs) in
-       (try
-          Printing.debug_term env b "REWRITE: ";
-          Printing.debug_term env goal "GOAL: ";
-          let goals1, sigma = run_tac env sigma (coq_tac sigma r "") goal in
-          let goals2, sigma = run_tac env sigma (coq_tac sigma r "simpl;") goal in
-          let goals1 = List.map (Goal.V82.abstract_type sigma) goals1 in
-          let goals2 = List.map (Goal.V82.abstract_type sigma) goals2 in
-          if list_eq (EConstr.eq_constr sigma) goals1 goals2
-          then rest else Compose ([ Simpl ], [ rest ])
-        with _ -> rest) *)
-    | Compose ( [ Rewrite (a, b, c, d) ], goals) ->
-       Compose ([ Simpl ], [ Compose ([ Rewrite (a, b, c, d) ],
-                                      List.map (simpl sigma) goals)])
-    | Compose (tacs, goals) ->
-       Compose (tacs, List.map (simpl sigma) goals)
-  
-                  
-(* Combine adjacent intros and revert tactics if possible. *)
-let rec intros_revert (t : tactical) : tactical =
-  match t with
-  | Compose ( [ Intros xs ], [ Compose ([ Revert ys ], goals) ]) ->
-     let n = count_shared_prefix Id.equal (List.rev xs) ys in
-     let xs' = take (List.length xs - n) xs in
-     let ys' = drop n ys in
-     let goals'  = List.map intros_revert goals in
-     (* Don't include empty name lists! *)
-     let c1 = if ys' == [] then goals' else [ Compose ([ Revert ys' ], goals') ] in
-     if xs' == [] then List.hd c1 else Compose ([ Intros xs' ], c1)
-  | Compose (tacs, goals) ->
-     Compose (tacs, List.map intros_revert goals)
-  
-(* Combine common subgoal tactics into semicolons. *)
-let rec semicolons sigma (t : tactical) : tactical =
-  let first t = match t with
-    | Compose ( [ tac ], _) -> tac in
-  let subgoals t = match t with
-    | Compose ( _, goals) -> goals in
-  match t with
-  (* end of proof *)
-  | Compose (_, []) -> t
-  (* single subgoal, don't bother *)
-  | Compose ( tacs, [ goal ]) ->
-     Compose ( tacs, [ semicolons sigma goal ])
-  (* compare first tactic of each subgoal *)
-  | Compose ( tacs, goals ) ->
-     let firsts = List.map first goals in
-     if all_eq (compare_tact sigma) firsts
-     then
-       let goals' = List.concat (List.map subgoals goals) in
-       semicolons sigma (Compose ( (List.hd firsts) :: tacs, goals'))
-     else
-       Compose (tacs, List.map (semicolons sigma) goals)
-
-(* Try implicit arguments to rewrite functions. *)
-let rec rewrite_implicit sigma (t : tactical) : tactical =
-  try
-    match t with
-    | Compose ( [ Rewrite (env, fx, dir, Some goal) ], [ goal_prf ]) ->
-       let rest = [ rewrite_implicit sigma goal_prf ] in
-       let r1 = Rewrite (env, fx, dir, Some goal) in
-       (match kind fx with
-        | App (f, args) ->
-           let r2 = Rewrite (env, f, dir, Some goal) in
-           let goals1, sigma = run_tac env sigma (coq_tac sigma r1 "") goal in
-           let goals2, sigma = run_tac env sigma (coq_tac sigma r2 "") goal in
-           let goals1 = List.map (Goal.V82.abstract_type sigma) goals1 in
-           let goals2 = List.map (Goal.V82.abstract_type sigma) goals2 in
-           let choice = if list_eq (EConstr.eq_constr sigma) goals1 goals2
-                        then r2 else r1 in 
-           Compose ( [ choice ], rest )
-        | _ -> Compose ( [ r1 ], rest ))
-    | Compose ( tacs, goals ) ->
-       Compose ( tacs, List.map (rewrite_implicit sigma) goals )
-  with _ -> t
- 
 (* Given the list of tactics and their corresponding string
    expressions, try to solve the goal (type of trm),
    return None otherwise. *)
@@ -481,8 +406,7 @@ and pose (n, valu, t, body) (env, sigma, opts) : tactical option =
        
 (* Decompile a term into its equivalent tactic list. *)
 let tac_from_term env sigma opts trm : tactical =
-  (* Perform second pass to revise greedy tactic list. *)
-  semicolons sigma (simpl sigma (rewrite_implicit sigma (intros_revert (first_pass env sigma opts trm))))
+  first_pass env sigma opts trm
 
 (* Generate indentation space before bullet. *)
 let indent level =
