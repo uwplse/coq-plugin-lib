@@ -138,18 +138,6 @@ let show_tactic sigma tac : Pp.t =
   | Auto -> str "auto"
   | Expr s -> str s
 
-(* Convert IR tactic to coq tactic by printing and parsing. *)
-let coq_tac sigma t prefix =
-    let s = show_tactic sigma t in
-    let s' = Format.asprintf "%a" Pp.pp_with s in
-    parse_tac_str (prefix ^ s')
-            
-(* True if both tactics are "equal" (syntactically). *)
-let compare_tact sigma (t1 : tact) (t2 : tact) : bool =
-  let s1 = show_tactic sigma t1 in
-  let s2 = show_tactic sigma t2 in
-  Pp.string_of_ppcmds s1 = Pp.string_of_ppcmds s2
-
 (* Option monad over function application. *)
 let try_app (trm : constr) : (constr * constr array) option =
   match kind trm with
@@ -211,8 +199,6 @@ let apply_implicit env sigma trm =
     qed tac
   with _ -> None
 
-
-       
 (* Performs the bulk of decompilation on a proof term.
    Opts are the optional goal solving tactics that can be inserted into
      the generated script. If one of these tactics solves the focused goal or 
