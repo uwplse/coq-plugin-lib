@@ -286,29 +286,33 @@ let apply_implicit env sigma trm =
     qed tac
   with _ -> None
 
-
        
 (* Performs the bulk of decompilation on a proof term.
    Opts are the optional goal solving tactics that can be inserted into
      the generated script. If one of these tactics solves the focused goal or 
      can be used intermediately, use the provided string representation of that tactic.
    Returns a list of tactics. *)
-let rec first_pass env sigma (opts : (unit Proofview.tactic * string) list) trm  =
+let rec first_pass
+          (env : env)
+          (sigma : Evd.evar_map)
+          (get_hints : env -> Evd.evar_map -> constr -> (unit Proofview.tactic * string) list state)
+          (trm : constr) =
   (* Apply single reduction to terms that *might*
        be in eta expanded form. *)
   let trm = Reduction.whd_betaiota env trm in
-  let custom = try_custom_tacs env sigma opts trm in
+  let sigma, hints = get_hints env sigma trm in
+  let custom = try_custom_tacs env sigma get_hints hints trm in
   if Option.has_some custom then Option.get custom
   else
     let def = Option.default (Compose ([ Apply (env, trm) ], []))
                 (apply_implicit env sigma trm) in
     let choose f x =
-      Option.default def (f x (env, sigma, opts)) in
+      Option.default def (f x (env, sigma, get_hints)) in
     match kind trm with
     (* "fun x => ..." -> "intro x." *)
     | Lambda (n, t, b) ->
        let (env', trm', names) = zoom_lambda_names env 0 trm in
-       Compose ([ Intros names ], [ first_pass env' sigma opts trm' ])
+       Compose ([ Intros names ], [ first_pass env' sigma get_hints trm' ])
     (* Match on well-known functions used in the proof. *)
     | App (f, args) ->
        choose (rewrite <|> induction <|> left <|> right <|> split
@@ -321,7 +325,7 @@ let rec first_pass env sigma (opts : (unit Proofview.tactic * string) list) trm 
 
 (* If successful, uses a custom tactic and decompiles subterms solving
    any generated subgoals. *)
-and try_custom_tacs env sigma all_opts trm =
+and try_custom_tacs env sigma get_hints all_opts trm =
   guard (not (isLambda trm)) >>= fun _ ->
   try
     let goal = (Typeops.infer env trm).uj_type  in
@@ -355,7 +359,7 @@ and try_custom_tacs env sigma all_opts trm =
                  (* doesn't matter which subterm we found, it's a proof of the subgoal *)
                  let subterms = List.map (fun (g, e) -> (list_snd g, e)) subterms in
                  let proofs = List.map (fun ((sigma, (_, trm)), env') ->
-                                  first_pass env' sigma all_opts trm) subterms in
+                                  first_pass env' sigma get_hints trm) subterms in
                  Some (Compose ([ Expr expr ], proofs))
          with _ -> aux opts'
     in aux all_opts
@@ -480,9 +484,9 @@ and pose (n, valu, t, body) (env, sigma, opts) : tactical option =
   else dot (Pose (env, valu, n')) (decomp_body)
        
 (* Decompile a term into its equivalent tactic list. *)
-let tac_from_term env sigma opts trm : tactical =
+let tac_from_term env sigma get_hints trm : tactical =
   (* Perform second pass to revise greedy tactic list. *)
-  semicolons sigma (simpl sigma (rewrite_implicit sigma (intros_revert (first_pass env sigma opts trm))))
+  semicolons sigma (simpl sigma (rewrite_implicit sigma (intros_revert (first_pass env sigma get_hints trm))))
 
 (* Generate indentation space before bullet. *)
 let indent level =
