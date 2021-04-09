@@ -44,7 +44,7 @@ val tac_from_term : env ->
                     evar_map ->
                     (env -> evar_map -> constr -> (unit Proofview.tactic * string) list state) ->
                     constr ->
-                    tactical
+                    tactical state
   
 (* Given a decompiled Ltac script, return its string representation. *)
 val tac_to_string : evar_map -> tactical -> Pp.t
