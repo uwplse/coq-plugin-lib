@@ -201,21 +201,17 @@ let try_solve env sigma opts trm =
     in aux sigma opts
   with _ -> None
 
+exception RunTacExc of string * env * Evd.evar_map * types
+          
 (* Generate the new subgoals after applying a tactic to a goal. *)
 let next_context_goals env sigma (t : tact) (goal : types) : (env * types) list state =
   try
     let sigma, subgoals = run_tac env sigma (coq_tac sigma t "") goal in
     sigma, List.map (get_context_goal env sigma) subgoals
   with e ->
-    Printing.debug_env env "Env";
-    Printing.debug_term env goal "Goal";
     let s = show_tactic sigma t in
     let s' = Format.asprintf "%a" Pp.pp_with s in
-    Printf.printf "Tactic: %s\n" s';
-    let msg = Printexc.to_string e
-    and stack = Printexc.get_backtrace () in
-    Printf.eprintf "%s%s\n" msg stack;
-    raise e
+    raise (RunTacExc (s', env, sigma, goal))
   
 (* Generates an apply tactic with implicit arguments if possible. *)
 let apply_implicit env sigma trm : tactical state option =
@@ -248,26 +244,37 @@ let rec first_pass
   else
     let def = Option.default (sigma, Compose ([ Apply (env, trm) ], []))
                 (apply_implicit env sigma trm) in
-    let choose f x =
-      Option.default def (f x (env, sigma, get_hints, goal)) in
-    match kind trm with
-    (* "fun x => ..." -> "intro x." *)
-    | Lambda (n, t, b) ->
-       let (env', trm', names) = zoom_lambda_names env 0 trm in
-       let t = Intros names in
-       let sigma, next = next_context_goals env sigma t goal in
-       let _, goal' = List.hd next in
-       let sigma, rest = first_pass env' sigma get_hints goal' trm' in
-       sigma, Compose ([ t ], [ rest ])
-    (* Match on well-known functions used in the proof. *)
-    | App (f, args) ->
-       choose (rewrite <|> induction <|> left <|> right <|> split
-               <|> reflexivity <|> symmetry <|> exists) (f, args)
-    (* Hypothesis transformations or generation tactics. *)
-    | LetIn (n, valu, typ, body) ->
-       choose (rewrite_in <|> apply_in <|> pose) (n, valu, typ, body)
-    (* Remainder of body, simply apply it. *)
-    | _ -> def 
+    try
+      let choose f x =
+        Option.default def (f x (env, sigma, get_hints, goal)) in
+      match kind trm with
+      (* "fun x => ..." -> "intro x." *)
+      | Lambda (n, t, b) ->
+         let (env', trm', names) = zoom_lambda_names env 0 trm in
+         let t = Intros names in
+         let sigma, next = next_context_goals env sigma t goal in
+         let _, goal' = List.hd next in
+         let sigma, rest = first_pass env' sigma get_hints goal' trm' in
+         sigma, Compose ([ t ], [ rest ])
+      (* Match on well-known functions used in the proof. *)
+      | App (f, args) ->
+         choose (rewrite <|> induction <|> left <|> right <|> split
+                 <|> reflexivity <|> symmetry <|> exists) (f, args)
+      (* Hypothesis transformations or generation tactics. *)
+      | LetIn (n, valu, typ, body) ->
+         choose (rewrite_in <|> apply_in <|> pose) (n, valu, typ, body)
+      (* Remainder of body, simply apply it. *)
+      | _ -> def    
+    with
+    | (RunTacExc (s, env, sigma, goal)) ->
+       Feedback.msg_warning (str "Failed to execute: " ++ str s);
+       Feedback.msg_warning (str "on the goal: " ++ Printer.pr_constr_env env sigma goal);
+       def
+    | e ->
+       Feedback.msg_warning (str "Error occured while decompilin: ");
+       Feedback.msg_warning (str (Printexc.to_string e));
+       def
+  
 
 (* Pass the updated goal to the next stage of decompilation. *)
 and one_subgoal env sigma opts goal t trm =
@@ -459,7 +466,7 @@ and pose (n, valu, t, body) (env, sigma, opts, goal) : tactical state option =
 let tac_from_term env sigma get_hints trm : tactical state =
   let sigma, goal = Inference.infer_type env sigma trm in
   first_pass env sigma get_hints goal trm
-  
+        
 (* Generate indentation space before bullet. *)
 let indent level =
   let spacing level = (level - 2) / 3 + 2 in
