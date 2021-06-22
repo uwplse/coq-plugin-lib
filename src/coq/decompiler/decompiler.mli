@@ -42,7 +42,8 @@ val parse_tac_str : string -> unit Proofview.tactic
    Each proofview tactic in the list must be paired with their string representation. *)
 val tac_from_term : env ->
                     evar_map ->
-                    (env -> evar_map -> constr -> (unit Proofview.tactic * string) list state) ->
+                    (env -> evar_map -> string list -> constr ->
+                     (unit Proofview.tactic * string) list state) ->
                     constr ->
                     tactical state
   

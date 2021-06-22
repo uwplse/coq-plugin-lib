@@ -101,7 +101,7 @@ type tactical =
      stored in reverse order to push in constant time. *)
   | Compose of tact list * (tactical list)
 
-(* Return the string representation of a single tactic. *)
+(* Return the Pp.t representation of a single tactic. *)
 let show_tactic sigma tac : Pp.t =
   let prnt e = Printer.pr_constr_env e sigma in
   match tac with
@@ -145,11 +145,14 @@ let show_tactic sigma tac : Pp.t =
   | Auto -> str "auto"
   | Expr s -> str s
 
+(* Return the string representation of a single tactic. *)
+let show_tactic_string sigma t =
+    let s = show_tactic sigma t in
+    Format.asprintf "%a" Pp.pp_with s
+            
 (* Convert IR tactic to coq tactic by printing and parsing. *)
 let coq_tac sigma t prefix =
-  let s = show_tactic sigma t in
-  let s' = Format.asprintf "%a" Pp.pp_with s in
-  parse_tac_str (prefix ^ s')
+  parse_tac_str (prefix ^ show_tactic_string sigma t)
             
 (* Option monad over function application. *)
 let try_app (trm : constr) : (constr * constr array) option =
@@ -232,21 +235,22 @@ let apply_implicit env sigma trm : tactical state option =
 let rec first_pass
           (env : env)
           (sigma : Evd.evar_map)
-          (get_hints : env -> Evd.evar_map -> constr -> (unit Proofview.tactic * string) list state)
+          (get_hints : env -> Evd.evar_map -> string list -> constr ->
+                       (unit Proofview.tactic * string) list state)
+          (prev : string list)
           (goal : types)
           (trm : constr) : tactical state =
   (* Apply single reduction to terms that *might*
        be in eta expanded form. *)
   let trm = Reduction.whd_betaiota env trm in
-  let sigma, hints = get_hints env sigma trm in
-  let custom = try_custom_tacs env sigma get_hints hints goal trm in
+  let custom = try_custom_tacs env sigma get_hints prev goal trm in
   if Option.has_some custom then Option.get custom
   else
     let def = Option.default (sigma, Compose ([ Apply (env, trm) ], []))
                 (apply_implicit env sigma trm) in
     try
       let choose f x =
-        Option.default def (f x (env, sigma, get_hints, goal)) in
+        Option.default def (f x (env, sigma, get_hints, prev, goal)) in
       match kind trm with
       (* "fun x => ..." -> "intro x." *)
       | Lambda (n, t, b) ->
@@ -254,7 +258,7 @@ let rec first_pass
          let t = Intros names in
          let sigma, next = next_context_goals env sigma t goal in
          let _, goal' = List.hd next in
-         let sigma, rest = first_pass env' sigma get_hints goal' trm' in
+         let sigma, rest = first_pass env' sigma get_hints (show_tactic_string sigma t :: prev) goal' trm' in
          sigma, Compose ([ t ], [ rest ])
       (* Match on well-known functions used in the proof. *)
       | App (f, args) ->
@@ -277,24 +281,26 @@ let rec first_pass
   
 
 (* Pass the updated goal to the next stage of decompilation. *)
-and one_subgoal env sigma opts goal t trm =
+and one_subgoal env sigma opts prev goal t trm =
   let sigma, next = next_context_goals env sigma t goal in
   let env', goal' = List.hd next in
-  let sigma, rest = first_pass env' sigma opts goal' trm in
+  let sigma, rest = first_pass env' sigma opts (show_tactic_string sigma t :: prev) goal' trm in
   sigma, Compose ([ t ], [ rest ])
 
 (* Pass the updated goal to the next stages of decompilation. *)
-and many_subgoals env sigma opts goal t trms =
+and many_subgoals env sigma opts prev goal t trms =
   let sigma, next = next_context_goals env sigma t goal in
   let sigma, rests =
-    map2_state (fun (_, g) trm sigma -> first_pass env sigma opts g trm) next trms sigma in
+    map2_state (fun (_, g) trm sigma ->
+        first_pass env sigma opts (show_tactic_string sigma t :: prev) g trm) next trms sigma in
   sigma, Compose ([ t ], rests)
-
+  
 (* If successful, uses a custom tactic and decompiles subterms solving
    any generated subgoals. *)
-and try_custom_tacs env sigma get_hints all_opts goal trm : tactical state option =
+and try_custom_tacs env sigma get_hints prev goal trm : tactical state option =
   guard (not (isLambda trm)) >>= fun _ ->
-  try
+  try  
+    let sigma, hints = get_hints env sigma prev trm in
     let goal = (Typeops.infer env trm).uj_type in
     let rec aux opts : tactical state option =
       match opts with
@@ -323,23 +329,25 @@ and try_custom_tacs env sigma get_hints all_opts goal trm : tactical state optio
                then aux opts'
                else
                  (* Pick the second subterm we found, since the first could be the entire term. *)
+                 let t = Expr expr in
                  let subterms = List.map (fun (t, e, g) -> (list_snd t, e, g)) subterms in
                  let proofs = List.map (fun ((sigma, (_, trm)), env', goal') ->
-                                  snd (first_pass env' sigma get_hints goal' trm)) subterms in
-                 Some (sigma, Compose ([ Expr expr ], proofs))
+                                  snd (first_pass env' sigma get_hints (show_tactic_string sigma t :: prev)
+                                         goal' trm)) subterms in
+                 Some (sigma, Compose ([ t ], proofs))
          with _ -> aux opts'
-    in aux all_opts
+    in aux hints
   with e -> (* raise e *) None
   
 (* Application of a equality eliminator. *)
-and rewrite (f, args) (env, sigma, opts, goal) : tactical state option =
+and rewrite (f, args) (env, sigma, opts, prev, goal) : tactical state option =
   let fx = mkApp (f, args) in
   dest_rewrite fx >>= fun rewr ->
   let t = Rewrite (env, rewr.eq, rewr.left, Some goal) in
-  Some (one_subgoal env sigma opts goal t rewr.px)
+  Some (one_subgoal env sigma opts prev goal t rewr.px)
 
 (* Applying an eliminator for induction on a hypothesis in context. *)
-and induction (f, args) (env, sigma, opts, goal) : tactical state option =
+and induction (f, args) (env, sigma, opts, prev, goal) : tactical state option =
   guard (is_elim env f) >>= fun _ ->
   guard (not (is_rewrite f)) >>= fun _ ->
   let app = mkApp (f, args) in
@@ -364,67 +372,69 @@ and induction (f, args) (env, sigma, opts, goal) : tactical state option =
     (* Compute bindings and goals for each case. *)
     let zooms = List.map (zoom_lambda_names env zoom_but) ind.cs in
     let names = List.map (fun (_, _, names) -> names) zooms in
-    let finish goal =
+    let finish goal reverts =
       let t = Induction (env, ind_var, names) in
       let sigma, next = next_context_goals env sigma t goal in
       let sigma, rests = map2_state (fun (_, trm, _) (env, goal') sigma ->
-                             first_pass env sigma opts goal' trm) zooms next sigma in
+                             first_pass env sigma opts (reverts @ show_tactic_string sigma t :: prev)
+                               goal' trm) zooms next sigma in
       Compose ([ t ], rests) in
     if reverts == []
     then
-      Some (sigma, finish goal)
+      Some (sigma, finish goal [])
     else
       let t1 = Revert reverts in
       let sigma, next = next_context_goals env sigma t1 goal in
       let goal = snd (List.hd next) in
-      Some (sigma, Compose ([ t1 ], [ finish goal ]))
+      Some (sigma, Compose ([ t1 ], [ finish goal [show_tactic_string sigma t1] ]))
       
 (* Choose left proof to construct or. *)
-and left (f, args) (env, sigma, opts, goal) : tactical state option =
+and left (f, args) (env, sigma, opts, prev, goal) : tactical state option =
   dest_or_introl (mkApp (f, args)) >>= fun args ->
-  Some (one_subgoal env sigma opts goal Left args.ltrm)
+  Some (one_subgoal env sigma opts prev goal Left args.ltrm)
 
 (* Choose right proof to construct or. *)
-and right (f, args) (env, sigma, opts, goal) : tactical state option =
+and right (f, args) (env, sigma, opts, prev, goal) : tactical state option =
   dest_or_intror (mkApp (f, args)) >>= fun args ->
-  Some (one_subgoal env sigma opts goal Right args.rtrm)
+  Some (one_subgoal env sigma opts prev goal Right args.rtrm)
 
 (* Branch two goals as arguments to conj. *)
-and split (f, args) (env, sigma, opts, goal) : tactical state option =
+and split (f, args) (env, sigma, opts, prev, goal) : tactical state option =
   dest_conj (mkApp (f, args)) >>= fun args ->
-  Some (many_subgoals env sigma opts goal Split [ args.ltrm ; args.rtrm ])
+  Some (many_subgoals env sigma opts prev goal Split [ args.ltrm ; args.rtrm ])
 
 (* Converts "apply eq_refl." into "reflexivity." *)
-and reflexivity (f, args) (_, sigma, _, _) : tactical state option =
+and reflexivity (f, args) (_, sigma, _, _, _) : tactical state option =
   dest_eq_refl_opt (mkApp (f, args)) >>= fun _ ->
   qed sigma Reflexivity
   
 (* Transform x = y to y = x. *)
-and symmetry (f, args) (env, sigma, opts, goal) : tactical state option =
+and symmetry (f, args) (env, sigma, opts, prev, goal) : tactical state option =
   guard (equal f eq_sym) >>= fun _ ->
   let sym = dest_eq_sym (mkApp (f, args)) in
-  Some (one_subgoal env sigma opts goal Symmetry sym.eq_proof)
+  Some (one_subgoal env sigma opts prev goal Symmetry sym.eq_proof)
 
 (* Provide evidence for dependent pair.  *)
-and exists (f, args) (env, sigma, opts, goal) : tactical state option =
+and exists (f, args) (env, sigma, opts, prev, goal) : tactical state option =
   guard (equal f Sigmautils.existT) >>= fun _ ->
   let exT = Sigmautils.dest_existT (mkApp (f, args)) in
-  Some (one_subgoal env sigma opts goal (Exists (env, exT.index)) exT.unpacked)
+  Some (one_subgoal env sigma opts prev goal (Exists (env, exT.index)) exT.unpacked)
   
 (* Value must be a rewrite on a hypothesis in context. *)
-and rewrite_in (_, valu, _, body) (env, sigma, opts, goal) : tactical state option =
+and rewrite_in (_, valu, _, body) (env, sigma, opts, prev, goal) : tactical state option =
   let valu = Reduction.whd_betaiota env valu in
   try_app valu                   >>= fun (f, args) ->
   dest_rewrite (mkApp (f, args)) >>= fun rewr -> 
   try_rel rewr.px                >>= fun idx ->
   guard (noccurn (idx + 1) body) >>= fun _ ->
-  let n, t = rel_name_type (lookup_rel idx env) in
-  let env' = push_local (n, t) env in
-  let sigma, rest = first_pass env' sigma opts goal body in
-  dot sigma (RewriteIn (env, rewr.eq, rewr.px, rewr.left)) rest
+  let t = RewriteIn (env, rewr.eq, rewr.px, rewr.left) in
+  let n, typ = rel_name_type (lookup_rel idx env) in
+  let env' = push_local (n, typ) env in
+  let sigma, rest = first_pass env' sigma opts (show_tactic_string sigma t :: prev) goal body in
+  dot sigma t rest
 
 (* Value must be an application with last argument in context. *)
-and apply_in (n, valu, typ, body) (env, sigma, opts, goal) : tactical state option =
+and apply_in (n, valu, _, body) (env, sigma, opts, prev, goal) : tactical state option =
   let valu = Reduction.whd_betaiota env valu in
   try_app valu >>= fun (f, args) ->
   let len = Array.length args in
@@ -432,40 +442,46 @@ and apply_in (n, valu, typ, body) (env, sigma, opts, goal) : tactical state opti
   try_rel hyp >>= fun idx ->                       (* let H' := F H *)
   guard (noccurn (idx + 1) body) >>= fun _ ->      (* H does not occur in body *)
   guard (not (noccurn 1 body)) >>= fun _ ->        (* new binding DOES occur *)
-  let n, t = rel_name_type (lookup_rel idx env) in (* "H" *)
-  let env' = push_local (n, t) env in              (* change type of "H" *)
+  let n, typ = rel_name_type (lookup_rel idx env) in (* "H" *)
+  let env' = push_local (n, typ) env in              (* change type of "H" *)
   let prf = mkApp (f, Array.sub args 0 (len - 1)) in
-  (* let H2 := f H1 := H2 ... *)
+  let t = ApplyIn (env, prf, hyp) in
+  (* let A := f B C D ... in A *)
   let apply_binding app_in (_, sigma) =
     try_app body   >>= fun (f, args) ->
     try_rel f      >>= fun i ->
     guard (i == 1) >>= fun _ ->
-    let sigma, f' = first_pass env' sigma opts goal f in
-    let sigma, args' = map_state (fun trm sigma -> first_pass env' sigma opts goal trm)
+    let sigma, f' = first_pass env' sigma opts (show_tactic_string sigma t :: prev) goal f in
+    let sigma, args' = map_state (fun trm sigma ->
+                           first_pass env' sigma opts (show_tactic_string sigma t :: prev) goal trm)
                          (Array.to_list args) sigma in
-    Some (sigma, Compose ([ ApplyIn (env, prf, hyp) ], f' :: args'))
+    Some (sigma, Compose ([ t ], f' :: args'))
   in 
   (* all other cases *)
   let default app_in (_, sigma) =
-    let sigma, rest = first_pass env' sigma opts goal body in
-    dot sigma (ApplyIn (env, prf, hyp)) rest
+    let sigma, rest = first_pass env' sigma opts (show_tactic_string sigma t :: prev) goal body in
+    dot sigma t rest
   in
   (apply_binding <|> default) () (env', sigma)
     
 (* Last resort decompile let-in as a pose.  *)
-and pose (n, valu, t, body) (env, sigma, opts, goal) : tactical state option =
+and pose (n, valu, typ, body) (env, sigma, opts, prev, goal) : tactical state option =
   let n' = fresh_name env n in
-  let env' = push_let_in (Name n', valu, t) env in
-  let sigma, decomp_body = first_pass env' sigma opts goal body in
+  let env' = push_let_in (Name n', valu, typ) env in
   (* If the binding is NEVER used, just skip this. *)
   if noccurn 1 body
-  then Some (sigma, decomp_body)
-  else dot sigma (Pose (env, valu, n')) (decomp_body)
+  then
+    let sigma, decomp_body = first_pass env' sigma opts prev goal body in
+    Some (sigma, decomp_body)
+  else
+    let t = Pose (env, valu, n') in
+    let sigma, decomp_body = first_pass env' sigma opts (show_tactic_string sigma t :: prev) goal body in
+    dot sigma t (decomp_body)
   
 (* Decompile a term into its equivalent tactic list. *)
 let tac_from_term env sigma get_hints trm : tactical state =
   let sigma, goal = Inference.infer_type env sigma trm in
-  first_pass env sigma get_hints goal trm
+  first_pass env sigma get_hints [] goal trm
         
 (* Generate indentation space before bullet. *)
 let indent level =
