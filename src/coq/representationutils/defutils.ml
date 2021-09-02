@@ -49,7 +49,7 @@ let edeclare ident (_, poly, _ as k) ~opaque sigma udecl body tyopt imps hook re
   let body = to_constr sigma body in
   let tyopt = Option.map (to_constr sigma) tyopt in
   let uvars_fold uvars c =
-    Univ.LSet.union uvars (Univops.universes_of_constr env c) in
+    Univ.LSet.union uvars (Univops.universes_of_constr c) in
   let uvars = List.fold_left uvars_fold Univ.LSet.empty
     (Option.List.cons tyopt [body]) in
   let sigma = Evd.restrict_universe_context sigma uvars in
@@ -61,7 +61,7 @@ let edeclare ident (_, poly, _ as k) ~opaque sigma udecl body tyopt imps hook re
 (* Define a new Coq term *)
 let define_term ?typ (n : Id.t) (evm : evar_map) (trm : types) (refresh : bool) =
   let k = (Global, Flags.is_universe_polymorphism(), Definition) in
-  let udecl = Univdecls.default_univ_decl in
+  let udecl = UState.default_univ_decl in
   let nohook = Lemmas.mk_hook (fun _ x -> x) in
   let etrm = EConstr.of_constr trm in
   let etyp = Option.map EConstr.of_constr typ in
@@ -70,7 +70,7 @@ let define_term ?typ (n : Id.t) (evm : evar_map) (trm : types) (refresh : bool) 
 (* Define a Canonical Structure *)
 let define_canonical ?typ (n : Id.t) (evm : evar_map) (trm : types) (refresh : bool) =
   let k = (Global, Flags.is_universe_polymorphism (), CanonicalStructure) in
-  let udecl = Univdecls.default_univ_decl in
+  let udecl = UState.default_univ_decl in
   let hook = Lemmas.mk_hook (fun _ x -> declare_canonical_structure x; x) in
   let etrm = EConstr.of_constr trm in
   let etyp = Option.map EConstr.of_constr typ in
@@ -99,7 +99,7 @@ let expr_of_global (g : global_reference) : constr_expr =
 (* Convert a term into a global reference with universes (or raise Not_found) *)
 let pglobal_of_constr term =
   match Constr.kind term with
-  | Const (const, univs) -> ConstRef const, univs
+  | Const (const, univs) -> Globnames.ConstRef const, univs
   | Ind (ind, univs) -> IndRef ind, univs
   | Construct (cons, univs) -> ConstructRef cons, univs
   | Var id -> VarRef id, Univ.Instance.empty
@@ -108,7 +108,7 @@ let pglobal_of_constr term =
 (* Convert a global reference with universes into a term *)
 let constr_of_pglobal (glob, univs) =
   match glob with
-  | ConstRef const -> mkConstU (const, univs)
+  | Globnames.ConstRef const -> mkConstU (const, univs)
   | IndRef ind -> mkIndU (ind, univs)
   | ConstructRef cons -> mkConstructU (cons, univs)
   | VarRef id -> mkVar id

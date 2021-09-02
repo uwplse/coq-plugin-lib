@@ -28,7 +28,7 @@ let check_inductive_supported mutind_body : unit =
  * Check if a constant is an inductive elminator
  * If so, return the inductive type
  *)
-let inductive_of_elim (env : env) (pc : pconstant) : mutual_inductive option =
+let inductive_of_elim (env : env) (pc : pconstant) : MutInd.t option =
   let (c, u) = pc in
   let kn = Constant.canonical c in
   let (modpath, dirpath, label) = KerName.repr kn in
@@ -43,7 +43,7 @@ let inductive_of_elim (env : env) (pc : pconstant) : mutual_inductive option =
         let ind_label_string = String.sub label_string 0 split_index in
         let ind_label = Label.of_id (Id.of_string_soft ind_label_string) in
         let ind_name = MutInd.make1 (KerName.make modpath dirpath ind_label) in
-        lookup_mind ind_name env;
+        let _ = lookup_mind ind_name env in
         Some ind_name
       else
         if not is_rev then

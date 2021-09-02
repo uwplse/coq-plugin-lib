@@ -194,7 +194,7 @@ let deanonymize_context env sigma ctxt =
 (*
  * Inductive types
  *)
-let bindings_for_inductive env mutind_body ind_bodies : CRD.t list =
+let bindings_for_inductive env mutind_body ind_bodies : rel_declaration list =
   Array.to_list
     (Array.mapi
        (fun i ind_body ->
@@ -206,7 +206,7 @@ let bindings_for_inductive env mutind_body ind_bodies : CRD.t list =
 (*
  * Fixpoints
  *)
-let bindings_for_fix (names : name array) (typs : types array) : CRD.t list =
+let bindings_for_fix (names : name array) (typs : types array) : rel_declaration list =
   Array.to_list
     (CArray.map2_i
        (fun i name typ -> CRD.LocalAssum (name, Vars.lift i typ))

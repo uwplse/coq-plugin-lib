@@ -29,7 +29,7 @@ val is_elim : env -> types -> bool
 (*
  * Get an inductive type from an eliminator, if possible
  *)
-val inductive_of_elim : env -> pconstant -> mutual_inductive option
+val inductive_of_elim : env -> pconstant -> MutInd.t option
 
 (*
  * Lookup the eliminator over the type sort

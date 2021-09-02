@@ -78,13 +78,13 @@ val named_type : ('constr, 'types) CND.pt -> 'types
  * Map over a rel context with environment kept in synch
  *)
 val map_rel_context :
-  env -> (env -> CRD.t -> 'a) -> Context.Rel.t -> 'a list
+  env -> (env -> rel_declaration -> 'a) -> rel_context -> 'a list
 
 (*
  * Map over a named context with environment kept in synch
  *)
 val map_named_context :
-  env -> (env -> CND.t -> 'a) -> Context.Named.t -> 'a list     
+  env -> (env -> named_declaration -> 'a) -> named_context -> 'a list     
 
 (* --- Binding in contexts --- *)
 
@@ -92,21 +92,21 @@ val map_named_context :
  * Bind all local declarations in the relative context onto the body term as
  * products, substituting away (i.e., zeta-reducing) any local definitions.
  *)
-val smash_prod_assum : Context.Rel.t -> types -> types
-val smash_lam_assum : Context.Rel.t -> constr -> constr
+val smash_prod_assum : rel_context -> types -> types
+val smash_lam_assum : rel_context -> constr -> constr
 
 (*
  * Decompose the first n product bindings, zeta-reducing let bindings to reveal
  * further product/lambda bindings when necessary.
  *)
-val decompose_prod_n_zeta : int -> types -> Context.Rel.t * types
-val decompose_lam_n_zeta : int -> constr -> Context.Rel.t * constr
+val decompose_prod_n_zeta : int -> types -> rel_context * types
+val decompose_lam_n_zeta : int -> constr -> rel_context * constr
 
 (*
  * Reconstruct local bindings around a term
  *)
-val recompose_prod_assum : Context.Rel.t -> types -> types
-val recompose_lam_assum : Context.Rel.t -> types -> types
+val recompose_prod_assum : rel_context -> types -> types
+val recompose_lam_assum : rel_context -> types -> types
 
 (* --- Names in contexts --- *)
 
@@ -130,10 +130,10 @@ val deanonymize_context :
  *)
                                                               
 val bindings_for_inductive :
-  env -> mutual_inductive_body -> one_inductive_body array -> CRD.t list
+  env -> mutual_inductive_body -> one_inductive_body array -> rel_declaration list
 
 val bindings_for_fix :
-  name array -> types array -> CRD.t list
+  name array -> types array -> rel_declaration list
 
 (* --- Combining contexts --- *) 
 
@@ -144,4 +144,4 @@ val bindings_for_fix :
  * external indices inside the now-inner context must be shifted to pass over
  * the now-outer context.
  *)
-val context_app : Context.Rel.t -> Context.Rel.t -> Context.Rel.t
+val context_app : rel_context -> rel_context -> rel_context

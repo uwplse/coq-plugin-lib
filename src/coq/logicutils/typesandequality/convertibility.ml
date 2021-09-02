@@ -15,7 +15,9 @@ open Inference
 let convertible env sigma trm1 trm2 : evar_map * bool =
   let etrm1 = EConstr.of_constr trm1 in
   let etrm2 = EConstr.of_constr trm2 in
-  Reductionops.infer_conv env sigma etrm1 etrm2
+  match Reductionops.infer_conv env sigma etrm1 etrm2 with
+  | Some sigma -> sigma, true
+  | None -> sigma, false
 
 (*
  * Checks whether the conclusions of two dependent types are convertible,
