@@ -10,6 +10,7 @@
 -I src/coq/logicutils/transformation
 -I src/coq/devutils
 -I src/coq/representationutils
+-I pyml
 -I src/coq/decompiler
 -I src
 -R src Plibrary
@@ -87,6 +88,17 @@ src/coq/logicutils/transformation/transform.ml
 
 src/coq/devutils/printing.mli
 src/coq/devutils/printing.ml
+
+pyml/pyutils.mli
+pyml/pyutils.ml
+pyml/pytypes.mli
+pyml/pytypes.ml
+pyml/pyml_arch.mli
+pyml/pyml_arch.ml
+pyml/pywrappers.mli
+pyml/pywrappers.ml
+pyml/py.mli
+pyml/py.ml
 
 src/coq/decompiler/decompiler.mli
 src/coq/decompiler/decompiler.ml
