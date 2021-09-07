@@ -1,3 +1,5 @@
+CAMLPKGS = "-package sexplib"
+
 -I src/utilities
 -I src/coq
 -I src/coq/termutils

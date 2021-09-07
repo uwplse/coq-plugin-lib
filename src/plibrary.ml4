@@ -25,6 +25,8 @@ open Nameutils
 open Class_tactics
 open Stdarg
 open Tacarg
+
+open List
 open Py
 open Serapi_protocol
 
@@ -35,7 +37,7 @@ let decompile_command trm tacs =
   let (sigma, env) = Pfedit.get_current_context () in
   let sigma, trm = intern env sigma trm in
   let trm = unwrap_definition env trm in
-  let opts = List.map (fun s -> (parse_tac_str s, s)) tacs in
+  let opts = map (fun s -> (parse_tac_str s, s)) tacs in
   let sigma, script = tac_from_term env sigma (fun _ sigma [] _ -> sigma, opts) trm in
   (* let sigma, goal = infer_type env sigma trm in *)
   (* Feedback.msg_warning (ppx_conv_sexp env sigma goal) *)
