@@ -11,6 +11,8 @@
 -I src/coq/devutils
 -I src/coq/representationutils
 -I pyml
+-I coq-serapi/serapi
+-I coq-serapi
 -I src/coq/decompiler
 -I src
 -R src Plibrary
@@ -99,6 +101,17 @@ pyml/pywrappers.mli
 pyml/pywrappers.ml
 pyml/py.mli
 pyml/py.ml
+
+coq-serapi/serapi/serapi_assumptions.mli
+coq-serapi/serapi/serapi_assumptions.ml
+coq-serapi/serapi/serapi_goals.mli
+coq-serapi/serapi/serapi_goals.ml
+coq-serapi/serapi/serapi_paths.mli
+coq-serapi/serapi/serapi_paths.ml
+coq-serapi/serapi/serapi_pp.mli
+coq-serapi/serapi/serapi_pp.ml
+coq-serapi/serapi/serapi_protocol.mli
+coq-serapi/serapi/serapi_protocol.ml
 
 src/coq/decompiler/decompiler.mli
 src/coq/decompiler/decompiler.ml

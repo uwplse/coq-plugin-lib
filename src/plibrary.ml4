@@ -26,7 +26,7 @@ open Class_tactics
 open Stdarg
 open Tacarg
 open Py
-open Serlib
+open Serapi_protocol
 
 (* --- Commands --- *)
 
