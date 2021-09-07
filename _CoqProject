@@ -91,7 +91,7 @@ src/coq/devutils/printing.ml
 src/coq/decompiler/decompiler.mli
 src/coq/decompiler/decompiler.ml
 
-src/plibrary.ml4
 src/plib.mlpack
+src/plibrary.ml4
 
 theories/Plib.v

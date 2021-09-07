@@ -1,0 +1,6 @@
+[submodule "pyml"]
+	path = pyml
+	url = https://github.com/thierry-martinez/pyml
+[submodule "coq-serapi"]
+	path = coq-serapi
+	url = https://github.com/ejgallego/coq-serapi
