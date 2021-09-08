@@ -1,0 +1,11 @@
+(library
+  (name hofs)
+  (public_name coq-plugin-lib.hofs)
+  (libraries
+    coq-plugin-lib.state
+    coq-plugin-lib.envs
+    coq-plugin-lib.typesandequality
+    coq-plugin-lib.utilities
+    coq.kernel
+    coq.engine)
+  (wrapped false))

@@ -1,3 +1,9 @@
 (library
   (name representationutils)
-  (public_name coq-plugin-lib.representationutils))
+  (public_name coq-plugin-lib.representationutils)
+  (libraries
+    coq.vernac
+    coq.interp
+    coq.kernel
+    coq.engine)
+  (wrapped false))

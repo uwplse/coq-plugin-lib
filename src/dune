@@ -9,7 +9,15 @@
    coq-plugin-lib.constants
    coq-plugin-lib.decompiler
    coq-plugin-lib.devutils
-   coq-plugin-lib.logicutils
+   coq-plugin-lib.envs
+   coq-plugin-lib.state
+   coq-plugin-lib.contexts
+   coq-plugin-lib.inference
+   coq-plugin-lib.typesandequality
+   coq-plugin-lib.transformation
+   coq-plugin-lib.hofs
+   coq-plugin-lib.hofimpls
+   coq-plugin-lib.inductive
    coq-plugin-lib.representationutils
    coq-plugin-lib.termutils
 ))

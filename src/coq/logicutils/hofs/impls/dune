@@ -1,0 +1,13 @@
+(library
+  (name hofimpls)
+  (public_name coq-plugin-lib.hofimpls)
+  (libraries
+    coq-plugin-lib.termutils
+    coq-plugin-lib.constants
+    coq-plugin-lib.debruijn
+    coq-plugin-lib.hofs
+    coq-plugin-lib.typesandequality
+    coq-plugin-lib.utilities
+    coq.kernel
+    coq.engine)
+  (wrapped false))

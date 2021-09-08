@@ -1,3 +1,6 @@
 (library
   (name utilities)
-  (public_name coq-plugin-lib.utilities))
+  (public_name coq-plugin-lib.utilities)
+  (libraries
+    coq.lib)
+  (wrapped false))

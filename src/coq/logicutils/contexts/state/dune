@@ -1,8 +1,9 @@
 (library
-  (name termutils)
-  (public_name coq-plugin-lib.termutils)
+  (name state)
+  (public_name coq-plugin-lib.state)
   (libraries
     coq-plugin-lib.utilities
+    coq.kernel
     coq.engine
-    coq.kernel)
+    coq.interp)
   (wrapped false))

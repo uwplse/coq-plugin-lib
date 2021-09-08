@@ -1,3 +1,13 @@
 (library
   (name decompiler)
-  (public_name coq-plugin-lib.decompiler))
+  (public_name coq-plugin-lib.decompiler)
+  (libraries
+    coq-plugin-lib.hofimpls
+    coq-plugin-lib.devutils
+    coq-plugin-lib.constants
+    coq-plugin-lib.inductive
+    coq-plugin-lib.contexts
+    coq.engine
+    coq.kernel
+    coq.plugins.ltac)
+  (wrapped false))

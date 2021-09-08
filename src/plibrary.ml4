@@ -27,8 +27,6 @@ open Stdarg
 open Tacarg
 
 open List
-open Py
-open Serapi_protocol
 
 (* --- Commands --- *)
 

@@ -1,0 +1,14 @@
+(library
+  (name contexts)
+  (public_name coq-plugin-lib.contexts)
+  (libraries
+    coq-plugin-lib.inductive
+    coq-plugin-lib.state
+    coq-plugin-lib.inference
+    coq-plugin-lib.representationutils
+    coq-plugin-lib.utilities
+    coq.kernel
+    coq.engine
+    coq.interp
+    coq.plugins.ltac)
+  (wrapped false))

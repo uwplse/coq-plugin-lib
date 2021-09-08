@@ -1,3 +1,10 @@
 (library
   (name devutils)
-  (public_name coq-plugin-lib.devutils))
+  (public_name coq-plugin-lib.devutils)
+  (libraries
+    coq-plugin-lib.contexts
+    coq-plugin-lib.utilities
+    coq.printing
+    coq.engine
+    coq.kernel)
+  (wrapped false))

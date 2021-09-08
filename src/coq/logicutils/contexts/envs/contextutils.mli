@@ -133,7 +133,7 @@ val bindings_for_inductive :
   env -> mutual_inductive_body -> one_inductive_body array -> rel_declaration list
 
 val bindings_for_fix :
-  name array -> types array -> rel_declaration list
+  Name.t array -> types array -> rel_declaration list
 
 (* --- Combining contexts --- *) 
 

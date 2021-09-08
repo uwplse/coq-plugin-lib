@@ -1,0 +1,10 @@
+(library
+  (name indutils)
+  (public_name coq-plugin-lib.inductive)
+  (libraries
+    coq-plugin-lib.hofimpls
+    coq-plugin-lib.debruijn
+    coq-plugin-lib.termutils
+    coq-plugin-lib.utilities
+    coq.kernel
+    coq.engine))

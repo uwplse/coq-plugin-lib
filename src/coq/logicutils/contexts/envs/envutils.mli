@@ -27,8 +27,8 @@ val rel_name_type : rel_declaration -> Name.t * types
 (*
  * Push to an environment
  *)
-val push_local : (name * types) -> env -> env
-val push_let_in : (name * types * types) -> env -> env
+val push_local : (Name.t * types) -> env -> env
+val push_let_in : (Name.t * types * types) -> env -> env
 
 (*
  * Lookup from an environment
