@@ -1,8 +1,9 @@
 (library
- (name coq_plugin_lib)
+ (name plib)
  (public_name coq-plugin-lib.plugin)
  (synopsis "Coq Plugin Lib")
- (flags :standard -w -27)       ; CoqPP codes requires this
+ (flags :standard -w -27 -warn-error -A)       ; CoqPP codes requires this
+ (modules ("plibrary"))
  (libraries
    coq.vernac                      ; needed for vernac extend
    coq-plugin-lib.utilities

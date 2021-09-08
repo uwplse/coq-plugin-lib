@@ -1,0 +1,8 @@
+(coq.theory
+ (name CoqPluginLib)
+ (package coq-plugin-lib)
+ (flags -q -noinit)
+ (libraries
+   coq-plugin-lib.plugin
+ )
+)
