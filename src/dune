@@ -7,6 +7,8 @@
  (libraries
    coq.vernac                      ; needed for vernac extend
    coq-plugin-lib.utilities
+   coq-plugin-lib.coq
+   coq-plugin-lib.debruijn
    coq-plugin-lib.constants
    coq-plugin-lib.decompiler
    coq-plugin-lib.devutils

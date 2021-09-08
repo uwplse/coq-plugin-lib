@@ -1,6 +1,20 @@
+Declare ML Module "utilities".
+Declare ML Module "coq".
+Declare ML Module "termutils".
+Declare ML Module "inference".
+Declare ML Module "constants".
+Declare ML Module "representationutils".
+Declare ML Module "state".
+Declare ML Module "envs".
+Declare ML Module "devutils".
+Declare ML Module "hofs".
+Declare ML Module "typesandequality".
+Declare ML Module "debruijn".
+Declare ML Module "hofimpls".
+Declare ML Module "inductive".
+Declare ML Module "contexts".
+Declare ML Module "transformation".
+Declare ML Module "ltac_plugin".
+Declare ML Module "decompiler".
 Declare ML Module "plib".
-(* Add ML Path "/Users/emilyfirst/.opam/4.07.1+flambda/lib/coq-serapi/serlib". *)
-(* Add ML Path "/Users/emilyfirst/.opam/4.07.1+flambda/lib/pyml". *)
-
-(* Declare ML Module "serlib". *)
 

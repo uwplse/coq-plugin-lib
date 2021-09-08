@@ -1,5 +1,5 @@
 (library
-  (name indutils)
+  (name inductive)
   (public_name coq-plugin-lib.inductive)
   (libraries
     coq-plugin-lib.hofimpls
@@ -7,4 +7,5 @@
     coq-plugin-lib.termutils
     coq-plugin-lib.utilities
     coq.kernel
-    coq.engine))
+    coq.engine)
+  (wrapped false))
