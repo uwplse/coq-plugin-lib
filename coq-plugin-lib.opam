@@ -13,7 +13,7 @@ doc:          "https://github.com/uwplse/coq-plugin-lib"
 depends: [
   "ocaml"         { = "4.07.1+flambda"           }
   "coq"           { = "8.9.1" }
-  "dune"          { build & >= "1.9.0"    }
+  "dune"          { build & >= "1.9.0" & <= "2.7.1"    }
 ]
 
 build: [ "dune" "build" "-p" name "-j" jobs ]
