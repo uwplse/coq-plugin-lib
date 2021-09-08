@@ -1,8 +1,0 @@
-(library
-  (name termutils)
-  (public_name coq-plugin-lib.termutils)
-  (libraries
-    coq-plugin-lib.utilities
-    coq.engine
-    coq.kernel)
-  (wrapped false))

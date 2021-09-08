@@ -1,8 +1,0 @@
-(library
-  (name constants)
-  (public_name coq-plugin-lib.constants)
-  (libraries
-    coq-plugin-lib.inference
-    coq-plugin-lib.termutils
-    coq.kernel)
-  (wrapped false))

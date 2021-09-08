@@ -1,8 +1,0 @@
-(library
-  (name inference)
-  (public_name coq-plugin-lib.inference)
-  (libraries
-    coq.pretyping
-    coq.kernel
-    coq.engine)
-  (wrapped false))

@@ -1,9 +1,0 @@
-(library
-  (name state)
-  (public_name coq-plugin-lib.state)
-  (libraries
-    coq-plugin-lib.utilities
-    coq.kernel
-    coq.engine
-    coq.interp)
-  (wrapped false))
