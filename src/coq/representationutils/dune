@@ -1,0 +1,3 @@
+(library
+  (name representationutils)
+  (public_name coq-plugin-lib.representationutils))

@@ -1,0 +1,3 @@
+(library
+  (name constants)
+  (public_name coq-plugin-lib.constants))

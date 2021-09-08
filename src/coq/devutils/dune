@@ -1,0 +1,3 @@
+(library
+  (name devutils)
+  (public_name coq-plugin-lib.devutils))

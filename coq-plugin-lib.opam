@@ -1,0 +1,19 @@
+synopsis:     "Coq Plugin Library"
+description:  "Coq Plugin Library"
+name:         "coq-plugin-lib"
+opam-version: "2.0"
+maintainer:   "talia@dependenttyp.es"
+authors:      "Talia Ringer"
+homepage:     "https://github.com/uwplse/coq-plugin-lib"
+bug-reports:  "https://github.com/uwplse/coq-plugin-lib"
+dev-repo:     "git+https://github.com/uwplse/coq-plugin-lib"
+license:      "MIT"
+doc:          "https://github.com/uwplse/coq-plugin-lib"
+
+depends: [
+  "ocaml"         { = "4.07.1+flambda"           }
+  "coq"           { = "8.9.1" }
+  "dune"          { build & >= "1.9.0"    }
+]
+
+build: [ "dune" "build" "-p" name "-j" jobs ]

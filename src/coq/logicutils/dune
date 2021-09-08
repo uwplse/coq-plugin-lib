@@ -1,0 +1,3 @@
+(library
+  (name logicutils)
+  (public_name coq-plugin-lib.logicutils))

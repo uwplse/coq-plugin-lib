@@ -1,0 +1,3 @@
+(library
+  (name utilities)
+  (public_name coq-plugin-lib.utilities))

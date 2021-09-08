@@ -1,1 +1,0 @@
-CAMLPKGS+= -package sexplib0 -package parsexp -package sexplib -package ppx_deriving -package coq-serapi -package pyml

@@ -1,0 +1,22 @@
+(library
+ (name coq_plugin_lib)
+ (public_name coq-plugin-lib.plugin)
+ (synopsis "Coq Plugin Lib")
+ (flags :standard -w -27)       ; CoqPP codes requires this
+ (libraries
+   coq.vernac                      ; needed for vernac extend
+   coq-plugin-lib.utilities
+   coq-plugin-lib.constants
+   coq-plugin-lib.decompiler
+   coq-plugin-lib.devutils
+   coq-plugin-lib.logicutils
+   coq-plugin-lib.representationutils
+   coq-plugin-lib.termutils
+))
+
+(rule
+ (targets plibrary.ml)
+ (deps (:pp-file plibrary.ml4) )
+ (action (bash "camlp5 pa_o.cmo pr_o.cmo %{lib:coq.grammar:grammar.cma} -loc loc -impl %{pp-file} -o %{targets}")))
+; camlp5 may need the following additional libs, YMMV
+; pa_op.cmo pr_dump.cmo pa_extend.cmo q_MLast.cmo pa_macro.cmo
