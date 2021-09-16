@@ -1,3 +1,4 @@
 opam pin dune 2.7.1
 dune clean
-dune build
+dune build @all
+dune install

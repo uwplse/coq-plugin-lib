@@ -1,4 +1,5 @@
-Declare ML Module "utilities".
+(* Dependencies for our library *)
+(*Declare ML Module "utilities".
 Declare ML Module "coq".
 Declare ML Module "termutils".
 Declare ML Module "inference".
@@ -15,6 +16,17 @@ Declare ML Module "inductive".
 Declare ML Module "contexts".
 Declare ML Module "transformation".
 Declare ML Module "ltac_plugin".
-Declare ML Module "decompiler".
-Declare ML Module "plib".
+Declare ML Module "decompiler".*)
+
+(* Dependencies for SerAPI *)
+(*Declare ML Module "sexplib0".
+Declare ML Module "ppx_sexp_conv_lib".
+Declare ML Module "bigarray".
+Declare ML Module "caml".
+Declare ML Module "parsexp".
+Declare ML Module "sexplib".
+Declare ML Module "serlib".*)
+
+(* Our library *)
+Declare ML Module "plib_full_plugin".
 

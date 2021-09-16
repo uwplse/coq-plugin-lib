@@ -6,6 +6,7 @@
  (modules ("plibrary"))
  (libraries
    coq.vernac                      ; needed for vernac extend
+   coq-serapi.serlib
    coq-plugin-lib.utilities
    coq-plugin-lib.coq
    coq-plugin-lib.debruijn
@@ -24,6 +25,16 @@
    coq-plugin-lib.representationutils
    coq-plugin-lib.termutils
 ))
+
+(rule
+  (targets plib_full_plugin.cmxs)
+  (action (run %{ocamlopt} -shared -linkall -o %{targets})))
+  
+(install
+  (section lib_root)
+  (package coq-plugin-lib)
+  (files
+    (plib_full_plugin.cmxs as coq/user-contrib/plib_full_plugin.cmxs))) 
 
 (rule
  (targets plibrary.ml)

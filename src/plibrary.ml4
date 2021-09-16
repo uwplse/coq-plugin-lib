@@ -26,6 +26,8 @@ open Class_tactics
 open Stdarg
 open Tacarg
 
+open Ser_names
+
 open List
 
 (* --- Commands --- *)

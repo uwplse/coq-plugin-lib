@@ -1,25 +1,5 @@
 (coq.theory
  (name CoqPluginLib)
  (package coq-plugin-lib)
- (flags -q -noinit)
- (libraries
-   coq-plugin-lib.utilities
-   coq-plugin-lib.coq
-   coq-plugin-lib.debruijn
-   coq-plugin-lib.constants
-   coq-plugin-lib.decompiler
-   coq-plugin-lib.devutils
-   coq-plugin-lib.envs
-   coq-plugin-lib.state
-   coq-plugin-lib.contexts
-   coq-plugin-lib.inference
-   coq-plugin-lib.typesandequality
-   coq-plugin-lib.transformation
-   coq-plugin-lib.hofs
-   coq-plugin-lib.hofimpls
-   coq-plugin-lib.inductive
-   coq-plugin-lib.representationutils
-   coq-plugin-lib.termutils
-   coq-plugin-lib.plugin
- )
+ (flags -q -noinit -I ./src)
 )
