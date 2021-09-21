@@ -4,7 +4,6 @@
  (synopsis "Coq Plugin Lib")
  (flags :standard -w -27 -warn-error -A)       ; CoqPP codes requires this
  (modules ("plibrary"))
- (modes native)
  (library_flags -linkall)
  (libraries
    coq.vernac                      ; needed for vernac extend
