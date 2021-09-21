@@ -21,5 +21,6 @@ plugin/Makefile.coq
 plugin/Makefile.conf
 plugin/Makefile
 plugin/.merlin
+*.merlin
 *.out
 _opam
