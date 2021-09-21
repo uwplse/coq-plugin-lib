@@ -4,10 +4,10 @@
  (synopsis "Coq Plugin Lib")
  (flags :standard -w -27 -warn-error -A)       ; CoqPP codes requires this
  (modules ("plibrary"))
+ (modes native)
  (library_flags -linkall)
  (libraries
    coq.vernac                      ; needed for vernac extend
-   coq.plugins.ltac                ; needed only for tactic extend
    coq-serapi.serlib
    coq-plugin-lib.utilities
    coq-plugin-lib.coq
@@ -38,7 +38,6 @@
   (targets plib_full_plugin.cmxs)
   (action (run %{ocamlopt} -shared -linkall -o %{targets}
            %{lib:lymp:lymp.cmxa}
-           %{lib:coq.plugins.ltac:ltac_plugin.cmx}
            %{lib:coq-plugin-lib.utilities:utilities.cmxa}
            %{lib:coq-plugin-lib.representationutils:representationutils.cmxa}
            %{lib:coq-plugin-lib.state:state.cmxa}
