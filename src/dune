@@ -5,6 +5,7 @@
  (flags :standard -w -27 -warn-error -A)       ; CoqPP codes requires this
  (modules ("plibrary"))
  (library_flags -linkall)
+ (modes native)
  (libraries
    coq.vernac                      ; needed for vernac extend
    coq.plugins.ltac                ; needed only for tactic extend
@@ -26,6 +27,8 @@
    coq-plugin-lib.inductive
    coq-plugin-lib.representationutils
    coq-plugin-lib.termutils
+   stdcompat
+   pyml
 ))
 
 (rule
@@ -56,6 +59,9 @@
            %{lib:coq-plugin-lib.devutils:devutils.cmxa}
            %{lib:coq-plugin-lib.decompiler:decompiler.cmxa}
            %{lib:coq-plugin-lib.coq:coq.cmxa}
+           %{lib:stdcompat:stdcompat.cmxa}
+           %{lib:pyml:pyml.cmxa}
+           %{lib:pyml:numpy.cmxa}
            %{cmxa:plib})))
 
 (install
