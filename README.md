@@ -34,7 +34,7 @@ This code guide is out of date and needs to be updated due to the switch to use 
       
 ## Contributors
 
-This library was developed by Talia Ringer, Nate Yazdani, RanDair Porter, and Emily First.
+This library was developed by Talia Ringer, Nate Yazdani, RanDair Porter, and Emily First. Probably none of it would build without Emilio's help.
 
 ## Licensing
 
