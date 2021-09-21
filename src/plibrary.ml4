@@ -1,4 +1,3 @@
-
 DECLARE PLUGIN "plib"
 
 open Decompiler

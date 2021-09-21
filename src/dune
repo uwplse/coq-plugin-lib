@@ -32,13 +32,12 @@
 (rule
  (targets plibrary.ml)
  (deps (:pp-file plibrary.ml4) )
- (action (bash "camlp5 pa_o.cmo pr_o.cmo pa_op.cmo pr_dump.cmo pa_extend.cmo q_MLast.cmo pa_macro.cmo %{lib:coq.grammar:grammar.cma} -loc loc -impl %{pp-file} -o %{targets}")))
-; camlp5 may need the following additional libs, YMMV
-; pa_op.cmo pr_dump.cmo pa_extend.cmo q_MLast.cmo pa_macro.cmo
+ (action (bash "camlp5 pa_o.cmo pr_o.cmo pa_op.cmo pr_dump.cmo pa_extend.cmo q_MLast.cmo pa_macro.cmo pa_op.cmo pr_dump.cmo pa_extend.cmo q_MLast.cmo pa_macro.cmo %{lib:coq.grammar:grammar.cma} -loc loc -impl %{pp-file} -o %{targets}")))
 
 (rule
   (targets plib_full_plugin.cmxs)
   (action (run %{ocamlopt} -shared -linkall -o %{targets}
+           %{lib:lymp:lymp.cmxa}
            %{lib:coq.plugins.ltac:ltac_plugin.cmx}
            %{lib:coq-plugin-lib.utilities:utilities.cmxa}
            %{lib:coq-plugin-lib.representationutils:representationutils.cmxa}
@@ -57,11 +56,7 @@
            %{lib:coq-plugin-lib.devutils:devutils.cmxa}
            %{lib:coq-plugin-lib.decompiler:decompiler.cmxa}
            %{lib:coq-plugin-lib.coq:coq.cmxa}
-           %{lib:lymp:lymp.cmxa}
            %{cmxa:plib})))
-           
-          
-
 
 (install
   (section lib_root)
