@@ -1,5 +1,5 @@
 (coq.theory
  (name CoqPluginLib)
  (package coq-plugin-lib)
- (flags -q -noinit -I ./src)
+ (flags -q -I ./src)
 )

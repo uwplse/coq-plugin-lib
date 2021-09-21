@@ -4,6 +4,7 @@
  (synopsis "Coq Plugin Lib")
  (flags :standard -w -27 -warn-error -A)       ; CoqPP codes requires this
  (modules ("plibrary"))
+ (modes native)
  (library_flags -linkall)
  (libraries
    coq.vernac                      ; needed for vernac extend
@@ -26,6 +27,7 @@
    coq-plugin-lib.inductive
    coq-plugin-lib.representationutils
    coq-plugin-lib.termutils
+   lymp
 ))
 
 (rule
@@ -56,7 +58,11 @@
            %{lib:coq-plugin-lib.devutils:devutils.cmxa}
            %{lib:coq-plugin-lib.decompiler:decompiler.cmxa}
            %{lib:coq-plugin-lib.coq:coq.cmxa}
+           %{lib:lymp:lymp.cmxa}
            %{cmxa:plib})))
+           
+          
+
 
 (install
   (section lib_root)

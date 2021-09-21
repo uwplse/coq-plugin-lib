@@ -10,6 +10,8 @@ See [PUMPKIN PATCH](https://github.com/uwplse/PUMPKIN-PATCH) and [DEVOID](https:
 
 ## Guide
 
+This code guide is out of date and needs to be updated due to the switch to use Dune.
+
 * [LICENSE](/LICENSE): License
 * [README.md](/README.md): You are here!
 * [build.sh](/build.sh): Build script for example plugin
