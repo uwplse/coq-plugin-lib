@@ -28,6 +28,9 @@ open Tacarg
 open List
 
 open Ser_names
+open Ser_environ
+open Ser_goal
+open Ser_constr
 open Lymp
 
 (* --- Commands --- *)
@@ -39,7 +42,9 @@ let decompile_command trm tacs =
   let trm = unwrap_definition env trm in
   let opts = map (fun s -> (parse_tac_str s, s)) tacs in
   let sigma, script = tac_from_term env sigma (fun _ sigma [] _ -> sigma, opts) trm in
-  (* let sigma, goal = infer_type env sigma trm in *)
+  (* let ser_env = sexp_of_env env in *)
+  (* let goal = (Typeops.infer env trm).uj_type in *)
+  (* let ser_goal = sexp_of_constr goal in *)
   (* Feedback.msg_warning (ppx_conv_sexp env sigma goal) *)
   (* Feedback.msg_warning (str "the goal: " ++ Printer.pr_constr_env env sigma goal) *)
   (* Feedback.msg_debug (script) *)

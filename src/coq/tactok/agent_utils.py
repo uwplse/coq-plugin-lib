@@ -5,9 +5,10 @@ from models.prover import Prover
 import string
 
 term_parser = GallinaTermParser(caching=True)
-sexp_cache = SexpCache('../sexp_cache', readonly=True) #include this
+sexp_cache = SexpCache('../../../../sexp_cache', readonly=True) # include this outside top directory
 
 def get_opts():
+	# TODO: need to update opts as we go
 	parser = argparse.ArgumentParser()
     parser.add_argument('--path', type=str, default='model.pth')
     parser.add_argument('--beam_width', type=int, default=10) 

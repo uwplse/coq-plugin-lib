@@ -16,5 +16,7 @@ open Ltac_plugin
 open Stateutils
 open Lymp
 open Ser_names
+open Ser_environ
+open Ser_goal
 
 val beam_search : env -> string list -> types -> string list 

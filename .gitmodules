@@ -1,3 +1,0 @@
-[submodule "deps/fundamental-arithmetics"]
-	path = deps/fundamental-arithmetics
-	url = https://github.com/coq-contribs/fundamental-arithmetics

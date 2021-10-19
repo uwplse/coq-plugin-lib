@@ -1,0 +1,16 @@
+(library
+  (name tactok)
+  (public_name coq-plugin-lib.tactok)
+  (libraries
+    coq-serapi.serlib
+    lymp
+    coq-plugin-lib.hofimpls
+    coq-plugin-lib.devutils
+    coq-plugin-lib.constants
+    coq-plugin-lib.inductive
+    coq-plugin-lib.contexts
+    coq-plugin-lib.decompiler
+    coq.engine
+    coq.kernel
+    coq.plugins.ltac)
+  (wrapped false))

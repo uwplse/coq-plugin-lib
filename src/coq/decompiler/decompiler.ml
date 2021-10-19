@@ -15,6 +15,8 @@ open Zooming
 open Nameutils
 open Ltac_plugin
 open Stateutils
+open List
+open Tactok
 
 (*
  * This is a minimal, sound version of the decompiler with our own heuristics
@@ -227,6 +229,9 @@ let apply_implicit env sigma trm : tactical state option =
     qed sigma tac
   with _ -> None
 
+let get_hints env sigma prev goal =
+  sigma, (beam_search env (List.rev prev) goal)
+                       
 (* Performs the bulk of decompilation on a proof term.
    Opts are the optional goal solving tactics that can be inserted into
      the generated script. If one of these tactics solves the focused goal or 
@@ -300,8 +305,8 @@ and many_subgoals env sigma opts prev goal t trms =
 and try_custom_tacs env sigma get_hints prev goal trm : tactical state option =
   guard (not (isLambda trm)) >>= fun _ ->
   try  
-    let sigma, hints = get_hints env sigma prev trm in
     let goal = (Typeops.infer env trm).uj_type in
+    let sigma, hints = get_hints env sigma prev goal in
     let rec aux opts : tactical state option =
       match opts with
       | [] -> None
@@ -464,7 +469,7 @@ and apply_in (n, valu, _, body) (env, sigma, opts, prev, goal) : tactical state 
   in
   (apply_binding <|> default) () (env', sigma)
     
-(* Last resort decompile let-in as a pose.  *)
+(* Last resort decompile let-in as a pose. *)
 and pose (n, valu, typ, body) (env, sigma, opts, prev, goal) : tactical state option =
   let n' = fresh_name env n in
   let env' = push_let_in (Name n', valu, typ) env in
@@ -482,7 +487,7 @@ and pose (n, valu, typ, body) (env, sigma, opts, prev, goal) : tactical state op
 let tac_from_term env sigma get_hints trm : tactical state =
   let sigma, goal = Inference.infer_type env sigma trm in
   first_pass env sigma get_hints [] goal trm
-        
+
 (* Generate indentation space before bullet. *)
 let indent level =
   let spacing level = (level - 2) / 3 + 2 in
@@ -508,7 +513,7 @@ let pp_concat sep xs =
     | x :: [] -> [ x ]
     | x :: xs' -> x :: sep :: aux xs'
   in seq (aux xs)
-  
+
 (* Show tactical, composed of many tactics. *)
 let rec show_tactical sigma (level : int) (bulletted : bool) (t : tactical) : Pp.t =
   let full_indent = if bulletted
@@ -522,7 +527,6 @@ let rec show_tactical sigma (level : int) (bulletted : bool) (t : tactical) : Pp
      tac_s ++ match goals with
               | [ goal ] ->  show_tactical sigma level false goal
               | goals -> seq (List.mapi f goals)
-                
+
 (* Represent tactics as a string. *)
 let tac_to_string sigma = show_tactical sigma 0 false
-  

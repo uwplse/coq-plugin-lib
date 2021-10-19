@@ -13,6 +13,7 @@
    coq-plugin-lib.coq
    coq-plugin-lib.debruijn
    coq-plugin-lib.constants
+   coq-plugin-lib.tactok
    coq-plugin-lib.decompiler
    coq-plugin-lib.devutils
    coq-plugin-lib.envs

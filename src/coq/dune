@@ -16,5 +16,6 @@
     coq-plugin-lib.inductive
     coq-plugin-lib.representationutils
     coq-plugin-lib.termutils
+    coq-plugin-lib.tactok
     coq.kernel)
   (wrapped false))
