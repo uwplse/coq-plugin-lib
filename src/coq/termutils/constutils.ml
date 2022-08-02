@@ -18,7 +18,7 @@ let make_constant id =
  * Safely extract the body of a constant, instantiating any universe variables 
  *)
 let open_constant env const =
-  let (Some (term, auctx)) = Global.body_of_constant const in
+  let (Some (term, _, auctx)) = Global.body_of_constant Library.indirect_accessor const in
   let uctx = Universes.fresh_instance_from_context auctx |> Univ.UContext.make in
   let term = Vars.subst_instance_constr (Univ.UContext.instance uctx) term in
   let env = Environ.push_context uctx env in
