@@ -138,7 +138,11 @@ let combine_cartesian_append (al : 'a list array) : 'a array list =
 (* Map3 *)
 let rec map3 (f : 'a -> 'b -> 'c -> 'd) l1 l2 l3 : 'd list =
   match (l1, l2, l3) with
-  | ([], [], []) ->
+  | ([], _, _) ->
+     []
+  | (_, [], _) ->
+     []
+  | (_, _, []) ->
      []
   | (h1 :: t1, h2 :: t2, h3 :: t3) ->
      let r = f h1 h2 h3 in r :: map3 f t1 t2 t3
