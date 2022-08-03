@@ -4,7 +4,6 @@
 
 open Constr
 open Names
-open Environ
 open Evd
 
 let coq_init_datatypes =
