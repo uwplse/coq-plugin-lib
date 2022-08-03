@@ -2,11 +2,8 @@
  * Utilities for defining terms
  *)
 
-open Constr
 open Names
 open Evd
-open Decl_kinds
-open Recordops
 open Constrexpr
 open Constrextern
 
@@ -15,7 +12,7 @@ open Constrextern
 (* https://github.com/ybertot/plugin_tutorials/blob/master/tuto1/src/simple_declare.ml 
 
 TODO do we need to return the updated evar_map? *)
-let edeclare ident (_, poly, _ as k) ~opaque sigma udecl body tyopt imps hook refresh =
+let edeclare ident poly ~opaque sigma udecl body tyopt imps hook refresh =
   let open EConstr in
   (* XXX: "Standard" term construction combinators such as `mkApp`
      don't add any universe constraints that may be needed later for
@@ -56,25 +53,27 @@ let edeclare ident (_, poly, _ as k) ~opaque sigma udecl body tyopt imps hook re
   let univs = Evd.check_univ_decl ~poly sigma udecl in
   let ubinders = Evd.universe_binders sigma in
   let ce = Declare.definition_entry ?types:tyopt ~univs body in
-  DeclareDef.declare_definition ident k ce ubinders imps hook
+  DeclareDef.declare_definition ~name:ident ~scope:(Locality.enforce_locality_exp None Vernacexpr.NoDischarge) ~kind:(Decls.variable_kind ident) ?hook_data:hook ubinders ce imps (* todo: does this even work? *)
 
 (* Define a new Coq term *)
-let define_term ?typ (n : Id.t) (evm : evar_map) (trm : types) (refresh : bool) =
-  let k = (Global, Flags.is_universe_polymorphism(), Definition) in
+let define_term ?typ (n : Id.t) (evm : evar_map) (trm : Constr.types) (refresh : bool) =
+  (* let k = (Global, Flags.is_universe_polymorphism(), Definition) in *)
+  let poly = Attributes.is_universe_polymorphism() in
   let udecl = UState.default_univ_decl in
-  let nohook = Lemmas.mk_hook (fun _ x -> x) in
+  (* let nohook = Lemmas.mk_hook (fun _ x -> x) in *)
   let etrm = EConstr.of_constr trm in
   let etyp = Option.map EConstr.of_constr typ in
-  edeclare n k ~opaque:false evm udecl etrm etyp [] nohook refresh
+  edeclare n poly ~opaque:false evm udecl etrm etyp [] None refresh
 
 (* Define a Canonical Structure *)
-let define_canonical ?typ (n : Id.t) (evm : evar_map) (trm : types) (refresh : bool) =
-  let k = (Global, Flags.is_universe_polymorphism (), CanonicalStructure) in
+let define_canonical ?typ (n : Id.t) (evm : evar_map) (trm : Constr.types) (refresh : bool) =
+  (* let k = (Global, Flags.is_universe_polymorphism(), Definition) in *)
+  let poly = Attributes.is_universe_polymorphism() in
   let udecl = UState.default_univ_decl in
-  let hook = Lemmas.mk_hook (fun _ x -> declare_canonical_structure x; x) in
+  let hook = DeclareDef.Hook.make (fun x -> let open DeclareDef.Hook.S in Canonical.declare_canonical_structure x.dref) in
   let etrm = EConstr.of_constr trm in
   let etyp = Option.map EConstr.of_constr typ in
-  edeclare n k ~opaque:false evm udecl etrm etyp [] hook refresh
+  edeclare n poly ~opaque:false evm udecl etrm etyp [] (Some (hook, Evd.evar_universe_context evm, [])) refresh (* todo: check if last empty list is correct to pass *)
 
 (* --- Converting between representations --- *)
 
@@ -83,7 +82,7 @@ let define_canonical ?typ (n : Id.t) (evm : evar_map) (trm : types) (refresh : b
  *)
 
 (* Intern a term (for now, ignore the resulting evar_map) *)
-let intern env sigma t : evar_map * types =
+let intern env sigma t : evar_map * Constr.types =
   let (sigma, trm) = Constrintern.interp_constr_evars env sigma t in
   sigma, EConstr.to_constr sigma trm
 
@@ -92,30 +91,31 @@ let extern env sigma t : constr_expr =
   Constrextern.extern_constr true env sigma (EConstr.of_constr t)
 
 (* Construct the external expression for a definition *)
-let expr_of_global (g : global_reference) : constr_expr =
+let expr_of_global (g : Globnames.global_reference) : constr_expr =
   let r = extern_reference Id.Set.empty g in
   CAst.make @@ (CAppExpl ((None, r, None), []))
 
 (* Convert a term into a global reference with universes (or raise Not_found) *)
 let pglobal_of_constr term =
-  match Constr.kind term with
-  | Const (const, univs) -> Globnames.ConstRef const, univs
-  | Ind (ind, univs) -> IndRef ind, univs
-  | Construct (cons, univs) -> ConstructRef cons, univs
-  | Var id -> VarRef id, Univ.Instance.empty
-  | _ -> raise Not_found
+  let open Constr in 
+    match Constr.kind term with
+    | Const (const, univs) -> Globnames.ConstRef const, univs
+    | Ind (ind, univs) ->  Names.GlobRef.IndRef ind, univs
+    | Construct (cons, univs) -> Names.GlobRef.ConstructRef cons, univs
+    | Var id -> Names.GlobRef.VarRef id, Univ.Instance.empty
+    | _ -> raise Not_found
 
 (* Convert a global reference with universes into a term *)
 let constr_of_pglobal (glob, univs) =
   match glob with
-  | Globnames.ConstRef const -> mkConstU (const, univs)
-  | IndRef ind -> mkIndU (ind, univs)
-  | ConstructRef cons -> mkConstructU (cons, univs)
-  | VarRef id -> mkVar id
+  | Globnames.ConstRef const -> Constr.mkConstU (const, univs)
+  | Names.GlobRef.IndRef ind -> Constr.mkIndU (ind, univs)
+  | Names.GlobRef.ConstructRef cons -> Constr.mkConstructU (cons, univs)
+  | Names.GlobRef.VarRef id -> Constr.mkVar id
 
 (* Safely instantiate a global reference, with proper universe handling *)
 let new_global sigma gref =
   let sigma_ref = ref sigma in
-  let glob =  Evarutil.e_new_global sigma_ref gref in
+  let (_, glob) = Evarutil.new_global sigma gref in
   let sigma = ! sigma_ref in
   sigma, EConstr.to_constr sigma glob
