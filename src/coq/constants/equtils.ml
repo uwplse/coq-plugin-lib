@@ -14,7 +14,7 @@ let coq_init_logic =
 
 (* equality *)
 let eq : types =
-  mkInd (MutInd.make1 (KerName.make2 coq_init_logic (Label.make "eq")), 0)
+  mkInd (MutInd.make1 (Names.KerName.make coq_init_logic (Label.make "eq")), 0)
 
 (* Constructor for quality *)
 let eq_refl : types =

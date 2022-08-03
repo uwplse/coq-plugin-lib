@@ -4,7 +4,6 @@
 
 open Constr
 open Names
-open Apputils
 
 let coq_init_logic =
   ModPath.MPfile
@@ -14,7 +13,7 @@ let coq_init_logic =
 
 (* Logical or *)
 let logical_or : types =
-  mkInd (MutInd.make1 (KerName.make2 coq_init_logic (Label.make "or")), 0)
+  mkInd (MutInd.make1 (Names.KerName.make coq_init_logic (Label.make "or")), 0)
   
 (* left constructor of \/ *)
 let or_introl : types =
@@ -27,7 +26,7 @@ let or_intror : types =
 
 (* Logical and *)
 let logical_and : types =
-  mkInd (MutInd.make1 (KerName.make2 coq_init_logic (Label.make "and")), 0)
+  mkInd (MutInd.make1 (Names.KerName.make coq_init_logic (Label.make "and")), 0)
   
 (* constructor of /\ *)
 let conj : types =
