@@ -5,7 +5,6 @@
 open Constr
 open Names
 open Evd
-open Sorts
 
 let coq_init_datatypes =
   ModPath.MPfile
