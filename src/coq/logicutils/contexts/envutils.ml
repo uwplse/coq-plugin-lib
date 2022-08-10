@@ -6,8 +6,6 @@ open Utilities
 open Environ
 open Constr
 open Declarations
-open Decl_kinds
-open Constrextern
 open Contextutils
 open Evd
 open Names
@@ -33,15 +31,15 @@ let lookup_all_rels (env : env) : rel_declaration list =
 (* Return a name-type pair from the given rel_declaration. *)
 let rel_name_type rel : Name.t * types =
   match rel with
-  | CRD.LocalAssum (n, t) -> (n, t)
-  | CRD.LocalDef (n, _, t) -> (n, t)
+  | CRD.LocalAssum (n, t) -> (n.binder_name, t)
+  | CRD.LocalDef (n, _, t) -> (n.binder_name, t)
 
 
 (* Push a local binding to an environment *)
-let push_local (n, t) = push_rel CRD.(LocalAssum (n, t))
+let push_local (n, t) = push_rel CRD.(LocalAssum (get_rel_ctx_name n, t))
 
 (* Push a let-in definition to an environment *)
-let push_let_in (n, e, t) = push_rel CRD.(LocalDef(n, e, t))
+let push_let_in (n, e, t) = push_rel CRD.(LocalDef(get_rel_ctx_name n, e, t))
 
 (* Lookup n rels and remove then *)
 let lookup_pop (n : int) (env : env) =
@@ -53,7 +51,7 @@ let force_constant_body const_body =
   | Def const_def ->
     Mod_subst.force_constr const_def
   | OpaqueDef opaq ->
-    Opaqueproof.force_proof (Global.opaque_tables ()) opaq
+    fst (Opaqueproof.force_proof Library.indirect_accessor (Global.opaque_tables ()) opaq)
   | _ ->
     CErrors.user_err ~hdr:"force_constant_body"
       (Pp.str "An axiom has no defining term")

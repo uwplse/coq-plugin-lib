@@ -4,7 +4,6 @@ open Constr
 open Environ
 open Debruijn
 open Evd
-open Utilities
 open Checking
 open Inference
 open Stateutils

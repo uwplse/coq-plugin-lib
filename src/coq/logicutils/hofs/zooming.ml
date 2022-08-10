@@ -10,7 +10,6 @@ open Envutils
 open Contextutils
 open Debruijn
 open Sigmautils
-open Evd
 open Names
 
 (* --- Zooming --- *)
@@ -22,7 +21,7 @@ let rec zoom_n_prod env npm typ : env * types =
   else
     match kind typ with
     | Prod (n1, t1, b1) ->
-       zoom_n_prod (push_local (n1, t1) env) (npm - 1) b1
+       zoom_n_prod (push_local (n1.binder_name, t1) env) (npm - 1) b1
     | _ ->
        failwith "more parameters expected"
 
@@ -35,7 +34,7 @@ let zoom_n_lambda env npm trm : env * types =
 let rec zoom_lambda_term (env : env) (trm : types) : env * types =
   match kind trm with
   | Lambda (n, t, b) ->
-     zoom_lambda_term (push_local (n, t) env) b
+     zoom_lambda_term (push_local (n.binder_name, t) env) b
   | _ ->
      (env, trm)
 
@@ -43,7 +42,7 @@ let rec zoom_lambda_term (env : env) (trm : types) : env * types =
 let rec zoom_product_type (env : env) (typ : types) : env * types =
   match kind typ with
   | Prod (n, t, b) ->
-     zoom_product_type (push_local (n, t) env) b
+     zoom_product_type (push_local (n.binder_name, t) env) b
   | _ ->
      (env, typ)
 
@@ -56,7 +55,7 @@ let zoom_lambda_names env except trm : env * types * Id.t list =
     | limit ->
      match kind trm with
      | Lambda (n, t, b) ->
-        let name = fresh_name env n in
+        let name = fresh_name env n.binder_name in
         let env' = push_local (Name name, t) env in
         let env, trm, names =
           aux env' (limit - 1) b in
