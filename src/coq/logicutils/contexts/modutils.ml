@@ -25,9 +25,10 @@ let decompose_module_signature mod_sign =
  * The optional argument specifies functor parameters.
  *)
 let declare_module_structure ?(params=[]) ident declare_elements =
-  let mod_sign = Vernacexpr.Check [] in
+  let mod_sign = Declaremods.Check []in
   let mod_path =
-    Declaremods.start_module Modintern.interp_module_ast None ident params mod_sign
+    (* Declaremods.start_module None ident params Modintern.interp_module_ast mod_sign *)
+    Declaremods.start_module None ident params mod_sign
   in
   Dumpglob.dump_moddef mod_path "mod";
   declare_elements mod_path;
@@ -55,7 +56,7 @@ let fold_module_structure_by_decl init fold_const fold_ind mod_body =
     match mod_elem with
     | SFBconst const_body ->
       let const = Constant.make2 mod_path label in
-      if Refset.mem (ConstRef const) globset then
+      if Names.GlobRef.Set.mem (ConstRef const) globset then
         (globset, acc)
       else
         (globset, fold_const acc const const_body)
@@ -63,9 +64,10 @@ let fold_module_structure_by_decl init fold_const fold_ind mod_body =
       check_inductive_supported mind_body;
       let ind_body = mind_body.mind_packets.(0) in
       let ind = (MutInd.make2 mod_path label, 0) in
+      let env = Global.env () in (* might need to pass something other than an empty env *)
       let globset' =
-        List.map (Indrec.lookup_eliminator ind) ind_body.mind_kelim |>
-        List.fold_left (fun gset gref -> Refset.add gref gset) globset
+        List.map (Indrec.lookup_eliminator env ind) [ind_body.mind_kelim] |>
+        List.fold_left (fun gset gref -> Names.GlobRef.Set.add gref gset) globset
       in
       (globset', fold_ind acc ind (mind_body, ind_body))
     | SFBmodule mod_body ->
@@ -77,7 +79,7 @@ let fold_module_structure_by_decl init fold_const fold_ind mod_body =
         Pp.(str "Skipping nested module signature " ++ Label.print label);
       (globset, acc)
   in
-  fold_module_structure_by_elem (Refset.empty, init) fold_mod_elem mod_body |> snd
+  fold_module_structure_by_elem (Names.GlobRef.Set.empty, init) fold_mod_elem mod_body |> snd
 
 (*
  * Same as `fold_module_structure_by_decl` except a single step function
