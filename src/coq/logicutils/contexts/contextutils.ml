@@ -13,6 +13,21 @@ open Declarations
 
 module CRD = Context.Rel.Declaration
 module CND = Context.Named.Declaration
+
+(* --- Questions about declarations --- *)
+
+(* Is the rel declaration a local assumption? *)
+let is_rel_assum = CRD.is_local_assum
+
+(* Is the rel declaration a local definition? *)
+(* let is_rel_defin x = CRD.is_local_def (get_rel_ctx_name x) *)
+let is_rel_defin x = CRD.is_local_def x
+
+(* Is the named declaration an assumption? *)
+let is_named_assum = CND.is_local_assum
+
+(* Is the named declaration a definition? *)
+let is_named_defin = CND.is_local_def
                        
 (* --- Deconstructing declarations --- *)
 
@@ -34,21 +49,6 @@ let named_value decl = CND.get_value decl
 (* Get the type of a named declaration *)
 let named_type decl = CND.get_type decl
 
-(* --- Questions about declarations --- *)
-
-(* Is the rel declaration a local assumption? *)
-let is_rel_assum = CRD.is_local_assum
-
-(* Is the rel declaration a local definition? *)
-(* let is_rel_defin x = CRD.is_local_def (get_rel_ctx_name x) *)
-let is_rel_defin x = CRD.is_local_def x
-
-(* Is the named declaration an assumption? *)
-let is_named_assum = CND.is_local_assum
-
-(* Is the named declaration a definition? *)
-let is_named_defin = CND.is_local_def
-    
 (* --- Context manipulation tools --- *)
 
 (* Get relative context for a name *)
