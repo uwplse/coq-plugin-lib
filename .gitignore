@@ -23,3 +23,4 @@ plugin/Makefile
 plugin/.merlin
 *.out
 _opam
+src/plibrary.ml
