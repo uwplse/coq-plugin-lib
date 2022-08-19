@@ -20,7 +20,7 @@ type constr_transformer = env -> evar_map -> constr -> evar_map * constr
  * NOTE: Global side effects.
  *)
 val transform_constant :
-  Id.t -> constr_transformer -> 'opaque constant_body -> evar_map * Constant.t
+  Id.t -> constr_transformer -> Opaqueproof.opaque constant_body -> evar_map * Constant.t
 
 (*
  * Declare a new inductive family under the given name with the transformed type
