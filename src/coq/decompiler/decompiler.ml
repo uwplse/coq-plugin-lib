@@ -38,7 +38,7 @@ let run_tac env sigma (tac : unit Proofview.tactic) (goal : constr)
     : Goal.goal list * Evd.evar_map =
   let p = Proof.start ~name:(destVar goal) ~poly:true sigma [(env, EConstr.of_constr goal)] in
   let (p', _, _) = Proof.run_tactic env tac p in
-  let compact_p = Proof.data (Proof.compact p') in
+  let compact_p = Proof.data p' in
   (compact_p.goals, compact_p.sigma)
 
 (* Returns true if the given tactic solves the goal. *)
