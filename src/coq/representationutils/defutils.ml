@@ -53,7 +53,9 @@ let edeclare ident poly ~opaque sigma udecl body tyopt imps hook refresh =
   let univs = Evd.check_univ_decl ~poly sigma udecl in
   let ubinders = Evd.universe_binders sigma in
   let ce = Declare.definition_entry ?types:tyopt ~univs body in
-  DeclareDef.declare_definition ~name:ident ~scope:(Locality.enforce_locality_exp None Vernacexpr.NoDischarge) ~kind:(Decls.variable_kind ident) ?hook_data:hook ubinders ce imps (* todo: does this even work? *)
+  let scope = DeclareDef.Global Declare.ImportDefaultBehavior in
+  let kind = Decls.(IsDefinition Definition) in
+  DeclareDef.declare_definition ~name:ident ~scope ~kind ?hook_data:hook ubinders ce imps (* todo: check if we need poly *)
 
 (* Define a new Coq term *)
 let define_term ?typ (n : Id.t) (evm : evar_map) (trm : Constr.types) (refresh : bool) =
