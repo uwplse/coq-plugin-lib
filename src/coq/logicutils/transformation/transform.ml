@@ -112,7 +112,7 @@ let try_register_record mod_path (ind, ind') =
  *
  * TODO sigma handling, not sure how to do it here/if we need it
  *)
-let transform_module_structure ?(init=const GlobRef.Map.empty) ?(opaques=GlobRef.Set.empty) ident tr_constr mod_body =
+let transform_module_structure env ?(init=const GlobRef.Map.empty) ?(opaques=GlobRef.Set.empty) ident tr_constr mod_body =
   let open Modutils in
   let mod_path = mod_body.mod_mp in
   let mod_arity, mod_elems = decompose_module_signature mod_body.mod_type in
@@ -142,7 +142,22 @@ let transform_module_structure ?(init=const GlobRef.Map.empty) ?(opaques=GlobRef
         let sigma, const' = transform_constant ident tr_constr const_body in
         GlobRef.Map.add (ConstRef const) (ConstRef const') subst
     | SFBmind mind_body ->
-      Feedback.msg_warning (Pp.str "Mutually inductive types are not supported");
+      check_inductive_supported mind_body;
+      let ind = (MutInd.make2 mod_path label, 0) in
+      let ind_body = mind_body.mind_packets.(0) in
+      let sigma, ind' = transform_inductive ident tr_constr (mind_body, ind_body) in
+      try_register_record mod_path' (ind, ind');
+      let subst = GlobRef.Map.add (IndRef ind) (IndRef ind') subst in
+      (* 
+      let ncons = Array.length ind_body.mind_consnames in
+      let sorts = ind_body.mind_kelim in
+      let list_cons ind = List.init ncons (fun i -> ConstructRef (ind, i + 1)) in
+      let list_elim ind = Indrec.lookup_eliminator env ind sorts in
+      let subst = GlobRef.Map.add (list_cons ind) (list_cons ind') subst in
+      let subst = GlobRef.Map.add (list_elim ind) (list_elim ind') subst in *)
+      (* 
+      List.fold_right2 GlobRef.Map.add (list_cons ind) (list_cons ind') |>
+      List.fold_right2 GlobRef.Map.add (list_elim ind) (list_elim ind') *)
       subst
     | SFBmodule mod_body ->
       Feedback.msg_warning (Pp.str "Skipping nested module structure");

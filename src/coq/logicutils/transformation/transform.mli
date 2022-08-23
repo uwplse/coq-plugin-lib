@@ -45,4 +45,4 @@ val transform_inductive :
  * NOTE: Global side effects.
  *)
 val transform_module_structure :
-  ?init:(unit -> global_substitution) -> ?opaques:(Names.GlobRef.Set.t) -> Id.t -> constr_transformer -> module_body -> ModPath.t
+  env -> ?init:(unit -> global_substitution) -> ?opaques:(Names.GlobRef.Set.t) -> Id.t -> constr_transformer -> module_body -> ModPath.t
