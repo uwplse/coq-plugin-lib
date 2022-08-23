@@ -42,27 +42,19 @@ let edeclare ident poly ~opaque sigma udecl body tyopt imps hook refresh =
     else
       sigma
   in
-  let sigma = Evd.minimize_universes sigma in
-  let body = to_constr sigma body in
-  let tyopt = Option.map (to_constr sigma) tyopt in
-  let uvars_fold uvars c =
-    Univ.LSet.union uvars (Univops.universes_of_constr c) in
-  let uvars = List.fold_left uvars_fold Univ.LSet.empty
-    (Option.List.cons tyopt [body]) in
-  let sigma = Evd.restrict_universe_context sigma uvars in
-  let univs = Evd.check_univ_decl ~poly sigma udecl in
+  let sigma = Evd.minimize_universes sigma in (* todo: is this necessary/bad? *)
+  let sigma, ce = DeclareDef.prepare_definition ~allow_evars:false ~opaque ~poly sigma udecl ~types:tyopt ~body in
   let ubinders = Evd.universe_binders sigma in
-  let ce = Declare.definition_entry ?types:tyopt ~univs body in
   let scope = DeclareDef.Global Declare.ImportDefaultBehavior in
   let kind = Decls.(IsDefinition Definition) in
-  DeclareDef.declare_definition ~name:ident ~scope ~kind ?hook_data:hook ubinders ce imps (* todo: check if we need poly *)
+  DeclareDef.declare_definition ~name:ident ~scope ~kind ?hook_data:hook ubinders ce imps
 
 (* Define a new Coq term *)
 let define_term ?typ (n : Id.t) (evm : evar_map) (trm : Constr.types) (refresh : bool) =
   (* let k = (Global, Flags.is_universe_polymorphism(), Definition) in *)
   let poly = Attributes.is_universe_polymorphism() in
   let udecl = UState.default_univ_decl in
-  (* let nohook = Lemmas.mk_hook (fun _ x -> x) in *)
+  (* let nohook = DeclareDef.Hook.make (fun x -> x) in *)
   let etrm = EConstr.of_constr trm in
   let etyp = Option.map EConstr.of_constr typ in
   edeclare n poly ~opaque:false evm udecl etrm etyp [] None refresh
