@@ -16,6 +16,7 @@ open Substitution
 open Stateutils
 open Recordops
 open Record
+open Printing
 
 (* Type-sensitive transformation of terms *)
 type constr_transformer = env -> evar_map -> constr -> evar_map * constr
@@ -54,6 +55,7 @@ let transform_constant ident tr_constr const_body =
   let sigma = Evd.from_env env in
   let sigma, term' = tr_constr env sigma term in
   let sigma, type' = tr_constr env sigma const_body.const_type in
+  let open Printing in
   sigma, Globnames.destConstRef (define_term ~typ:type' ident sigma term' true)
 
 (*
@@ -97,6 +99,18 @@ let try_register_record mod_path (ind, ind') =
          (Pp.str "Failed to register projections for transformed record"))
   with Not_found ->
     ()
+
+let lookup_eliminator_error_handling ind sorts = 
+  let env = Global.env () in
+  List.filter_map (fun x -> x)
+  (List.map 
+    (fun x -> 
+      Feedback.msg_warning (Sorts.pr_sort_family (x));
+      try Some (Indrec.lookup_eliminator env ind x)
+      with
+      | _ -> None
+    )
+    sorts)
 
 (*
  * Declare a new module structure under the given name with the compositionally
@@ -148,17 +162,34 @@ let transform_module_structure env ?(init=const GlobRef.Map.empty) ?(opaques=Glo
       let sigma, ind' = transform_inductive ident tr_constr (mind_body, ind_body) in
       try_register_record mod_path' (ind, ind');
       let subst = GlobRef.Map.add (IndRef ind) (IndRef ind') subst in
-      (* 
       let ncons = Array.length ind_body.mind_consnames in
-      let sorts = ind_body.mind_kelim in
       let list_cons ind = List.init ncons (fun i -> ConstructRef (ind, i + 1)) in
-      let list_elim ind = Indrec.lookup_eliminator env ind sorts in
-      let subst = GlobRef.Map.add (list_cons ind) (list_cons ind') subst in
-      let subst = GlobRef.Map.add (list_elim ind) (list_elim ind') subst in *)
-      (* 
+      (* let sorts = List.map Sorts.family [Sorts.sprop; Sorts.set; Sorts.prop; Sorts.type1] in *)
+      let sorts = List.map Sorts.family [Sorts.sprop; Sorts.prop; Sorts.set; Sorts.type1] in
+      let list_elim ind_arg = lookup_eliminator_error_handling ind_arg sorts in
+      Feedback.msg_warning (Names.MutInd.print (fst ind));
+      Feedback.msg_warning (Pp.str ("ind level " ^ (string_of_int (snd ind))));
+      Feedback.msg_warning (Names.MutInd.print (fst ind'));
+      Feedback.msg_warning (Pp.str ("ind level " ^ (string_of_int (snd ind'))));
+      Feedback.msg_warning (Pp.str (string_of_int (List.length (list_cons ind))));
+      Feedback.msg_warning (Pp.str (string_of_int (List.length (list_elim ind))));
+      Feedback.msg_warning (Pp.str (string_of_int (List.length (list_cons ind'))));
+      Feedback.msg_warning (Pp.str (string_of_int (List.length (list_elim ind'))));
+      GlobRef.Map.add (IndRef ind) (IndRef ind') subst |>
       List.fold_right2 GlobRef.Map.add (list_cons ind) (list_cons ind') |>
-      List.fold_right2 GlobRef.Map.add (list_elim ind) (list_elim ind') *)
-      subst
+      List.fold_right2 GlobRef.Map.add (list_elim ind) (list_elim ind')
+      (* let sorts = List.map (fun x -> x ind_body.mind_kelim) sort_funcs in *)
+      (* let sorts = List.filter (fun x -> match Sorts.relevance_of_sort_family x with 
+                                        | Sorts.Relevant -> true
+                                        | Sorts.Irrelevant -> false 
+                              )  *)
+      (* List.filter (fun x -> Sorts.family_leq x ind_body.mind_kelim) *)
+      (* Feedback.msg_warning (Pp.str (string_of_int (List.length sorts))); *)
+      (*
+      let subst = GlobRef.Map.add (IndRef ind) (IndRef ind') subst in 
+      let subst = List.fold_right2 GlobRef.Map.add (list_cons ind) (list_cons ind') subst in
+      let subst = List.fold_right2 GlobRef.Map.add (list_elim ind) (list_elim ind') subst in 
+      subst *)
     | SFBmodule mod_body ->
       Feedback.msg_warning (Pp.str "Skipping nested module structure");
       subst

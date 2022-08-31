@@ -15,6 +15,8 @@ open Envutils
 open Contextutils
 open Inference
 open Evd
+open Entries
+open DeclareInd
 
 (* Don't support mutually inductive or coinductive types yet (TODO move) *)
 let check_inductive_supported mutind_body : unit =
@@ -196,6 +198,27 @@ let open_inductive ?(global=false) env (mind_body, ind_body) =
   let ctors_typ = Array.map (recompose_prod_assum arity_ctx) ind_body.mind_user_lc in
   env, univs, subst_univs arity, Array.map_to_list subst_univs ctors_typ
 
+
+(* Internal func from the Coq kernel, for debugging. This func used to be exposed, but now is hidden.
+   TODO: remove 
+let declare_mind mie =
+  let id = match mie.mind_entry_inds with
+  | ind::_ -> ind.mind_entry_typename
+  | [] -> CErrors.anomaly (Pp.str "cannot declare an empty list of inductives.") in
+  let map_names mip = (mip.mind_entry_typename, mip.mind_entry_consnames) in
+  let names = List.map map_names mie.mind_entry_inds in
+  List.iter (fun (typ, cons) -> Declare.check_exists typ;
+  List.iter Declare.check_exists cons) names;
+  let _kn' = Global.add_mind id mie in
+  let (sp,kn as oname) = Lib.add_leaf id (DeclareInd.inInductive { ind_names = names }) in
+  if is_unsafe_typing_flags() then feedback_axiom ();
+  let mind = Global.mind_of_delta_kn kn in
+  let isprim = declare_projections mie.mind_entry_universes mind in
+  Impargs.declare_mib_implicits mind;
+  declare_inductive_argument_scopes mind mie;
+  oname, isprim
+*)
+
 let declare_inductive typename consnames template univs nparam arity constypes =
   let open Entries in
   let params, arity = Term.decompose_prod_n_assum nparam arity in
@@ -217,7 +240,11 @@ let declare_inductive typename consnames template univs nparam arity constypes =
       mind_entry_private = None }
   in
   let mind = DeclareInd.declare_mutual_inductive_with_eliminations mind_entry UnivNames.empty_binders [] in
-  (* let mind = MutInd.make1 ker_name in *)
+  (mind, 0)
+  (* 
+  let ((_, ker_name), _) = declare_mind mind_entry in
+  let mind = MutInd.make1 ker_name in
   let ind = (mind, 0) in
   Indschemes.declare_default_schemes mind;
   ind
+  *)
