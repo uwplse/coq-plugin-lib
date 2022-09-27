@@ -103,7 +103,7 @@ let try_register_record mod_path (ind, ind') =
     ()
 
 let lookup_eliminator_error_handling ind sorts = 
-  Feedback.msg_warning (Pp.(str "start "));
+  (* Feedback.msg_warning (Pp.(str "start ")); *)
   let env = Global.env () in
   List.filter_map (fun x -> x)
   (List.map 
