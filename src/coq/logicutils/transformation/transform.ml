@@ -4,6 +4,8 @@
  * TODO move out some module stuff etc.
  *)
 
+(* open Stdlib
+open Map *)
 open Util
 open Environ
 open Constr
@@ -101,12 +103,13 @@ let try_register_record mod_path (ind, ind') =
     ()
 
 let lookup_eliminator_error_handling ind sorts = 
+  Feedback.msg_warning (Pp.(str "start "));
   let env = Global.env () in
   List.filter_map (fun x -> x)
   (List.map 
     (fun x -> 
-      Feedback.msg_warning (Sorts.pr_sort_family (x));
-      try Some (Indrec.lookup_eliminator env ind x)
+      (* try Some (x, Indrec.lookup_eliminator env ind x) *)
+      try Some (x, Indrec.lookup_eliminator env ind x)
       with
       | _ -> None
     )
@@ -167,6 +170,17 @@ let transform_module_structure env ?(init=const GlobRef.Map.empty) ?(opaques=Glo
       (* let sorts = List.map Sorts.family [Sorts.sprop; Sorts.set; Sorts.prop; Sorts.type1] in *)
       let sorts = List.map Sorts.family [Sorts.sprop; Sorts.prop; Sorts.set; Sorts.type1] in
       let list_elim ind_arg = lookup_eliminator_error_handling ind_arg sorts in
+
+      let list_elim_ind = list_elim ind in
+      let list_elim_ind' = list_elim ind' in
+      let list_elim_ind_map = Map.S.of_seq list_elim_ind in 
+      let list_elim_ind'_map = Map.S.of_seq list_elim_ind' in 
+      let list_elim_ind_sorts = Set.S.of_seq (fst (unzip list_elim_ind)) in
+      let list_elim_ind'_sorts = Set.S.of_seq (fst (unzip list_elim_ind')) in
+      let common_sorts = inter (list_elim_ind_sorts list_elim_ind'_sorts) in 
+      let list_elim_ind_winnowed = Map.S.filter (fun x -> Set.S.mem x common_sort) list_elim_ind_map in
+      let list_elim_ind'_winnowed = Map.S.filter (fun x -> Set.S.mem x common_sort) list_elim_ind'_map in
+      (*
       Feedback.msg_warning (Names.MutInd.print (fst ind));
       Feedback.msg_warning (Pp.str ("ind level " ^ (string_of_int (snd ind))));
       Feedback.msg_warning (Names.MutInd.print (fst ind'));
@@ -175,9 +189,7 @@ let transform_module_structure env ?(init=const GlobRef.Map.empty) ?(opaques=Glo
       Feedback.msg_warning (Pp.str (string_of_int (List.length (list_elim ind))));
       Feedback.msg_warning (Pp.str (string_of_int (List.length (list_cons ind'))));
       Feedback.msg_warning (Pp.str (string_of_int (List.length (list_elim ind'))));
-      GlobRef.Map.add (IndRef ind) (IndRef ind') subst |>
-      List.fold_right2 GlobRef.Map.add (list_cons ind) (list_cons ind') |>
-      List.fold_right2 GlobRef.Map.add (list_elim ind) (list_elim ind')
+      *)
       (* let sorts = List.map (fun x -> x ind_body.mind_kelim) sort_funcs in *)
       (* let sorts = List.filter (fun x -> match Sorts.relevance_of_sort_family x with 
                                         | Sorts.Relevant -> true
@@ -190,6 +202,14 @@ let transform_module_structure env ?(init=const GlobRef.Map.empty) ?(opaques=Glo
       let subst = List.fold_right2 GlobRef.Map.add (list_cons ind) (list_cons ind') subst in
       let subst = List.fold_right2 GlobRef.Map.add (list_elim ind) (list_elim ind') subst in 
       subst *)
+      (*
+      GlobRef.Map.add (IndRef ind) (IndRef ind') subst |>
+      List.fold_right2 GlobRef.Map.add (list_cons ind) (list_cons ind') |>
+      List.fold_right2 GlobRef.Map.add (list_elim ind) (list_elim ind')
+      *)
+      GlobRef.Map.add (IndRef ind) (IndRef ind') subst |>
+      List.fold_right2 GlobRef.Map.add (list_cons ind) (list_cons ind') |>
+      List.fold_right2 GlobRef.Map.add (list_elim_ind_winnowed) (list_elim_ind'_winnowed)
     | SFBmodule mod_body ->
       Feedback.msg_warning (Pp.str "Skipping nested module structure");
       subst
