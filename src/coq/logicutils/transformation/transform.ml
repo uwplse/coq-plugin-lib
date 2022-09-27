@@ -4,8 +4,8 @@
  * TODO move out some module stuff etc.
  *)
 
-(* open Stdlib
-open Map *)
+open Stdlib
+open Map
 open Util
 open Environ
 open Constr
@@ -173,13 +173,13 @@ let transform_module_structure env ?(init=const GlobRef.Map.empty) ?(opaques=Glo
 
       let list_elim_ind = list_elim ind in
       let list_elim_ind' = list_elim ind' in
-      let list_elim_ind_map = Map.S.of_seq list_elim_ind in 
-      let list_elim_ind'_map = Map.S.of_seq list_elim_ind' in 
-      let list_elim_ind_sorts = Set.S.of_seq (fst (unzip list_elim_ind)) in
-      let list_elim_ind'_sorts = Set.S.of_seq (fst (unzip list_elim_ind')) in
-      let common_sorts = inter (list_elim_ind_sorts list_elim_ind'_sorts) in 
-      let list_elim_ind_winnowed = Map.S.filter (fun x -> Set.S.mem x common_sort) list_elim_ind_map in
-      let list_elim_ind'_winnowed = Map.S.filter (fun x -> Set.S.mem x common_sort) list_elim_ind'_map in
+      (* let list_elim_ind_map = Map.Make.of_seq list_elim_ind in 
+      let list_elim_ind'_map = Map.Make.of_seq list_elim_ind' in *)
+      let list_elim_ind_sorts = List.map fst list_elim_ind in
+      let list_elim_ind'_sorts = List.map fst list_elim_ind' in
+      let common_sorts = List.filter (fun x -> List.exists (fun y -> Sorts.family_equal x y) list_elim_ind_sorts) list_elim_ind'_sorts in 
+      let list_elim_ind_winnowed = List.map snd (List.filter (fun (x, y) -> List.exists (fun z -> Sorts.family_equal x z) common_sorts) list_elim_ind) in
+      let list_elim_ind'_winnowed = List.map snd (List.filter (fun (x, y) -> List.exists (fun z -> Sorts.family_equal x z) common_sorts) list_elim_ind') in
       (*
       Feedback.msg_warning (Names.MutInd.print (fst ind));
       Feedback.msg_warning (Pp.str ("ind level " ^ (string_of_int (snd ind))));
