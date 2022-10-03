@@ -13,6 +13,7 @@ open Constrextern
 
 TODO do we need to return the updated evar_map? *)
 let edeclare ident poly ~opaque sigma udecl body tyopt imps hook refresh =
+  let open EConstr in
   (* XXX: "Standard" term construction combinators such as `mkApp`
      don't add any universe constraints that may be needed later for
      the kernel to check that the term is correct.

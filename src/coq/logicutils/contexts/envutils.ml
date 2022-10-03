@@ -6,12 +6,13 @@ open Utilities
 open Environ
 open Constr
 open Declarations
-open Contextutils
 open Evd
 open Names
 open Nameutils
 open Stateutils
-   
+
+open Contextutils
+
 (* Look up all indexes from is in env *)
 let lookup_rels (is : int list) (env : env) : rel_declaration list =
  List.map (fun i -> lookup_rel i env) is
