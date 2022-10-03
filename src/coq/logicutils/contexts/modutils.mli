@@ -38,5 +38,5 @@ val fold_module_structure_by_glob : 'a -> ('a -> Names.evaluable_global_referenc
 (*
  * Same as `fold_module_structure_by_glob` except an implicit unit accumulator.
  *)
-(* val iter_module_structure_by_glob : (evaluable_global_reference -> unit) -> module_body -> unit *)
+val iter_module_structure_by_glob : (evaluable_global_reference -> unit) -> module_body -> unit
 val fold_module_structure_by_glob : 'a -> ('a -> Globnames.global_reference -> 'a) -> 'b Declarations.generic_module_body -> 'a
