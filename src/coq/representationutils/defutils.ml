@@ -43,7 +43,7 @@ let edeclare ident poly ~opaque sigma udecl body tyopt imps hook refresh =
       sigma
   in
   let sigma = Evd.minimize_universes sigma in (* todo: is this necessary/bad? *)
-  let sigma, ce = DeclareDef.prepare_definition ~allow_evars:false ~opaque ~poly sigma udecl ~types:tyopt ~body in
+  let sigma, ce = DeclareDef.prepare_definition ~allow_evars:true ~opaque ~poly sigma udecl ~types:tyopt ~body in
   let ubinders = Evd.universe_binders sigma in
   let scope = DeclareDef.Global Declare.ImportDefaultBehavior in
   let kind = Decls.(IsDefinition Definition) in
