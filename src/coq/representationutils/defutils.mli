@@ -7,6 +7,7 @@ open Names
 open Evd
 open Environ
 open Constrexpr
+open Globnames
 
 (* --- Defining Coq terms --- *)
 

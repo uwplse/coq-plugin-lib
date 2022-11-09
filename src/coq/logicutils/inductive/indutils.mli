@@ -69,9 +69,9 @@ val arity_of_ind_body : one_inductive_body -> types
  * universe levels, and return the universe-synchronized environment. If global
  * is true, the global environment is also synchronized with the new universe
  * levels and constraints. A descriptor for the inductive type's universe
- * properties is also returned.
+ * properties is also returned. Mutual inductive types are not supported.
  *)
-val open_inductive : ?global:bool -> env -> Inductive.mind_specif -> env * Entries.inductive_universes * types * types list
+val open_inductive : ?global:bool -> env -> Inductive.mind_specif -> env * Entries.universes_entry * types * types list
 
 (*
  * Declare a new inductive type in the global environment. Note that the arity
@@ -79,5 +79,5 @@ val open_inductive : ?global:bool -> env -> Inductive.mind_specif -> env * Entri
  * a recursive reference and then all parameters (i.e.,
  * forall (I : arity) (P : params), ...).
  *)
-val declare_inductive : Id.t -> Id.t list -> bool -> Entries.inductive_universes -> int -> types -> types list -> inductive
+val declare_inductive : Id.t -> Id.t list -> bool -> Entries.universes_entry -> int -> types -> types list -> inductive
 

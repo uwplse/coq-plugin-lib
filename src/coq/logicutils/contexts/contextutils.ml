@@ -20,7 +20,8 @@ module CND = Context.Named.Declaration
 let is_rel_assum = CRD.is_local_assum
 
 (* Is the rel declaration a local definition? *)
-let is_rel_defin = CRD.is_local_def
+(* let is_rel_defin x = CRD.is_local_def (get_rel_ctx_name x) *)
+let is_rel_defin x = CRD.is_local_def x
 
 (* Is the named declaration an assumption? *)
 let is_named_assum = CND.is_local_assum
@@ -47,14 +48,25 @@ let named_value decl = CND.get_value decl
 
 (* Get the type of a named declaration *)
 let named_type decl = CND.get_type decl
-    
+
+(* --- Context manipulation tools --- *)
+
+(* Get relative context for a name *)
+let get_rel_ctx_name name = 
+  match name with (* handle if anon or not *)
+  | Anonymous -> Context.anonR
+  | Name idt -> Context.nameR idt
+
+(* Get relative context for a declaration *)
+let get_rel_ctx decl = get_rel_ctx_name (rel_name decl)
+
 (* --- Constructing declarations --- *)
 
 (* Make the rel declaration for a local assumption *)
-let rel_assum (name, typ) = CRD.LocalAssum (name, typ)
+let rel_assum (name, typ) = CRD.LocalAssum (get_rel_ctx_name name, typ)
 
 (* Make the rel declaration for a local definition *)
-let rel_defin (name, def, typ) = CRD.LocalDef (name, def, typ)
+let rel_defin (name, def, typ) = CRD.LocalDef (get_rel_ctx_name name, def, typ)
 
 (* Make the named declaration for a local assumption *)
 let named_assum (id, typ) = CND.LocalAssum (id, typ)
@@ -104,7 +116,7 @@ let smash_prod_assum ctxt body =
     (fun body decl ->
        match rel_value decl with
        | Some defn -> Vars.subst1 defn body
-       | None -> mkProd (rel_name decl, rel_type decl, body))
+       | None -> mkProd (get_rel_ctx decl, rel_type decl, body))
     ~init:body
     ctxt
 
@@ -117,7 +129,7 @@ let smash_lam_assum ctxt body =
     (fun body decl ->
        match rel_value decl with
        | Some defn -> Vars.subst1 defn body
-       | None -> mkLambda (rel_name decl, rel_type decl, body))
+       | None -> mkLambda (get_rel_ctx decl, rel_type decl, body))
     ~init:body
     ctxt
 
@@ -127,11 +139,12 @@ let smash_lam_assum ctxt body =
  *)
 let decompose_prod_n_zeta n term =
   assert (n >= 0);
+  let open Context in
   let rec aux n ctxt body =
     if n > 0 then
       match Constr.kind body with
       | Prod (name, param, body) ->
-        aux (n - 1) (Context.Rel.add (rel_assum (name, param)) ctxt) body
+        aux (n - 1) (Rel.add (rel_assum (name.binder_name, param)) ctxt) body
       | LetIn (name, def_term, def_type, body) ->
         aux n ctxt (Vars.subst1 def_term body)
       | _ ->
@@ -139,7 +152,7 @@ let decompose_prod_n_zeta n term =
     else
       ctxt, body
   in
-  aux n Context.Rel.empty term
+  aux n Rel.empty term
 
 (*
  * Decompose the first n lambda bindings, zeta-reducing let bindings to reveal
@@ -147,11 +160,12 @@ let decompose_prod_n_zeta n term =
  *)
 let decompose_lam_n_zeta n term =
   assert (n >= 0);
+  let open Context in
   let rec aux n ctxt body =
     if n > 0 then
       match Constr.kind body with
       | Lambda (name, param, body) ->
-        aux (n - 1) (Context.Rel.add (rel_assum (name, param)) ctxt) body
+        aux (n - 1) (Rel.add (rel_assum (name.binder_name, param)) ctxt) body
       | LetIn (name, def_term, def_type, body) ->
         Vars.subst1 def_term body |> aux n ctxt
       | _ ->
@@ -159,7 +173,7 @@ let decompose_lam_n_zeta n term =
     else
       ctxt, body
   in
-  aux n Context.Rel.empty term
+  aux n Rel.empty term
 
 (* Bind the declarations of a local context as product/let-in bindings *)
 let recompose_prod_assum decls term =
@@ -200,8 +214,8 @@ let bindings_for_inductive env mutind_body ind_bodies : rel_declaration list =
        (fun i ind_body ->
          let name_id = ind_body.mind_typename in
          let typ = type_of_inductive env i mutind_body in
-         CRD.LocalAssum (Name name_id, typ))
-       ind_bodies)
+         CRD.LocalAssum (Context.nameR name_id, typ))
+       mutind_body.mind_packets)
 
 (*
  * Fixpoints
@@ -210,7 +224,8 @@ let bindings_for_fix (names : name array) (typs : types array) : rel_declaration
   Array.to_list
     (CArray.map2_i
        (fun i name typ -> CRD.LocalAssum (name, Vars.lift i typ))
-       names typs)
+       (Array.map get_rel_ctx_name names)
+       typs)
 
 (* --- Combining contexts --- *)
 

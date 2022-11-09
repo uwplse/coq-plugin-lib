@@ -35,8 +35,18 @@ val define_rel_decl :
 (*
  * Construct a named assumption/definition
  *)
+val named_assum : Id.t Context.binder_annot * 'types -> ('constr, 'types) CND.pt
+val named_defin : Id.t Context.binder_annot * 'constr * 'types -> ('constr, 'types) CND.pt
+
+(* Old version, breaking change. TODO: make sure this doesn't affect any downstream plugins
 val named_assum : Id.t * 'types -> ('constr, 'types) CND.pt
 val named_defin : Id.t * 'constr * 'types -> ('constr, 'types) CND.pt
+*)
+
+(* Context name/decl manipulation *)
+val get_rel_ctx_name : Names.name -> Names.Name.t Context.binder_annot
+
+val get_rel_ctx : ('constr, 'types) CRD.pt -> Names.Name.t Context.binder_annot
 
 (* --- Questions about declarations --- *)
 

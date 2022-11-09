@@ -14,7 +14,7 @@ let coq_init_specif =
 
 (* sigma types *)
 let sigT : types =
-  mkInd (MutInd.make1 (KerName.make2 coq_init_specif (Label.make "sigT")), 0)
+  mkInd (MutInd.make1 (Names.KerName.make coq_init_specif (Label.make "sigT")), 0)
 
 (* Introduction for sigma types *)
 let existT : types =

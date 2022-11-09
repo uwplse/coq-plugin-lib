@@ -24,7 +24,7 @@ module CRD = Context.Rel.Declaration
 let pr_global_as_constr gref =
   let env = Global.env () in
   let sigma = Evd.from_env env in
-  pr_constr_env env sigma (Universes.constr_of_global gref)
+  pr_constr_env env sigma (UnivGen.constr_of_monomorphic_global gref)
 
 (* Using pp, prints directly to a string *)
 let print_to_string (pp : formatter -> 'a -> unit) (trm : 'a) : string =
@@ -66,11 +66,12 @@ let sort_as_string s =
 
 (* Prints a term *)
 let rec term_as_string (env : env) (trm : types) =
+  let open Context in
   match kind trm with
   | Rel i ->
      (try
        let (n, _, _) = CRD.to_tuple @@ lookup_rel i env in
-       Printf.sprintf "(%s [Rel %d])" (name_as_string n) i
+       Printf.sprintf "(%s [Rel %d])" (name_as_string n.binder_name) i
      with
        Not_found -> Printf.sprintf "(Unbound_Rel %d)" i)
   | Var v ->
@@ -84,22 +85,22 @@ let rec term_as_string (env : env) (trm : types) =
   | Prod (n, t, b) ->
      Printf.sprintf
        "(Π (%s : %s) . %s)"
-       (name_as_string n)
+       (name_as_string n.binder_name)
        (term_as_string env t)
-       (term_as_string (push_local (n, t) env) b)
+       (term_as_string (push_local (n.binder_name, t) env) b)
   | Lambda (n, t, b) ->
      Printf.sprintf
        "(λ (%s : %s) . %s)"
-       (name_as_string n)
+       (name_as_string n.binder_name)
        (term_as_string env t)
-       (term_as_string (push_local (n, t) env) b)
+       (term_as_string (push_local (n.binder_name, t) env) b)
   | LetIn (n, trm, typ, e) ->
      Printf.sprintf
        "(let (%s : %s) := %s in %s)"
-       (name_as_string n)
+       (name_as_string n.binder_name)
        (term_as_string env typ)
        (term_as_string env trm)
-       (term_as_string (push_let_in (n, trm, typ) env) e)
+       (term_as_string (push_let_in (n.binder_name, trm, typ) env) e)
   | App (f, xs) ->
      Printf.sprintf
        "(%s %s)"
@@ -119,14 +120,15 @@ let rec term_as_string (env : env) (trm : types) =
      let name_id = (ind_bodies.(i_index)).mind_typename in
      Id.to_string name_id
   | Fix ((is, i), (ns, ts, ds)) ->
-     let env_fix = push_rel_context (bindings_for_fix ns ds) env in
+     let ns_binder_name = Array.map (fun x -> x.binder_name) ns in
+     let env_fix = push_rel_context (bindings_for_fix ns_binder_name ds) env in
      String.concat
        " with "
        (map3
           (fun n t d ->
             Printf.sprintf
              "(Fix %s : %s := %s)"
-             (name_as_string n)
+             (name_as_string n.binder_name)
              (term_as_string env t)
              (term_as_string env_fix d))
           (Array.to_list ns)
@@ -180,7 +182,7 @@ let env_as_string (env : env) : string =
          let (n, b, t) = CRD.to_tuple @@ lookup_rel i env in
          Printf.sprintf
            "%s (Rel %d): %s"
-           (name_as_string n)
+           (name_as_string n.binder_name)
            i
            (term_as_string (pop_rel_context i env) t))
        all_relis)

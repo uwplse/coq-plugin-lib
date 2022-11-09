@@ -20,7 +20,7 @@ type constr_transformer = env -> evar_map -> constr -> evar_map * constr
  * NOTE: Global side effects.
  *)
 val transform_constant :
-  Id.t -> constr_transformer -> constant_body -> evar_map * Constant.t
+  Id.t -> constr_transformer -> Opaqueproof.opaque constant_body -> evar_map * Constant.t
 
 (*
  * Declare a new inductive family under the given name with the transformed type
@@ -45,4 +45,4 @@ val transform_inductive :
  * NOTE: Global side effects.
  *)
 val transform_module_structure :
-  ?init:(unit -> global_substitution) -> ?opaques:(Globnames.Refset.t) -> Id.t -> constr_transformer -> module_body -> ModPath.t
+  env -> ?init:(unit -> global_substitution) -> ?opaques:(Names.GlobRef.Set.t) -> Id.t -> constr_transformer -> module_body -> ModPath.t

@@ -15,6 +15,8 @@ open Envutils
 open Contextutils
 open Inference
 open Evd
+open Entries
+open DeclareInd
 
 (* Don't support mutually inductive or coinductive types yet (TODO move) *)
 let check_inductive_supported mutind_body : unit =
@@ -31,7 +33,7 @@ let check_inductive_supported mutind_body : unit =
 let inductive_of_elim (env : env) (pc : pconstant) : MutInd.t option =
   let (c, u) = pc in
   let kn = Constant.canonical c in
-  let (modpath, dirpath, label) = KerName.repr kn in
+  let (modpath, label) = KerName.repr kn in
   let rec try_find_ind is_rev =
     try
       let label_string = Label.to_string label in
@@ -42,7 +44,7 @@ let inductive_of_elim (env : env) (pc : pconstant) : MutInd.t option =
       if (suffix = "_ind" || suffix = "_rect" || suffix = "_rec" || suffix = "_ind_r") then
         let ind_label_string = String.sub label_string 0 split_index in
         let ind_label = Label.of_id (Id.of_string_soft ind_label_string) in
-        let ind_name = MutInd.make1 (KerName.make modpath dirpath ind_label) in
+        let ind_name = MutInd.make1 (KerName.make modpath ind_label) in
         let _ = lookup_mind ind_name env in
         Some ind_name
       else
@@ -78,7 +80,10 @@ let is_elim (env : env) (trm : types) =
 
 (* Lookup the eliminator over the type sort *)
 let type_eliminator (env : env) (ind : inductive) =
-  Universes.constr_of_global (Indrec.lookup_eliminator ind InType)
+  UnivGen.constr_of_monomorphic_global (Indrec.lookup_eliminator env ind InType)
+  (* TODO: Does this need to support polymorphic (and not just monomorphic)?
+     E.g.: Evd.fresh_global env (Evd.from_env env) (Indrec.lookup_eliminator env ind InType) 
+   *)
 
 (* Applications of eliminators *)
 type elim_app =
@@ -125,9 +130,9 @@ let rec num_ihs env sigma rec_typ typ =
      let t_red = reduce_stateless reduce_term env sigma t in
      if is_or_applies rec_typ t_red then
        let (n_b_t, b_t, b_b) = destProd b in
-       1 + num_ihs (push_local (n, t) (push_local (n_b_t, b_t) env)) sigma rec_typ b_b
+       1 + num_ihs (push_local (n.binder_name, t) (push_local (n_b_t.binder_name, b_t) env)) sigma rec_typ b_b
      else
-       num_ihs (push_local (n, t) env) sigma rec_typ b
+       num_ihs (push_local (n.binder_name, t) env) sigma rec_typ b
   | _ ->
      0
 
@@ -147,6 +152,7 @@ let arity_of_ind_body ind_body =
     recompose_prod_assum ind_body.mind_arity_ctxt sort
 
 (* Create an Entries.local_entry from a Rel.Declaration.t *)
+(*
 let make_ind_local_entry decl =
   let entry =
     match decl with
@@ -156,37 +162,62 @@ let make_ind_local_entry decl =
   match CRD.get_name decl with
   | Name.Name id -> (id, entry)
   | Name.Anonymous -> failwith "Parameters to an inductive type may not be anonymous"
+*)
 
 (* Instantiate an abstract universe context *)
 let inst_abs_univ_ctx abs_univ_ctx =
   (* Note that we're creating *globally* fresh universe levels. *)
-  Universes.fresh_instance_from_context abs_univ_ctx |> Univ.UContext.make
+   UnivGen.fresh_instance abs_univ_ctx
 
 (* Instantiate an abstract_inductive_universes into an Entries.inductive_universes with Univ.UContext.t (TODO do we do something with evar_map here?) *)
 let make_ind_univs_entry = function
-  | Monomorphic_ind univ_ctx_set ->
+  | Monomorphic univ_ctx_set ->
     let univ_ctx = Univ.UContext.empty in
-    (Entries.Monomorphic_ind_entry univ_ctx_set, univ_ctx)
-  | Polymorphic_ind abs_univ_ctx ->
-    let univ_ctx = inst_abs_univ_ctx abs_univ_ctx in
-    (Entries.Polymorphic_ind_entry univ_ctx, univ_ctx)
+    (Entries.Monomorphic_entry univ_ctx_set, univ_ctx)
+  | Polymorphic abs_univ_ctx ->
+    let univ_ctx_repr = (Univ.AUContext.repr abs_univ_ctx) in
+    (Entries.Polymorphic_entry 
+      (Univ.AUContext.names abs_univ_ctx, univ_ctx_repr), univ_ctx_repr)
+(*
   | Cumulative_ind abs_univ_cumul ->
     let abs_univ_ctx = Univ.ACumulativityInfo.univ_context abs_univ_cumul in
     let univ_ctx = inst_abs_univ_ctx abs_univ_ctx in
     let univ_var = Univ.ACumulativityInfo.variance abs_univ_cumul in
     let univ_cumul = Univ.CumulativityInfo.make (univ_ctx, univ_var) in
     (Entries.Cumulative_ind_entry univ_cumul, univ_ctx)
+*)
 
 let open_inductive ?(global=false) env (mind_body, ind_body) =
   let univs, univ_ctx = make_ind_univs_entry mind_body.mind_universes in
   let subst_univs = Vars.subst_instance_constr (Univ.UContext.instance univ_ctx) in
   let env = Environ.push_context univ_ctx env in
   if global then
-    Global.push_context false univ_ctx;
+    Global.push_context_set false (Univ.ContextSet.of_context univ_ctx);
   let arity = arity_of_ind_body ind_body in
-  let arity_ctx = [CRD.LocalAssum (Name.Anonymous, arity)] in
+  let arity_ctx = [CRD.LocalAssum (get_rel_ctx_name Name.Anonymous, arity)] in
   let ctors_typ = Array.map (recompose_prod_assum arity_ctx) ind_body.mind_user_lc in
   env, univs, subst_univs arity, Array.map_to_list subst_univs ctors_typ
+
+
+(* Internal func from the Coq kernel, for debugging. This func used to be exposed, but now is hidden.
+   TODO: remove 
+let declare_mind mie =
+  let id = match mie.mind_entry_inds with
+  | ind::_ -> ind.mind_entry_typename
+  | [] -> CErrors.anomaly (Pp.str "cannot declare an empty list of inductives.") in
+  let map_names mip = (mip.mind_entry_typename, mip.mind_entry_consnames) in
+  let names = List.map map_names mie.mind_entry_inds in
+  List.iter (fun (typ, cons) -> Declare.check_exists typ;
+  List.iter Declare.check_exists cons) names;
+  let _kn' = Global.add_mind id mie in
+  let (sp,kn as oname) = Lib.add_leaf id (DeclareInd.inInductive { ind_names = names }) in
+  if is_unsafe_typing_flags() then feedback_axiom ();
+  let mind = Global.mind_of_delta_kn kn in
+  let isprim = declare_projections mie.mind_entry_universes mind in
+  Impargs.declare_mib_implicits mind;
+  declare_inductive_argument_scopes mind mie;
+  oname, isprim
+*)
 
 let declare_inductive typename consnames template univs nparam arity constypes =
   let open Entries in
@@ -202,13 +233,18 @@ let declare_inductive typename consnames template univs nparam arity constypes =
   let mind_entry =
     { mind_entry_record = None;
       mind_entry_finite = Declarations.Finite;
-      mind_entry_params = List.map make_ind_local_entry params;
+      mind_entry_params = params;
       mind_entry_inds = [ind_entry];
       mind_entry_universes = univs;
+      mind_entry_variance = None;
       mind_entry_private = None }
   in
-  let ((_, ker_name), _) = Declare.declare_mind mind_entry in
+  let mind = DeclareInd.declare_mutual_inductive_with_eliminations mind_entry UnivNames.empty_binders [] in
+  (mind, 0)
+  (* 
+  let ((_, ker_name), _) = declare_mind mind_entry in
   let mind = MutInd.make1 ker_name in
   let ind = (mind, 0) in
   Indschemes.declare_default_schemes mind;
   ind
+  *)
