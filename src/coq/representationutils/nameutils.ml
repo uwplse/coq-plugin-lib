@@ -2,7 +2,6 @@
  * Utilities for names, references, and identifiers
  *)
 
-open Constr
 open Names
 open Util
 

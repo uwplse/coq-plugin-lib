@@ -3,12 +3,13 @@
  * TODO move more of the HOFs stuff into here
  *)
 
-open Hofs
-open Constr
-open Debruijn
-
-(*
- * Check recursively whether a term contains another term
- *)
-let contains_term c trm =
-  exists_subterm equal shift c trm
+ open Hofs
+ open Constr
+ open Debruijn
+ 
+ (*
+  * Check recursively whether a term contains another term
+  *)
+ let contains_term env c trm =
+   exists_subterm env equal (shift env) c trm
+ 

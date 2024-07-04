@@ -1,0 +1,10 @@
+(library
+ (name example_plugin)
+ (wrapped false)
+ (public_name my-plugin.plugin)
+ (synopsis "Coq Plugin library")
+ (flags :standard -rectypes -w -3-8-27-28-33)
+ (libraries coq-core.plugins.ltac))
+
+(include_subdirs unqualified)
+(coq.pp (modules plib))

@@ -20,5 +20,5 @@ let expand_eta (env : env) sigma (trm : types) : evar_map * types =
   let sigma, typ = reduce_type env sigma trm in
   let curried_args = mk_n_rels (arity typ) in
   sigma, reconstruct_lambda
-    (zoom_env zoom_product_type empty_env typ)
-    (mkAppl (shift_by (List.length curried_args) trm, curried_args))
+    (zoom_env zoom_product_type env typ)
+    (mkAppl (shift_by env (List.length curried_args) trm, curried_args))

@@ -10,7 +10,6 @@ open Envutils
 open Contextutils
 open Debruijn
 open Sigmautils
-open Evd
 open Names
 
 (* --- Zooming --- *)
@@ -22,7 +21,7 @@ let rec zoom_n_prod env npm typ : env * types =
   else
     match kind typ with
     | Prod (n1, t1, b1) ->
-       zoom_n_prod (push_local (n1, t1) env) (npm - 1) b1
+       zoom_n_prod (push_local (Context.binder_name n1, t1) env) (npm - 1) b1
     | _ ->
        failwith "more parameters expected"
 
@@ -35,7 +34,7 @@ let zoom_n_lambda env npm trm : env * types =
 let rec zoom_lambda_term (env : env) (trm : types) : env * types =
   match kind trm with
   | Lambda (n, t, b) ->
-     zoom_lambda_term (push_local (n, t) env) b
+     zoom_lambda_term (push_local (Context.binder_name n, t) env) b
   | _ ->
      (env, trm)
 
@@ -43,7 +42,7 @@ let rec zoom_lambda_term (env : env) (trm : types) : env * types =
 let rec zoom_product_type (env : env) (typ : types) : env * types =
   match kind typ with
   | Prod (n, t, b) ->
-     zoom_product_type (push_local (n, t) env) b
+     zoom_product_type (push_local (Context.binder_name n, t) env) b
   | _ ->
      (env, typ)
 
@@ -56,7 +55,7 @@ let zoom_lambda_names env except trm : env * types * Id.t list =
     | limit ->
      match kind trm with
      | Lambda (n, t, b) ->
-        let name = fresh_name env n in
+        let name = fresh_name env (Context.binder_name n) in
         let env' = push_local (Name name, t) env in
         let env, trm, names =
           aux env' (limit - 1) b in
@@ -78,13 +77,13 @@ let zoom_sig_lambda t =
   last_arg t
 
 (* Get the application from the body of the last argument of a sigma *)
-let zoom_sig_app t =
+let zoom_sig_app env t =
   let lambda = zoom_sig_lambda t in
-  zoom_term zoom_lambda_term empty_env lambda
+  zoom_term zoom_lambda_term env lambda
 
 (* Get the very first function from the body of the last argument of a sigma *)
-let zoom_sig t =
-  first_fun (zoom_sig_app t)
+let zoom_sig env t =
+  first_fun (zoom_sig_app env t)
 
 (* zoom_sig if t actually applies sigT *)
 let zoom_if_sig_lambda t =
@@ -94,16 +93,16 @@ let zoom_if_sig_lambda t =
     t
 
 (* zoom_sig_app if actually applies sigT *)
-let zoom_if_sig_app t =
+let zoom_if_sig_app env t =
   if applies sigT t then
-    zoom_sig_app t
+    zoom_sig_app env t
   else
     t
 
 (* zoom if t actually applies sigT *)
-let zoom_if_sig t =
+let zoom_if_sig env t =
   if applies sigT t then
-    zoom_sig t
+    zoom_sig env t
   else
     t
 
@@ -132,7 +131,7 @@ let rec reconstruct_lambda_n_skip (env : env) (b : types) (i : int) (j : int) : 
     if j <= 0 then
       reconstruct_lambda_n_skip env' (mkLambda (n, t, b)) i j
     else
-      reconstruct_lambda_n_skip env' (unshift b) (i - 1) (j - 1)
+      reconstruct_lambda_n_skip env' (unshift env b) (i - 1) (j - 1)
                 
 
 (* Reconstruct a product from an environment, but stop when i are left *)
@@ -158,7 +157,7 @@ let rec reconstruct_product_n_skip (env : env) (b : types) (i : int) (j : int) :
     if j <= 0 then
       reconstruct_product_n_skip env' (mkProd (n, t, b)) i j
     else
-      reconstruct_product_n_skip env' (unshift b) (i - 1) (j - 1)
+      reconstruct_product_n_skip env' (unshift env b) (i - 1) (j - 1)
 
 (* --- Higher-order zooming --- *)
 
@@ -184,16 +183,16 @@ let zoom_apply zoom reconstruct f =
 let zoom_apply_lambda =
   zoom_apply zoom_lambda_term reconstruct_lambda
 
-let zoom_apply_lambda_empty f trm =
+let zoom_apply_lambda_empty env f trm =
   snd
     (zoom_apply
        zoom_lambda_term
        reconstruct_lambda
        (fun _ sigma trm -> sigma, f trm)
-       empty_env
-       Evd.empty
+       env
+       (Evd.from_env env)
        trm)
-             
+   
 let zoom_apply_lambda_n n =
   zoom_apply zoom_lambda_term (fun e t -> reconstruct_lambda_n e t n)
 

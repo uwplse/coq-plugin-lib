@@ -45,7 +45,7 @@ val reindex_body : (types -> types) -> types -> types
  * Unshift all arguments after the location of an argument, since
  * the index is no longer a hypothesis
  *)
-val adjust_no_index : int -> types list -> types list
+val adjust_no_index : env -> int -> types list -> types list
 
 (*
  * Returns true if the hypothesis is used to compute the index at the supplied
@@ -56,6 +56,7 @@ val adjust_no_index : int -> types list -> types list
  * searching for ornaments.
  *)
 val computes_ih_index :
+  env ->
   int -> (* index location *)
   types -> (* inductive property *)
   types -> (* hypothesis *)

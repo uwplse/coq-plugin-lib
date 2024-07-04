@@ -98,7 +98,7 @@ type ('a, 'b) proposition_list_mapper =
 val map_rec_env_fix :
   (env -> evar_map -> 'a -> types -> 'b state) ->
   ('a -> 'a) ->
-  (env -> evar_map -> 'a -> Names.name array -> types array -> types -> 'b state)
+  (env -> evar_map -> 'a -> Names.Name.t Context.binder_annot array -> types array -> types -> 'b state)
 
 val map_rec_args :
   ('a, 'b) transformer_with_env ->
@@ -117,7 +117,7 @@ val map_term_env : ('a, types) mapper_with_env
 (*
  * map_term_env with the empty environment
  *)
-val map_term : ('a, types) mapper
+val map_term : env -> ('a, types) mapper
 
 (* --- Advanced mapping over terms --- *)
 
@@ -134,7 +134,7 @@ val map_subterms_env : ('a, types) list_mapper_with_env
  * Update the argument of type 'a using the a supplied update function
  * Return all combinations of new terms
  *)
-val map_subterms : ('a, types) list_mapper
+val map_subterms : env -> ('a, types) list_mapper
 
 (*
  * Map a function over a term in an environment
@@ -177,22 +177,22 @@ val map_term_env_if_list : ('a, types) pred_with_env ->
 (*
  * Like map_term_env_if, but in the empty environment
  *)
-val map_term_if : ('a, types) conditional_mapper
+val map_term_if : env -> ('a, types) conditional_mapper
 
 (*
  * Like map_term_if, but use unit for 'a
  *)
-val map_unit_if : types unit_conditional_mapper
+val map_unit_if : env -> types unit_conditional_mapper
 
 (*
  * Like map_term_env_if_lazy, but use the empty environment
  *)
-val map_term_if_lazy : ('a, types) conditional_mapper
+val map_term_if_lazy : env -> ('a, types) conditional_mapper
     
 (*
  * Like map_term_if_lazy, but use unit for 'a
  *)
-val map_unit_if_lazy : types unit_conditional_mapper
+val map_unit_if_lazy : env -> types unit_conditional_mapper
 
 (*
  * Map a function over subterms of a term in an environment
@@ -237,10 +237,10 @@ val exists_subterm_env : ('a, types) proposition_mapper_with_env
 (* 
  * Like exists_subterm_env, but use the empty environment 
  *)
-val exists_subterm : ('a, types) proposition_mapper
+val exists_subterm : env -> ('a, types) proposition_mapper
 
 (* 
  * Like exists_subterm, but return a list of constant subterms that match
  *)
-val all_const_subterms : ('a, types) proposition_list_mapper
+val all_const_subterms : env -> ('a, types) proposition_list_mapper
 

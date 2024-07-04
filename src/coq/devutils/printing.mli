@@ -8,7 +8,7 @@ open Evd
 (* --- Coq terms --- *)
 
 (* Pretty-print a `global_reference` with fancy `constr` coloring. *)
-val pr_global_as_constr : global_reference -> Pp.t
+val pr_global_as_constr : GlobRef.t -> Pp.t
 
 (* Gets a name as a string *)
 val name_as_string : Name.t -> string

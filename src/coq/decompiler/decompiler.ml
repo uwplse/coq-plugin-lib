@@ -36,11 +36,11 @@ let parse_tac_str (s : string) : unit Proofview.tactic =
 (* Run a coq tactic against a given goal, returning generated subgoals *)
 let run_tac env sigma (tac : unit Proofview.tactic) (goal : constr)
     : Goal.goal list * Evd.evar_map =
-  let p = Proof.start sigma [(env, EConstr.of_constr goal)] in
-  let (p', _) = Proof.run_tactic env tac p in
-  let (subgoals, _, _, _, sigma) = Proof.proof p' in
-  subgoals, sigma
-    
+    let p = Proof.start ~name:(destVar goal) ~poly:true sigma [(env, EConstr.of_constr goal)] in
+  let (p', _, _) = Proof.run_tactic env tac p in
+  let d = Proof.data p' in
+  d.goals, d.sigma
+
 (* Returns true if the given tactic solves the goal. *)
 let solves env sigma (tac : unit Proofview.tactic) (goal : constr) : bool state =
   try
@@ -217,7 +217,9 @@ let rec intros_revert (t : tactical) : tactical =
 (* Combine common subgoal tactics into semicolons. *)
 let rec semicolons sigma (t : tactical) : tactical =
   let first t = match t with
-    | Compose ( [ tac ], _) -> tac in
+    | Compose ( [ tac ], _) -> tac
+    | Compose _ -> assert false
+  in
   let subgoals t = match t with
     | Compose ( _, goals) -> goals in
   match t with
@@ -330,7 +332,7 @@ and try_custom_tacs env sigma get_hints all_opts trm =
   try
     let goal = (Typeops.infer env trm).uj_type  in
     let goal_env env sigma g =
-      let typ = EConstr.to_constr sigma (Goal.V82.abstract_type sigma g) in
+      let typ = EConstr.to_constr ~abort_on_undefined_evars:false sigma (Goal.V82.abstract_type sigma g) in
       Zooming.zoom_product_type (Environ.reset_context env) typ in
     let rec aux opts =
       match opts with
@@ -437,7 +439,7 @@ and exists (f, args) (env, sigma, opts) : tactical option =
   dot (Exists (env, exT.index)) (first_pass env sigma opts exT.unpacked)
   
 (* Value must be a rewrite on a hypothesis in context. *)
-and rewrite_in (_, valu, _, body) (env, sigma, opts) : tactical option =
+and rewrite_in (name, valu, _, body) (env, sigma, opts) : tactical option =
   let valu = Reduction.whd_betaiota env valu in
   try_app valu                   >>= fun (f, args) ->
   dest_rewrite (mkApp (f, args)) >>= fun rewr -> 
@@ -449,7 +451,7 @@ and rewrite_in (_, valu, _, body) (env, sigma, opts) : tactical option =
     (first_pass env' sigma opts body)
 
 (* Value must be an application with last argument in context. *)
-and apply_in (n, valu, typ, body) (env, sigma, opts) : tactical option =
+and apply_in (name, valu, typ, body) (env, sigma, opts) : tactical option =
   let valu = Reduction.whd_betaiota env valu in
   try_app valu >>= fun (f, args) ->
   let len = Array.length args in
@@ -476,13 +478,13 @@ and apply_in (n, valu, typ, body) (env, sigma, opts) : tactical option =
     
 (* Last resort decompile let-in as a pose.  *)
 and pose (n, valu, t, body) (env, sigma, opts) : tactical option =
-  let n' = fresh_name env n in
+  let n' = fresh_name env (Context.binder_name n) in
   let env' = push_let_in (Name n', valu, t) env in
   let decomp_body = first_pass env' sigma opts body in
   (* If the binding is NEVER used, just skip this. *)
   if noccurn 1 body then Some decomp_body
   else dot (Pose (env, valu, n')) (decomp_body)
-       
+   
 (* Decompile a term into its equivalent tactic list. *)
 let tac_from_term env sigma get_hints trm : tactical =
   (* Perform second pass to revise greedy tactic list. *)
@@ -502,7 +504,9 @@ let bullet level =
   let blt = match level mod 3 with
     | 0 -> '*'
     | 1 -> '-'
-    | 2 -> '+' in
+    | 2 -> '+'
+    | _ -> assert false
+  in
   str (String.make num blt) ++ str " "
   
 (* Concatenate list of pp.t with separator *)

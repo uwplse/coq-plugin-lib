@@ -30,8 +30,8 @@ let shift_i (i : int) : int =
  * Unshifts a term by n if it is greater than the maximum index
  * max of a local binding
  *)
-let unshift_local (max : int) (n : int) (trm : types) : types =
-  map_term
+let unshift_local (env: env) (max : int) (n : int) (trm : types) : types =
+  map_term env
     (fun (m, adj) t ->
       match kind t with
       | Rel i ->
@@ -47,28 +47,28 @@ let unshift_local (max : int) (n : int) (trm : types) : types =
  * Shifts a term by n if it is greater than the maximum index
  * max of a local binding
  *)
-let shift_local (max : int) (n : int) (trm : types) : types =
-  unshift_local max (- n) trm
+let shift_local (env: env) (max : int) (n : int) (trm : types) : types =
+  unshift_local env max (- n) trm
 
 (* Decrement the relative indexes of a term t by n *)
-let unshift_by (n : int) (trm : types) : types =
-  unshift_local 0 n trm
+let unshift_by (env: env) (n : int) (trm : types) : types =
+  unshift_local env 0 n trm
 
 (* Increment the relative indexes of a term t by n *)
-let shift_by (n : int) (t : types) : types  =
-  unshift_by (- n) t
+let shift_by (env: env) (n : int) (t : types) : types  =
+  unshift_by env (- n) t
 
 (* Increment the relative indexes of a term t by one *)
-let shift (t : types) : types  =
-  shift_by 1 t
+let shift (env: env) (t : types) : types  =
+  shift_by env 1 t
 
 (* Decrement the relative indexes of a term t by one *)
-let unshift (t : types) : types =
-  unshift_by 1 t
+let unshift (env: env) (t : types) : types =
+  unshift_by env 1 t
 
 (* Shift everything and pray; workaround for bug (TODO investigate) *)
-let shift_by_unconditional (n : int) (trm : types) : types =
-  map_term
+let shift_by_unconditional (env: env) (n : int) (trm : types) : types =
+  map_term env
     (fun _ t ->
       match kind t with
       | Rel i ->
@@ -79,33 +79,6 @@ let shift_by_unconditional (n : int) (trm : types) : types =
     (fun _ -> ())
     ()
     trm
-
-(*
- * Function from: 
- * https://github.com/coq/coq/commit/7ada864b7728c9c94b7ca9856b6b2c89feb0214e
- * Inlined here to make this compatible with Coq 8.8.0
- * TODO remove with update
- *)
-let fold_constr_with_binders g f n acc c =
-  match kind c with
-  | (Rel _ | Meta _ | Var _   | Sort _ | Const _ | Ind _
-    | Construct _) -> acc
-  | Cast (c,_, t) -> f n (f n acc c) t
-  | Prod (na,t,c) -> f (g  n) (f n acc t) c
-  | Lambda (na,t,c) -> f (g  n) (f n acc t) c
-  | LetIn (na,b,t,c) -> f (g  n) (f n (f n acc b) t) c
-  | App (c,l) -> Array.fold_left (f n) (f n acc c) l
-  | Proj (p,c) -> f n acc c
-  | Evar (_,l) -> Array.fold_left (f n) acc l
-  | Case (_,p,c,bl) -> Array.fold_left (f n) (f n (f n acc p) c) bl
-  | Fix (_,(lna,tl,bl)) ->
-      let n' = CArray.fold_left2 (fun c n t -> g c) n lna tl in
-      let fd = Array.map2 (fun t b -> (t,b)) tl bl in
-      Array.fold_left (fun acc (t,b) -> f n' (f n acc t) b) acc fd
-  | CoFix (_,(lna,tl,bl)) ->
-      let n' = CArray.fold_left2 (fun c n t -> g c) n lna tl in
-      let fd = Array.map2 (fun t b -> (t,b)) tl bl in
-      Array.fold_left (fun acc (t,b) -> f n' (f n acc t) b) acc fd
 
 (*
  * Gather the set of relative (de Bruijn) variables occurring in the term that
@@ -132,33 +105,33 @@ let rec free_rels nb frels term =
 (* --- Lists --- *)
 
 (* Shift a list *)
-let shift_all = List.map shift
+let shift_all env = List.map (shift env)
 
 (* Shift all elements of a list by n *)
-let shift_all_by n = List.map (shift_by n)
+let shift_all_by env n = List.map (shift_by env n)
 
 (* Unshift a list *)
-let unshift_all = List.map unshift
+let unshift_all env = List.map (unshift env)
 
 (* Unshift all elements of a list by n *)
-let unshift_all_by n = List.map (unshift_by n)
+let unshift_all_by env n = List.map (unshift_by env n)
 
 (* --- Substitutions --- *)
 
 (* Shift substitutions *)
-let shift_subs = List.map (map_tuple shift)
+let shift_subs env = List.map (map_tuple (shift env))
 
 (* Shift from substitutions *)
-let shift_from = List.map (fun (s, d) -> (shift s, d))
+let shift_from env = List.map (fun (s, d) -> (shift env s, d))
 
 (* Shift to substitutions *)
-let shift_to = List.map (fun (s, d) -> (s, shift d))
+let shift_to env = List.map (fun (s, d) -> (s, shift env d))
                                 
 (* --- Environments --- *)
 
 (* Shift a term by the offset from env_o to env_n *)
 let shift_to_env (env_o, env_n) trm =
-  shift_by (new_rels2 env_n env_o) trm
+  shift_by env_n (new_rels2 env_n env_o) trm
 
 (* Unshifts indexes for terms in env by n *)
 let unshift_env_by (n : int) (env : env) : env =

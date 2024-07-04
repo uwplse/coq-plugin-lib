@@ -14,7 +14,8 @@ open Defutils
 open Indutils
 open Substitution
 open Stateutils
-open Recordops
+open Structures
+open Record
 
 (* Type-sensitive transformation of terms *)
 type constr_transformer = env -> evar_map -> constr -> evar_map * constr
@@ -25,10 +26,9 @@ type constr_transformer = env -> evar_map -> constr -> evar_map * constr
  *)
 let force_constant_body const_body =
   match const_body.const_body with
-  | Def const_def ->
-    Mod_subst.force_constr const_def
+  | Def const_def -> const_def
   | OpaqueDef opaq ->
-    Opaqueproof.force_proof (Global.opaque_tables ()) opaq
+    fst (Opaqueproof.force_proof Library.indirect_accessor (Global.opaque_tables ()) opaq)
   | _ ->
     CErrors.user_err ~hdr:"force_constant_body"
       (Pp.str "An axiom has no defining term")
@@ -43,9 +43,9 @@ let force_constant_body const_body =
 let transform_constant ident tr_constr const_body =
   let env =
     match const_body.const_universes with
-    | Monomorphic_const univs ->
+    | Monomorphic univs ->
       Global.env () |> Environ.push_context_set univs
-    | Polymorphic_const univs ->
+    | Polymorphic univs ->
       CErrors.user_err ~hdr:"transform_constant"
         Pp.(str "Universe polymorphism is not supported")
   in
@@ -53,7 +53,7 @@ let transform_constant ident tr_constr const_body =
   let sigma = Evd.from_env env in
   let sigma, term' = tr_constr env sigma term in
   let sigma, type' = tr_constr env sigma const_body.const_type in
-  sigma, Globnames.destConstRef (define_term ~typ:type' ident sigma term' true)
+  sigma, Globnames.destConstRef (define_term ~typ:type' ident sigma term')
 
 (*
  * Declare a new inductive family under the given name with the transformed type
@@ -81,27 +81,39 @@ let transform_inductive ident tr_constr (mind_body, ind_body as ind_specif) =
        arity')
     (sigma, cons_types')
 
+let tr_projection mod_path (p: Structures.Structure.projection) : Structures.Structure.projection =
+  {p with proj_body = Option.map (fun x -> Constant.make2 mod_path (Constant.label x)) p.proj_body}
+
 (*
  * Try to register a transformed inductive type inside a module as a record,
  * if appropriate
  *)
 let try_register_record mod_path (ind, ind') =
   try
-    let r = lookup_structure ind in
+    let r = Structure.find ind in
     Feedback.msg_info (Pp.str "Transformed a record");
-    let pks = r.s_PROJKIND in
-    let ps =
-      List.map
-        (Option.map (fun p -> Constant.make2 mod_path (Constant.label p)))
-        r.s_PROJ
-    in
+    let projections = r.projections in
+    let projections' = List.map (tr_projection mod_path) projections in
     (try
-       declare_structure (ind', (ind', 1), pks, ps)
+       let struc = Structures.Structure.make (Global.env ()) ind' projections' in
+       Record.Internal.declare_structure_entry struc;
      with _ ->
        Feedback.msg_warning
          (Pp.str "Failed to register projections for transformed record"))
   with Not_found ->
     ()
+
+let lookup_eliminator_error_handling ind sorts = 
+  (* Feedback.msg_warning (Pp.(str "start ")); *)
+  let env = Global.env () in
+  List.filter_map (fun x -> x)
+  (List.map 
+    (fun x -> 
+      try Some (x, Indrec.lookup_eliminator env ind x)
+      with
+      | _ -> None
+    )
+    sorts)
 
 (*
  * Declare a new module structure under the given name with the compositionally
@@ -117,7 +129,7 @@ let try_register_record mod_path (ind, ind') =
  *
  * TODO sigma handling, not sure how to do it here/if we need it
  *)
-let transform_module_structure ?(init=const Globnames.Refmap.empty) ?(opaques=Globnames.Refset.empty) ident tr_constr mod_body =
+let transform_module_structure ?(init=const GlobRef.Map.empty) ?(opaques=GlobRef.Set.empty) ident tr_constr mod_body =
   let open Modutils in
   let mod_path = mod_body.mod_mp in
   let mod_arity, mod_elems = decompose_module_signature mod_body.mod_type in
@@ -127,7 +139,7 @@ let transform_module_structure ?(init=const Globnames.Refmap.empty) ?(opaques=Gl
         match b with
         | SFBconst const_body ->
            let const = Constant.make2 mod_path l in
-           not (Globnames.Refset.mem (ConstRef const) opaques)
+           not (GlobRef.Set.mem (GlobRef.ConstRef const) opaques)
         | _ ->
            true)
       mod_elems
@@ -137,28 +149,36 @@ let transform_module_structure ?(init=const Globnames.Refmap.empty) ?(opaques=Gl
     let open GlobRef in
     Feedback.msg_info (Pp.(str "Transforming " ++ Label.print label));
     let ident = Label.to_id label in
-    let tr_constr env sigma = subst_globals subst %> tr_constr env sigma in
+    let tr_constr env sigma = subst_globals env subst %> tr_constr env sigma in
     match body with
     | SFBconst const_body ->
       let const = Constant.make2 mod_path label in
-      if Globnames.Refmap.mem (ConstRef const) subst then
+      if GlobRef.Map.mem (ConstRef const) subst then
         subst (* Do not transform schematic definitions. *)
       else
         let sigma, const' = transform_constant ident tr_constr const_body in
-        Globnames.Refmap.add (ConstRef const) (ConstRef const') subst
+        GlobRef.Map.add (ConstRef const) (ConstRef const') subst
     | SFBmind mind_body ->
       check_inductive_supported mind_body;
       let ind = (MutInd.make2 mod_path label, 0) in
       let ind_body = mind_body.mind_packets.(0) in
       let sigma, ind' = transform_inductive ident tr_constr (mind_body, ind_body) in
       try_register_record mod_path' (ind, ind');
+      let subst = GlobRef.Map.add (IndRef ind) (IndRef ind') subst in
       let ncons = Array.length ind_body.mind_consnames in
       let list_cons ind = List.init ncons (fun i -> ConstructRef (ind, i + 1)) in
-      let sorts = ind_body.mind_kelim in
-      let list_elim ind = List.map (Indrec.lookup_eliminator ind) sorts in
-      Globnames.Refmap.add (IndRef ind) (IndRef ind') subst |>
-      List.fold_right2 Globnames.Refmap.add (list_cons ind) (list_cons ind') |>
-      List.fold_right2 Globnames.Refmap.add (list_elim ind) (list_elim ind')
+      let sorts = List.map Sorts.family [Sorts.sprop; Sorts.prop; Sorts.set; Sorts.type1] in
+      let list_elim ind = lookup_eliminator_error_handling ind sorts in
+      let list_elim_ind = list_elim ind in
+      let list_elim_ind' = list_elim ind' in
+      let list_elim_ind_sorts = List.map fst list_elim_ind in
+      let list_elim_ind'_sorts = List.map fst list_elim_ind' in
+      let common_sorts = List.filter (fun x -> List.exists (fun y -> Sorts.family_equal x y) list_elim_ind_sorts) list_elim_ind'_sorts in 
+      let list_elim_ind_winnowed = List.map snd (List.filter (fun (x, y) -> List.exists (fun z -> Sorts.family_equal x z) common_sorts) list_elim_ind) in
+      let list_elim_ind'_winnowed = List.map snd (List.filter (fun (x, y) -> List.exists (fun z -> Sorts.family_equal x z) common_sorts) list_elim_ind') in
+      GlobRef.Map.add (IndRef ind) (IndRef ind') subst |>
+      List.fold_right2 GlobRef.Map.add (list_cons ind) (list_cons ind') |>
+      List.fold_right2 GlobRef.Map.add (list_elim_ind_winnowed) (list_elim_ind'_winnowed)
     | SFBmodule mod_body ->
       Feedback.msg_warning (Pp.str "Skipping nested module structure");
       subst

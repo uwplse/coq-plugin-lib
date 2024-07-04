@@ -23,7 +23,7 @@ let all_substs p env sigma (src, dst) trm : evar_map * types =
   map_term_env_if
     (fun env sigma (s, _) t -> p env sigma s t)
     (fun _ sigma (_, d) _ -> sigma, d)
-    (fun (s, d) -> (shift s, shift d))
+    (fun (s, d) -> (shift env s, shift env d))
     env
     sigma
     (src, dst)
@@ -34,7 +34,7 @@ let all_substs_combs p env sigma (src, dst) trm : evar_map * types list =
   map_subterms_env_if
     (fun env sigma (s, _) t -> p env sigma s t)
     (fun _ sigma (_, d) t -> sigma, [d; t])
-    (fun (s, d) -> (shift s, shift d))
+    (fun (s, d) -> (shift env s, shift env d))
     env
     sigma
     (src, dst)
@@ -52,12 +52,12 @@ let all_typ_substs : (types * types) type_substitution =
   all_substs types_convertible
 
 (* Same, but equal *)
-let all_eq_substs (src, dst) trm =
+let all_eq_substs env (src, dst) trm =
   snd
     (all_substs
        (fun _ _ t1 t2 -> Evd.empty, equal t1 t2)
-       empty_env
-       Evd.empty
+       env
+       (Evd.from_env env)
        (src, dst)
        trm)
 
@@ -101,7 +101,7 @@ let all_constr_substs env sigma c trm : evar_map * types =
         (fun trm sigma -> types_convertible env sigma t trm)
         (Array.to_list args_t)
         sigma)
-    shift
+    (shift env)
     env
     sigma
     c
@@ -117,26 +117,27 @@ let all_typ_substs_combs : (types * types) comb_substitution =
 
  (* --- Substituting global references --- *)
 
-type global_substitution = global_reference Globnames.Refmap.t
+type global_substitution = GlobRef.t Names.GlobRef.Map.t
 
 (* Substitute global references throughout a term *)
-let rec subst_globals subst (term : constr) =
-  map_term_if
+let rec subst_globals env subst (term : constr) =
+  map_term_if env
     (fun _ t -> isConst t || isInd t || isConstruct t || isVar t || isCase t)
     (fun _ t ->
       try
         pglobal_of_constr t |>
-        map_puniverses (flip Globnames.Refmap.find subst) |>
+        map_puniverses (flip Names.GlobRef.Map.find subst) |>
         constr_of_pglobal
       with _ ->
         match kind t with
-        | Case (ci, p, b, bl) ->
-           let ci_ind' = destInd (subst_globals subst (mkInd ci.ci_ind)) in
+        | Case (ci, u, pms, p, iv, c, brs) ->
+           let (ci, p, iv, c, brs) = Inductive.expand_case (Global.env ()) (ci, u, pms, p, iv, c, brs) in
+           let ci_ind' = destInd (subst_globals env subst (mkInd ci.ci_ind)) in
            let ci' = { ci with ci_ind = fst ci_ind' } in 
-           let b' = subst_globals subst b in
-           let p' = subst_globals subst p in
-           let bl' = Array.map (subst_globals subst) bl in
-           mkCase (ci', p', b', bl')               
+           let b' = subst_globals env subst c in
+           let p' = subst_globals env subst p in
+           let brs' = Array.map (subst_globals env subst) brs in
+           mkCase (Inductive.contract_case (Global.env ()) (ci', p', iv, b', brs'))               
         | _ -> t)
     (fun _ -> ())
     ()

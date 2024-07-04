@@ -4,7 +4,6 @@
 
 open Constr
 open Contextutils
-open Utilities
 open Environ
 open Evd
 open Inference

@@ -4,7 +4,6 @@
 
 open Constr
 open Names
-open Environ
 open Evd
 
 let coq_init_datatypes =
@@ -27,7 +26,7 @@ let id_typ : types =
 let identity_term env sigma typ : evar_map * types =
   let sigma, sort_family = Inference.infer_sort env sigma typ in
   match sort_family with
-  | InProp ->
+  | Sorts.InProp ->
      (sigma, mkApp (id_prop, Array.make 1 typ))
   | _ ->
      (sigma, mkApp (id_typ, Array.make 1 typ))

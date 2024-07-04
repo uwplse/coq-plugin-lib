@@ -14,7 +14,7 @@ let coq_init_logic =
 
 (* equality *)
 let eq : types =
-  mkInd (MutInd.make1 (KerName.make2 coq_init_logic (Label.make "eq")), 0)
+  mkInd (MutInd.make1 (KerName.make coq_init_logic (Label.make "eq")), 0)
 
 (* Constructor for quality *)
 let eq_refl : types =
@@ -70,8 +70,9 @@ let apply_eq (app : eq_app) : types =
  * Deconstruct an eq type
  *)
 let dest_eq (trm : types) : eq_app =
-  let [at_type; trm1; trm2] = unfold_args trm in
-  { at_type; trm1; trm2 }
+  match unfold_args trm with
+  | [at_type; trm1; trm2] -> { at_type; trm1; trm2 }
+  | _ -> assert false
 
 (*
  * An application of eq_sym
@@ -93,10 +94,12 @@ let apply_eq_sym (app : eq_sym_app) : types =
  * Deconstruct an eq type
  *)
 let dest_eq_sym (trm : types) : eq_sym_app =
-  let [at_type; trm1; trm2; eq_proof] = unfold_args trm in
-  let eq_typ = { at_type; trm1; trm2 } in
-  { eq_typ; eq_proof }
-    
+  match unfold_args trm with
+  | [at_type; trm1; trm2; eq_proof] ->
+    let eq_typ = { at_type; trm1; trm2 } in
+    { eq_typ; eq_proof }
+  | _ -> assert false
+
 (*
  * An application of eq_ind
  *)
@@ -120,8 +123,10 @@ let apply_eq_ind (app : eq_ind_app) : types =
  * Deconstruct an eq_ind
  *)
 let dest_eq_ind (trm : types) : eq_ind_app =
-  let [at_type; trm1; p; b; trm2; h] = unfold_args trm in
-  { at_type; trm1; p; b; trm2; h }
+  match unfold_args trm with
+  | [at_type; trm1; p; b; trm2; h] ->
+    { at_type; trm1; p; b; trm2; h }
+  | _ -> assert false
 
 (*
  * An application of eq_refl
@@ -142,8 +147,10 @@ let apply_eq_refl (app : eq_refl_app) : types =
  * Deconstruct an eq_refl
  *)
 let dest_eq_refl (trm : types) : eq_refl_app =
-  let [typ; trm] = unfold_args trm in
-  { typ; trm }
+  match unfold_args trm with
+  | [typ; trm] ->
+    { typ; trm }
+  | _ -> assert false
 
 (*
  * Deconstruct an eq_refl.

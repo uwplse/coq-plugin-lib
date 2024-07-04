@@ -21,10 +21,7 @@ open Contextutils
 module CRD = Context.Rel.Declaration
 
 (* Pretty-print a `global_reference` with fancy `constr` coloring. *)
-let pr_global_as_constr gref =
-  let env = Global.env () in
-  let sigma = Evd.from_env env in
-  pr_constr_env env sigma (Universes.constr_of_global gref)
+let pr_global_as_constr gref = Printer.pr_global gref
 
 (* Using pp, prints directly to a string *)
 let print_to_string (pp : formatter -> 'a -> unit) (trm : 'a) : string =
@@ -61,8 +58,10 @@ let universe_as_string u =
 (* Gets a sort as a string *)
 let sort_as_string s =
   match s with
-  | Term.Prop _ -> if s = Sorts.prop then "Prop" else "Set"
-  | Term.Type u -> Printf.sprintf "Type %s" (universe_as_string u)
+  | Sorts.Prop -> "Prop"
+  | Sorts.Set -> "Set"
+  | Sorts.SProp -> "SProp"
+  | Sorts.Type u -> Printf.sprintf "Type %s" (universe_as_string u)
 
 (* Prints a term *)
 let rec term_as_string (env : env) (trm : types) =
@@ -70,7 +69,7 @@ let rec term_as_string (env : env) (trm : types) =
   | Rel i ->
      (try
        let (n, _, _) = CRD.to_tuple @@ lookup_rel i env in
-       Printf.sprintf "(%s [Rel %d])" (name_as_string n) i
+       Printf.sprintf "(%s [Rel %d])" (name_as_string (Context.binder_name n)) i
      with
        Not_found -> Printf.sprintf "(Unbound_Rel %d)" i)
   | Var v ->
@@ -84,22 +83,22 @@ let rec term_as_string (env : env) (trm : types) =
   | Prod (n, t, b) ->
      Printf.sprintf
        "(Π (%s : %s) . %s)"
-       (name_as_string n)
+       (name_as_string (Context.binder_name n))
        (term_as_string env t)
-       (term_as_string (push_local (n, t) env) b)
+       (term_as_string (push_local (Context.binder_name n, t) env) b)
   | Lambda (n, t, b) ->
      Printf.sprintf
        "(λ (%s : %s) . %s)"
-       (name_as_string n)
+       (name_as_string (Context.binder_name n))
        (term_as_string env t)
-       (term_as_string (push_local (n, t) env) b)
+       (term_as_string (push_local (Context.binder_name n, t) env) b)
   | LetIn (n, trm, typ, e) ->
      Printf.sprintf
        "(let (%s : %s) := %s in %s)"
-       (name_as_string n)
+       (name_as_string (Context.binder_name n))
        (term_as_string env typ)
        (term_as_string env trm)
-       (term_as_string (push_let_in (n, trm, typ) env) e)
+       (term_as_string (push_let_in (Context.binder_name n, trm, typ) env) e)
   | App (f, xs) ->
      Printf.sprintf
        "(%s %s)"
@@ -129,17 +128,18 @@ let rec term_as_string (env : env) (trm : types) =
              (name_as_string n)
              (term_as_string env t)
              (term_as_string env_fix d))
-          (Array.to_list ns)
+          (Array.to_list (Array.map Context.binder_name ns))
           (Array.to_list ts)
           (Array.to_list ds))
-  | Case (ci, ct, m, bs) ->
+  | Case (ci, u, pms, p, iv, c, brs) ->
+     let (ci, p, iv, c, brs) = Inductive.expand_case env (ci, u, pms, p, iv, c, brs) in 
      let (i, i_index) = ci.ci_ind in
      let mutind_body = lookup_mind i env in
      let ind_body = mutind_body.mind_packets.(i_index) in
      Printf.sprintf
        "(match %s : %s with %s)"
-       (term_as_string env m)
-       (term_as_string env ct)
+       (term_as_string env c)
+       (term_as_string env p)
        (String.concat
           " "
           (Array.to_list
@@ -149,13 +149,14 @@ let rec term_as_string (env : env) (trm : types) =
                     "(case %s => %s)"
                     (Id.to_string (ind_body.mind_consnames.(c_i)))
                     (term_as_string env b))
-                bs)))
+                brs)))
   | Meta mv -> (* TODO *)
      Printf.sprintf "(%s)" (print_to_string print_constr trm)
   | CoFix (i, (ns, ts, ds)) -> (* TODO *)
      Printf.sprintf "(%s)" (print_to_string print_constr trm)
   | Proj (p, c) -> (* TODO *)
      Printf.sprintf "(%s)" (print_to_string print_constr trm)
+  | Int i -> Uint63.to_string i
 
 (* Debug a term *)
 let debug_term (env : env) (trm : types) (descriptor : string) : unit =
@@ -180,7 +181,7 @@ let env_as_string (env : env) : string =
          let (n, b, t) = CRD.to_tuple @@ lookup_rel i env in
          Printf.sprintf
            "%s (Rel %d): %s"
-           (name_as_string n)
+           (name_as_string (Context.binder_name n))
            i
            (term_as_string (pop_rel_context i env) t))
        all_relis)

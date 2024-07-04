@@ -28,14 +28,14 @@ val zoom_term : (env -> types -> (env * types)) -> env -> types -> types
 (* --- Zooming for sigma types --- *)
 
 val zoom_sig_lambda : types -> types
-val zoom_sig_app : types -> types
-val zoom_sig : types -> types
+val zoom_sig_app : env -> types -> types
+val zoom_sig : env -> types -> types
 
 (* --- Conditional zooming for sigma types --- *)
 
 val zoom_if_sig_lambda : types -> types
-val zoom_if_sig_app : types -> types
-val zoom_if_sig : types -> types
+val zoom_if_sig_app : env -> types -> types
+val zoom_if_sig : env -> types -> types
                              
 (* --- Reconstruct until n are left --- *)
                                                                      
@@ -88,7 +88,7 @@ val zoom_apply_lambda :
   evar_map * types
 
 val zoom_apply_lambda_empty :
-  (types -> types) -> types -> types
+  env -> (types -> types) -> types -> types
 
 val zoom_apply_lambda_n :
   int ->

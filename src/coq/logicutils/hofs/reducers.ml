@@ -18,25 +18,25 @@ type stateless_reducer = env -> evar_map -> types -> types
 
 (* Default reducer *)
 let reduce_term (env : env) (sigma : evar_map) (trm : types) =
-  sigma, EConstr.to_constr
+  sigma, EConstr.to_constr ~abort_on_undefined_evars:false
     sigma
     (Reductionops.nf_betaiotazeta env sigma (EConstr.of_constr trm))
 
 (* Delta reduction *)
 let delta (env : env) (sigma : evar_map) (trm : types) =
-  sigma, EConstr.to_constr
+  sigma, EConstr.to_constr ~abort_on_undefined_evars:false
     sigma
     (Reductionops.whd_delta env sigma (EConstr.of_constr trm))
 
 (* Weak head reduction *)
 let whd (env : env) (sigma : evar_map) (trm : types) =
-  sigma, EConstr.to_constr
+  sigma, EConstr.to_constr ~abort_on_undefined_evars:false
     sigma
     (Reductionops.whd_all env sigma (EConstr.of_constr trm))
 
 (* nf_all *)
 let reduce_nf (env : env) (sigma : evar_map) (trm : types) =
-  sigma, EConstr.to_constr
+  sigma, EConstr.to_constr ~abort_on_undefined_evars:false
     sigma
     (Reductionops.nf_all env sigma (EConstr.of_constr trm))
 
@@ -87,7 +87,7 @@ let do_not_reduce (env : env) sigma (trm : types) =
 
 (* Remove all applications of the identity function *)
 let remove_identities (env : env) sigma (trm : types) =
-  sigma, map_term_if
+  sigma, map_term_if env
     (fun _ t -> applies_identity t)
     (fun _ t ->
       match kind t with
@@ -105,22 +105,22 @@ let reduce_remove_identities : reducer =
 
 (* Reduce and also unfold definitions *)
 let reduce_unfold (env : env) sigma (trm : types) =
-  sigma, EConstr.to_constr
+  sigma, EConstr.to_constr ~abort_on_undefined_evars:false
     sigma
     (Reductionops.nf_all env sigma (EConstr.of_constr trm))
 
 (* Reduce and also unfold definitions, but weak head *)
 let reduce_unfold_whd (env : env) sigma (trm : types) =
-  sigma, EConstr.to_constr
+  sigma, EConstr.to_constr ~abort_on_undefined_evars:false
     sigma
     (Reductionops.whd_all env sigma (EConstr.of_constr trm))
 
 (* Weak-head reduce a term if it is a let-in *)
 let reduce_whd_if_let_in (env : env) sigma (trm : types) =
   if isLetIn trm then
-    sigma, EConstr.to_constr
+    sigma, EConstr.to_constr ~abort_on_undefined_evars:false
       sigma
-      (Reductionops.whd_betaiotazeta sigma (EConstr.of_constr trm))
+      (Reductionops.whd_betaiotazeta env sigma (EConstr.of_constr trm))
   else
     sigma, trm
 
@@ -142,7 +142,7 @@ let rec remove_unused_hypos (env : env) sigma (trm : types) : evar_map * types =
         let num_rels = nb_rel env in
         let env_ill = push_rel CRD.(LocalAssum (n, mkRel (num_rels + 1))) env in
         let sigma, _ = infer_type env_ill sigma b' in
-        remove_unused_hypos env sigma (unshift b')
+        remove_unused_hypos env sigma (unshift env b')
       with _ ->
         sigma, mkLambda (n, t, b'))
   | _ ->

@@ -3,9 +3,10 @@
  *)
 
 open Constr
+open Environ
 
 (*
  * Check recursively whether a term contains another term
  * Use exact equality for comparison
  *)
-val contains_term : types -> types -> bool
+val contains_term : env -> types -> types -> bool

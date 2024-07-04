@@ -10,7 +10,6 @@ open Hofimpls
 open Reducers
 open Sigmautils
 open Apputils
-open Evd
 
 (* --- Generic functions --- *)
 
@@ -60,28 +59,28 @@ let dummy_index env sigma f =
  * Unshift arguments after index_i, since the index is no longer in
  * the hypotheses
  *)
-let adjust_no_index index_i args =
+let adjust_no_index env index_i args =
   let (before, after) = take_split index_i args in
-  List.append before (unshift_all after)
+  List.append before (unshift_all env after)
 
 (*
  * Returns true if the hypothesis i is used to compute the index at position
  * off in any application of the property p in some inductive hypothesis
  * of the eliminator type typ
  *)
-let rec computes_ih_index off p i typ =
+let rec computes_ih_index env off p i typ =
   match kind typ with
   | Prod (n, t, b) ->
-     let p_b = shift p in
-     let i_b = shift i in
+     let p_b = shift env p in
+     let i_b = shift env i in
      if applies p t then
        let index = get_arg off t in
-       contains_term i index || computes_ih_index off p_b i_b b
+       contains_term env i index || computes_ih_index env off p_b i_b b
      else
-       computes_ih_index off p_b i_b b
+       computes_ih_index env off p_b i_b b
   | _ ->
      false
-                 
+
 (* --- Getting arguments to indexed types --- *)
 
 (*
