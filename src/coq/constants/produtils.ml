@@ -14,7 +14,7 @@ let coq_init_data =
 
 (* prod types *)
 let prod : types =
-  mkInd (MutInd.make1 (KerName.make2 coq_init_data (Label.make "prod")), 0)
+  mkInd (MutInd.make1 (KerName.make coq_init_data (Label.make "prod")), 0)
 
 (* Introduction for sigma types *)
 let pair : constr =
@@ -55,9 +55,11 @@ let apply_pair (app : pair_app) =
  * Deconsruct a sigT type from a type
  *)
 let dest_pair (trm : constr) =
-  let [typ1; typ2; trm1; trm2] = unfold_args trm in
-  { typ1; typ2; trm1; trm2 }
-          
+  match unfold_args trm with
+  | [typ1; typ2; trm1; trm2] ->
+    { typ1; typ2; trm1; trm2 }
+  | _ -> assert false
+
 (*
  * An application of prod
  *)
@@ -77,8 +79,10 @@ let apply_prod (app : prod_app) : types =
  * Deconstruct a prod
  *)
 let dest_prod (trm : types) : prod_app =
-  let [typ1; typ2] = unfold_args trm in
-  { typ1; typ2 }
+  match unfold_args trm with
+  | [typ1; typ2] ->
+    { typ1; typ2 }
+  | _ -> assert false
 
 (*
  * An application of prod_rect
@@ -106,9 +110,11 @@ let elim_prod (app : prod_elim) =
  * Deconstruct an application of prod
  *)
 let dest_prod_elim (trm : constr) =
-  let [typ1; typ2; p; proof; arg] = unfold_args trm in
-  let to_elim = { typ1; typ2 } in
-  { to_elim; p; proof; arg }
+  match unfold_args trm with
+  | [typ1; typ2; p; proof; arg] ->
+    let to_elim = { typ1; typ2 } in
+    { to_elim; p; proof; arg }
+  | _ -> assert false
 
 (*
  * First projection of a prod

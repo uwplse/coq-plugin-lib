@@ -3,7 +3,7 @@ This is a library of useful utility functions for Coq plugins. These functions o
 To build this library with a test plugin, run:
 
 ```
-./build.sh
+dune build
 ```
 
 See [PUMPKIN PATCH](https://github.com/uwplse/PUMPKIN-PATCH) and [DEVOID](https://github.com/uwplse/ornamental-search) for examples of loading it as a submodule.

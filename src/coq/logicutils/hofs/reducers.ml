@@ -18,25 +18,25 @@ type stateless_reducer = env -> evar_map -> types -> types
 
 (* Default reducer *)
 let reduce_term (env : env) (sigma : evar_map) (trm : types) =
-  sigma, EConstr.to_constr
+  sigma, EConstr.to_constr ~abort_on_undefined_evars:false
     sigma
     (Reductionops.nf_betaiotazeta env sigma (EConstr.of_constr trm))
 
 (* Delta reduction *)
 let delta (env : env) (sigma : evar_map) (trm : types) =
-  sigma, EConstr.to_constr
+  sigma, EConstr.to_constr ~abort_on_undefined_evars:false
     sigma
     (Reductionops.whd_delta env sigma (EConstr.of_constr trm))
 
 (* Weak head reduction *)
 let whd (env : env) (sigma : evar_map) (trm : types) =
-  sigma, EConstr.to_constr
+  sigma, EConstr.to_constr ~abort_on_undefined_evars:false
     sigma
     (Reductionops.whd_all env sigma (EConstr.of_constr trm))
 
 (* nf_all *)
 let reduce_nf (env : env) (sigma : evar_map) (trm : types) =
-  sigma, EConstr.to_constr
+  sigma, EConstr.to_constr ~abort_on_undefined_evars:false
     sigma
     (Reductionops.nf_all env sigma (EConstr.of_constr trm))
 
@@ -105,22 +105,22 @@ let reduce_remove_identities : reducer =
 
 (* Reduce and also unfold definitions *)
 let reduce_unfold (env : env) sigma (trm : types) =
-  sigma, EConstr.to_constr
+  sigma, EConstr.to_constr ~abort_on_undefined_evars:false
     sigma
     (Reductionops.nf_all env sigma (EConstr.of_constr trm))
 
 (* Reduce and also unfold definitions, but weak head *)
 let reduce_unfold_whd (env : env) sigma (trm : types) =
-  sigma, EConstr.to_constr
+  sigma, EConstr.to_constr ~abort_on_undefined_evars:false
     sigma
     (Reductionops.whd_all env sigma (EConstr.of_constr trm))
 
 (* Weak-head reduce a term if it is a let-in *)
 let reduce_whd_if_let_in (env : env) sigma (trm : types) =
   if isLetIn trm then
-    sigma, EConstr.to_constr
+    sigma, EConstr.to_constr ~abort_on_undefined_evars:false
       sigma
-      (Reductionops.whd_betaiotazeta sigma (EConstr.of_constr trm))
+      (Reductionops.whd_betaiotazeta env sigma (EConstr.of_constr trm))
   else
     sigma, trm
 

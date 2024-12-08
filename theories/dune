@@ -1,0 +1,4 @@
+(coq.theory
+ (name MyPlugin)
+ (package my-plugin)
+ (plugins my-plugin.plugin))

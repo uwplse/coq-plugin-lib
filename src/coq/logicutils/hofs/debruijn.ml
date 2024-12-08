@@ -81,33 +81,6 @@ let shift_by_unconditional (n : int) (trm : types) : types =
     trm
 
 (*
- * Function from: 
- * https://github.com/coq/coq/commit/7ada864b7728c9c94b7ca9856b6b2c89feb0214e
- * Inlined here to make this compatible with Coq 8.8.0
- * TODO remove with update
- *)
-let fold_constr_with_binders g f n acc c =
-  match kind c with
-  | (Rel _ | Meta _ | Var _   | Sort _ | Const _ | Ind _
-    | Construct _) -> acc
-  | Cast (c,_, t) -> f n (f n acc c) t
-  | Prod (na,t,c) -> f (g  n) (f n acc t) c
-  | Lambda (na,t,c) -> f (g  n) (f n acc t) c
-  | LetIn (na,b,t,c) -> f (g  n) (f n (f n acc b) t) c
-  | App (c,l) -> Array.fold_left (f n) (f n acc c) l
-  | Proj (p,c) -> f n acc c
-  | Evar (_,l) -> Array.fold_left (f n) acc l
-  | Case (_,p,c,bl) -> Array.fold_left (f n) (f n (f n acc p) c) bl
-  | Fix (_,(lna,tl,bl)) ->
-      let n' = CArray.fold_left2 (fun c n t -> g c) n lna tl in
-      let fd = Array.map2 (fun t b -> (t,b)) tl bl in
-      Array.fold_left (fun acc (t,b) -> f n' (f n acc t) b) acc fd
-  | CoFix (_,(lna,tl,bl)) ->
-      let n' = CArray.fold_left2 (fun c n t -> g c) n lna tl in
-      let fd = Array.map2 (fun t b -> (t,b)) tl bl in
-      Array.fold_left (fun acc (t,b) -> f n' (f n acc t) b) acc fd
-
-(*
  * Gather the set of relative (de Bruijn) variables occurring in the term that
  * are free (i.e., not bound) under nb levels of external relative binding.
  *

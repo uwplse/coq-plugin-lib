@@ -50,11 +50,19 @@ let named_type decl = CND.get_type decl
     
 (* --- Constructing declarations --- *)
 
+(* Get relative context for a name *)
+let get_rel_ctx_name name = 
+  match name with (* handle if anon or not *)
+  | Anonymous -> Context.anonR
+  | Name idt -> Context.nameR idt
+
+let get_rel_ctx decl = get_rel_ctx_name (rel_name decl)
+
 (* Make the rel declaration for a local assumption *)
-let rel_assum (name, typ) = CRD.LocalAssum (name, typ)
+let rel_assum (name, typ) = CRD.LocalAssum (get_rel_ctx_name name, typ)
 
 (* Make the rel declaration for a local definition *)
-let rel_defin (name, def, typ) = CRD.LocalDef (name, def, typ)
+let rel_defin (name, def, typ) = CRD.LocalDef (get_rel_ctx_name name, def, typ)
 
 (* Make the named declaration for a local assumption *)
 let named_assum (id, typ) = CND.LocalAssum (id, typ)
@@ -104,7 +112,9 @@ let smash_prod_assum ctxt body =
     (fun body decl ->
        match rel_value decl with
        | Some defn -> Vars.subst1 defn body
-       | None -> mkProd (rel_name decl, rel_type decl, body))
+       | None -> match decl with
+       | CRD.LocalAssum (a, _) -> mkProd (a, rel_type decl, body)
+       | CRD.LocalDef (a, _, _) -> mkProd (a, rel_type decl, body))
     ~init:body
     ctxt
 
@@ -117,7 +127,9 @@ let smash_lam_assum ctxt body =
     (fun body decl ->
        match rel_value decl with
        | Some defn -> Vars.subst1 defn body
-       | None -> mkLambda (rel_name decl, rel_type decl, body))
+       | None -> match decl with
+        | CRD.LocalAssum (a, _) -> mkLambda (a, rel_type decl, body)
+        | CRD.LocalDef (a, _, _) -> mkLambda (a, rel_type decl, body))
     ~init:body
     ctxt
 
@@ -131,7 +143,7 @@ let decompose_prod_n_zeta n term =
     if n > 0 then
       match Constr.kind body with
       | Prod (name, param, body) ->
-        aux (n - 1) (Context.Rel.add (rel_assum (name, param)) ctxt) body
+        aux (n - 1) (Context.Rel.add (rel_assum (Context.binder_name name, param)) ctxt) body
       | LetIn (name, def_term, def_type, body) ->
         aux n ctxt (Vars.subst1 def_term body)
       | _ ->
@@ -151,7 +163,7 @@ let decompose_lam_n_zeta n term =
     if n > 0 then
       match Constr.kind body with
       | Lambda (name, param, body) ->
-        aux (n - 1) (Context.Rel.add (rel_assum (name, param)) ctxt) body
+        aux (n - 1) (Context.Rel.add (rel_assum (Context.binder_name name, param)) ctxt) body
       | LetIn (name, def_term, def_type, body) ->
         Vars.subst1 def_term body |> aux n ctxt
       | _ ->
@@ -200,13 +212,13 @@ let bindings_for_inductive env mutind_body ind_bodies : rel_declaration list =
        (fun i ind_body ->
          let name_id = ind_body.mind_typename in
          let typ = type_of_inductive env i mutind_body in
-         CRD.LocalAssum (Name name_id, typ))
+         CRD.LocalAssum (Context.nameR name_id, typ))
        ind_bodies)
 
 (*
  * Fixpoints
  *)
-let bindings_for_fix (names : name array) (typs : types array) : rel_declaration list =
+let bindings_for_fix (names : Name.t Context.binder_annot array) (typs : types array) : rel_declaration list =
   Array.to_list
     (CArray.map2_i
        (fun i name typ -> CRD.LocalAssum (name, Vars.lift i typ))

@@ -10,7 +10,6 @@ open Hofimpls
 open Reducers
 open Sigmautils
 open Apputils
-open Evd
 
 (* --- Generic functions --- *)
 

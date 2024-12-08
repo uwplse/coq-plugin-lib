@@ -35,10 +35,14 @@ val define_rel_decl :
 (*
  * Construct a named assumption/definition
  *)
-val named_assum : Id.t * 'types -> ('constr, 'types) CND.pt
-val named_defin : Id.t * 'constr * 'types -> ('constr, 'types) CND.pt
+val named_assum : Id.t Context.binder_annot * 'types -> ('constr, 'types) CND.pt
+val named_defin : Id.t Context.binder_annot * 'constr * 'types -> ('constr, 'types) CND.pt
 
 (* --- Questions about declarations --- *)
+
+val get_rel_ctx_name : Names.name -> Names.Name.t Context.binder_annot
+
+val get_rel_ctx : ('constr, 'types) CRD.pt -> Names.Name.t Context.binder_annot
 
 (* 
  * Is the rel declaration a local assumption/definition? 
@@ -133,7 +137,7 @@ val bindings_for_inductive :
   env -> mutual_inductive_body -> one_inductive_body array -> rel_declaration list
 
 val bindings_for_fix :
-  name array -> types array -> rel_declaration list
+  Name.t Context.binder_annot array -> types array -> rel_declaration list
 
 (* --- Combining contexts --- *) 
 
